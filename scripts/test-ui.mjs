@@ -86,6 +86,7 @@ export async function verifyUI(base) {
           return {height:input.height,radius:getComputedStyle(control.querySelector('input')).borderRadius,buttonFits:button.left>=input.left&&button.right<=input.right&&button.top>=input.top&&button.bottom<=input.bottom};
         }));
         check(geometry.length===3&&geometry.every(g=>g.height===48&&g.radius==='12px'&&g.buttonFits),engineName+': aligned password fields at '+width+'px');
+        if(width<=650)check(await page.locator('#profile-new-password').evaluate(input=>parseFloat(getComputedStyle(input).fontSize)>=16),engineName+': readable mobile input without focus zoom at '+width+'px');
         if(engineName==='chromium'&&width===1440) {
           const screenshot=await page.screenshot({fullPage:true});
           console.log('RITM_SCREENSHOT_DESKTOP '+screenshot.toString('base64'));
