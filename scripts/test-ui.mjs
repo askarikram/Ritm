@@ -7,7 +7,7 @@ export async function verifyUI(base) {
   const check=(condition,label)=>{assert.ok(condition,label);checks++;console.log('RITM_UI_CHECK '+label);};
   for(const [engineName,engine] of [['chromium',chromium],['webkit',webkit]]) {
     const browser=await engine.launch({headless:true});
-    const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1});
+    const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,reducedMotion:'reduce'});
     const page=await context.newPage(),errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     page.on('dialog',dialog=>dialog.accept());
@@ -22,6 +22,7 @@ export async function verifyUI(base) {
       check(await page.evaluate(()=>[...document.fonts].some(font=>font.family==='Manrope'&&font.status==='loaded')),engineName+': self-hosted Manrope loaded');
       await page.locator('#auth-signup-tab').click();
       check(await page.locator('#auth-confirm-field').isVisible(),engineName+': registration confirmation visible');
+      if(engineName==='chromium'){const screenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_REGISTRATION '+screenshot.toString('base64'));}
       await page.locator('#auth-username').fill(username);
       await page.locator('#auth-name').fill('Александр Тестовый');
       await page.locator('#auth-password').fill(oldPassword);
@@ -90,6 +91,7 @@ export async function verifyUI(base) {
           console.log('RITM_SCREENSHOT_DESKTOP '+screenshot.toString('base64'));
         }
         if(engineName==='chromium'&&width===390) {
+          const profileScreenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_PROFILE '+profileScreenshot.toString('base64'));
           await page.evaluate(()=>{location.hash='home';});
           await page.waitForFunction(()=>document.getElementById('heading').textContent==='Главная');
           const screenshot=await page.screenshot({fullPage:true});
