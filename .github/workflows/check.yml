@@ -1,0 +1,58 @@
+name: Check Ritm
+on:
+  push:
+    branches: [main, 'updates/**']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ritmtest
+          POSTGRES_PASSWORD: LocalTestPassword123
+          POSTGRES_DB: ritmtest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ritmtest -d ritmtest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install
+      - name: Check source and bundled fonts
+        run: npm run check
+      - name: Configure TLS for the disposable test database
+        env:
+          RITM_PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -keyout /tmp/ritm-test.key -out /tmp/ritm-test.crt -subj /CN=localhost -addext subjectAltName=DNS:localhost,IP:127.0.0.1
+          docker cp /tmp/ritm-test.key "$RITM_PG_CONTAINER":/tmp/ritm-test.key
+          docker cp /tmp/ritm-test.crt "$RITM_PG_CONTAINER":/tmp/ritm-test.crt
+          docker exec "$RITM_PG_CONTAINER" chown postgres:postgres /tmp/ritm-test.key /tmp/ritm-test.crt
+          docker exec "$RITM_PG_CONTAINER" chmod 600 /tmp/ritm-test.key
+          docker exec "$RITM_PG_CONTAINER" psql -U ritmtest -d ritmtest -c "ALTER SYSTEM SET ssl = 'on'"
+          docker exec "$RITM_PG_CONTAINER" psql -U ritmtest -d ritmtest -c "ALTER SYSTEM SET ssl_cert_file = '/tmp/ritm-test.crt'"
+          docker exec "$RITM_PG_CONTAINER" psql -U ritmtest -d ritmtest -c "ALTER SYSTEM SET ssl_key_file = '/tmp/ritm-test.key'"
+          docker exec "$RITM_PG_CONTAINER" psql -U ritmtest -d ritmtest -c "SELECT pg_reload_conf()"
+      - name: Install browsers for UI checks
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Verify API and responsive UI
+        env:
+          DATABASE_URL: postgresql://ritmtest:LocalTestPassword123@localhost:5432/ritmtest
+          NODE_EXTRA_CA_CERTS: /tmp/ritm-test.crt
+          RITM_TEST_UI: '1'
+        run: node scripts/test-server.mjs

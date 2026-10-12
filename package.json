@@ -8,9 +8,10 @@
   },
   "scripts": {
     "start": "node scripts/start.mjs",
-    "check": "node --check server.js && node --check scripts/start.mjs && node --check scripts/verify-isolation.mjs"
+    "check": "node --check server.js && node --check scripts/start.mjs && node --check scripts/verify-isolation.mjs && node --check scripts/test-ui.mjs && node --check scripts/test-server.mjs && node scripts/check-client.mjs"
   },
   "dependencies": {
-    "pg": "8.23.1"
+    "pg": "8.23.1",
+    "@fontsource-variable/manrope": "5.2.8"
   }
 }

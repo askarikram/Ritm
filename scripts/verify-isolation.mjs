@@ -59,9 +59,11 @@ export async function verifyIsolation(baseURL, origin = baseURL, production = tr
   };
   try {
     check((await request(null, '/api/me')).status === 401, 'anonymous read denied');
+    check((await request(null, '/api/signup', 'POST', { username: 'ritmreject' + suffix, name: 'Проверка подтверждения', password: 'ConfirmPass123', confirmPassword: 'DifferentPass123' })).status === 400, 'signup mismatched passwords denied');
+    check((await request(null, '/api/signup', 'POST', { username: 'ritmreject' + suffix, name: 'Проверка подтверждения', password: 'ConfirmPass123' })).status === 400, 'signup missing confirmation denied');
     for (const account of accounts) {
       const result = await request(account, '/api/signup', 'POST', {
-        username: account.username, password: account.password, name: account.name, remember: true
+        username: account.username, password: account.password, confirmPassword: account.password, name: account.name, remember: true
       });
       check(result.status === 200, account.name + ': signup');
       created.push(account.username);
@@ -104,6 +106,41 @@ export async function verifyIsolation(baseURL, origin = baseURL, production = tr
     check(loginResult.status === 200, 'A login after logout');
     await assertPlan(loginA, plans[0], 'A persisted after relogin');
     await assertPlan(accounts[1], plans[1], 'B independent browser session');
+
+    check((await request(null, '/api/profile', 'PATCH', { name: 'Чужое имя' })).status === 401, 'anonymous profile change denied');
+    check((await request(loginA, '/api/profile', 'PATCH', { name: 'Чужое имя' }, { 'X-Ritm-User': accounts[1].username })).status === 401, 'forged profile change denied');
+    check((await request(loginA, '/api/profile', 'PATCH', { name: 'Чужое имя' }, { Origin: 'https://unrelated.invalid' })).status === 403, 'foreign origin profile change denied');
+    check((await request(loginA, '/api/profile', 'PATCH', { name: '   ' })).status === 400, 'empty profile name denied');
+    const renamed = await request(loginA, '/api/profile', 'PATCH', { name: '  Обновлённый профиль A  ', user_id: accounts[1].username });
+    check(renamed.status === 200 && renamed.body.user.name === 'Обновлённый профиль A' && renamed.body.user.username === loginA.username, 'profile name updated only for session owner');
+    const aProfile = await assertPlan(loginA, plans[0], 'A plan after profile change');
+    check(aProfile.user.name === 'Обновлённый профиль A' && aProfile.revision === 1, 'profile name persisted without changing financial revision');
+    const bProfile = await assertPlan(accounts[1], plans[1], 'B plan after A profile change');
+    check(bProfile.user.name === accounts[1].name, 'B name unchanged after A profile change');
+    const oldPassword = loginA.password, newPassword = randomBytes(24).toString('hex');
+    check((await request(loginA, '/api/password', 'POST', { currentPassword: oldPassword, newPassword, confirmPassword: 'DifferentPass123' })).status === 400, 'password confirmation mismatch denied');
+    check((await request(loginA, '/api/password', 'POST', { currentPassword: oldPassword, newPassword: 'short', confirmPassword: 'short' })).status === 400, 'invalid new password denied');
+    const wrongPassword = await request(loginA, '/api/password', 'POST', { currentPassword: 'WrongCurrent123', newPassword, confirmPassword: newPassword });
+    check(wrongPassword.status === 401 && wrongPassword.body.code === 'wrong_password', 'wrong current password denied without logout');
+    await assertPlan(loginA, plans[0], 'A session after wrong password');
+    const otherA = { username: loginA.username };
+    check((await request(otherA, '/api/login', 'POST', { username: loginA.username, password: oldPassword })).status === 200, 'second A device signed in before password change');
+    const oldCookie = loginA.cookie;
+    const changed = await request(loginA, '/api/password', 'POST', { currentPassword: oldPassword, newPassword, confirmPassword: newPassword });
+    check(changed.status === 200 && changed.body.user.username === loginA.username, 'password changed for session owner');
+    check(/HttpOnly/.test(changed.setCookie) && /SameSite=Strict/.test(changed.setCookie), 'password change rotates protected session cookie');
+    if (production) check(/Secure/.test(changed.setCookie), 'password change keeps Secure cookie');
+    check((await request(null, '/api/me', 'GET', undefined, { Cookie: oldCookie })).status === 401, 'pre-change A session revoked');
+    check((await request(otherA, '/api/me')).status === 401, 'other A device revoked after password change');
+    await assertPlan(loginA, plans[0], 'A stays signed in after password change');
+    check((await request(null, '/api/login', 'POST', { username: loginA.username, password: oldPassword })).status === 401, 'old password no longer accepted');
+    const newLogin = { username: loginA.username };
+    check((await request(newLogin, '/api/login', 'POST', { username: loginA.username, password: newPassword })).status === 200, 'new password accepted');
+    const finalA = await assertPlan(newLogin, plans[0], 'A plan after new password login');
+    check(finalA.revision === 1, 'password change preserves financial revision');
+    const finalB = await assertPlan(accounts[1], plans[1], 'B unaffected by A password change');
+    check(finalB.user.name === accounts[1].name, 'B profile preserved after A password change');
+
     console.log('RITM_ISOLATION_HTTP_PASS ' + checks + ' checks ' + base);
   } finally {
     if (created.length && process.env.DATABASE_URL) {
