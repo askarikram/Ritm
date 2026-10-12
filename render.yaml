@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ritm
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run check
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: RITM_VERIFY_DEPLOY
+        value: "0"
