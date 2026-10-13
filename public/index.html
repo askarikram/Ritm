@@ -771,6 +771,8 @@ label,.field>label{font-size:14px;font-weight:500}
  .personal-time{font-size:11px;min-width:42px;padding:4px 5px}
  .personal-check{width:26px;height:26px}
  .personal-row-actions{gap:7px}
+ .personal-row[data-personal-type="task"] .personal-row-actions{margin-left:-86px}
+ .personal-row[data-personal-type="task"] .personal-row-actions .btn{flex:1}
  .personal-row-actions .btn{font-size:11px;padding:8px 10px}
  .personal-done-label{display:none}
  .personal-savings{padding:18px 16px;gap:12px}
@@ -1154,7 +1156,6 @@ function syncPlanningDate(){
   const now=C.today();if(now===planningDay)return false;
   if(calMonth===planningDay.slice(0,7)+'-01')calMonth=now.slice(0,7)+'-01';
   if(calDay===planningDay)calDay=now;
-  if(personalDay===planningDay)personalDay=now;
   planningDay=now;return true;
 }
 function schedulePlanningRefresh(){
@@ -1437,7 +1438,7 @@ function accountChange(fn,message=''){
   const next=JSON.parse(JSON.stringify(S));fn(next);C.validate(next);S=next;queuedPlan=JSON.parse(JSON.stringify(S));render();if(message)notify(message);void flushPlan();
 }
 function accountRender(){
-  baseRender();schedulePersonalClock();syncConnectivity();updateInstallUI();syncReminderBadge();if($('archive-dialog').open)renderArchive();if($('reminders-dialog').open)updateReminderList();
+  refreshPersonalClockDate();baseRender();schedulePersonalClock();syncConnectivity();updateInstallUI();syncReminderBadge();if($('archive-dialog').open)renderArchive();if($('reminders-dialog').open)updateReminderList();
   if(currentUser){$('session-name').textContent=currentUser.name;$('session-name').title=currentUser.username;}
   $('save-state').textContent=storageError?'Есть несохранённые изменения':saving||queuedPlan?'Сохраняем план…':'План сохранён';
   if(storageError)$('storage-notice').innerHTML='<div class="notice error"><div>'+esc(storageError)+'<div class="actions" style="margin-top:10px">'+(saveConflict?btn('Загрузить план с сервера','account-reload','','small line'):btn('Повторить сохранение','account-retry','','small line'))+link('Экспортировать →','settings')+'</div></div></div>';
@@ -1984,7 +1985,7 @@ const Personal = (() => {
 
 
 
-let personalState=null,personalRevision=0,personalLoading=false,personalBusy=false,personalError='',personalRequest=0,personalTimer=null,personalForm=null,personalDay='';
+let personalState=null,personalRevision=0,personalLoading=false,personalBusy=false,personalError='',personalRequest=0,personalTimer=null,personalForm=null,personalDay='',personalClockDay='';
 for(const node of document.querySelectorAll('[data-nav="personal"] svg'))node.innerHTML='<path d="M20 4c-9-1-15 3-15 9a6 6 0 0 0 6 6c6 0 10-6 9-15Z"/><path d="m4 21 11-11"/>';
 Object.assign(icons,{
  trash:'<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
@@ -1999,9 +2000,14 @@ const personalDayLabel=date=>{
 };
 function resetPersonal(){
  personalRequest++;clearTimeout(personalTimer);personalTimer=null;
- personalState=null;personalRevision=0;personalLoading=false;personalBusy=false;personalError='';personalForm=null;personalDay='';
+ personalState=null;personalRevision=0;personalLoading=false;personalBusy=false;personalError='';personalForm=null;personalDay='';personalClockDay='';
  if($('personal-dialog').open)$('personal-dialog').close();
  $('personal-fields').replaceChildren();$('personal-form-error').textContent='';
+}
+function refreshPersonalClockDate(){
+ const day=personalClock().date;
+ if(personalClockDay&&personalDay===personalClockDay)personalDay=day;
+ personalClockDay=day;
 }
 function schedulePersonalClock(){
  clearTimeout(personalTimer);if(!currentUser)return;
@@ -2052,7 +2058,7 @@ const personalData=(row,date=personalDay)=>' data-personal-id="'+esc(row.id)+'" 
 function personalRow(row){
  const habit=row.type==='habit',done=row.done,futureHabit=habit&&row.date>personalClock().date;
  const label=(done?'Снять отметку: ':'Отметить выполненным: ')+row.title;
- const meta=done?'Выполнено':habit?(row.repeat==='daily'?'Каждый день':'Один день')+(row.time?' · '+row.time:''):row.current?'Сейчас':row.time?'Запланировано':'В течение дня';
+ const meta=habit?(row.repeat==='daily'?'Каждый день':'Один день')+(row.time?' · '+row.time:''):done?'Выполнено':row.current?'Сейчас':row.time?'Запланировано':'В течение дня';
  const checkbox='<button type="button" class="personal-check" aria-pressed="'+done+'" aria-label="'+esc(label)+'" data-personal-action="'+(habit?'check-habit':'complete-task')+'"'+personalData(row,row.date)+(futureHabit?' disabled':'')+'>'+(done?I('check'):'')+'</button>';
  const primary='<button type="button" class="btn" data-personal-action="'+(habit?'check-habit':'complete-task')+'"'+personalData(row,row.date)+'>'+I('check')+'Выполнено</button>';
  const move=!habit?'<button type="button" class="btn line" data-personal-action="move-task"'+personalData(row,row.date)+'>'+I('calendar')+'Перенести</button>':'';
@@ -2075,7 +2081,7 @@ function personalPage(){
    (rows.length?rows.map(personalRow).join(''):'<div class="personal-empty">'+(!personalState?personalLoading?'Загружаем…':'Личные дела пока не загружены.':type==='task'?'На этот день задач пока нет.':'На этот день привычек пока нет.')+'</div>')+'</div></section>';
  };
  const goal=S.goals.find(g=>g.saved<g.target)||S.goals[0];
- const savings='<a class="card personal-savings" href="#goals" aria-label="Открыть накопления"><div class="tile">'+I('wallet')+'</div><div class="grow"><h2>Накопить деньги</h2><p>Ваши денежные цели</p>'+(goal?'<div class="personal-savings-preview">'+esc(goal.title)+' · '+money(goal.saved)+' из '+money(goal.target)+'</div>':'<div class="personal-savings-preview">Сумма, ежемесячные взносы или срок</div>')+'</div><span class="btn line">Открыть</span>'+I('arrow')+'</a>';
+ const savings='<a class="card personal-savings" href="#goals" aria-label="Открыть накопления"><div class="tile">'+I('wallet')+'</div><div class="grow"><h2>Накопить деньги</h2><p>Ваши денежные цели</p>'+(goal?'<div class="personal-savings-preview">'+esc(goal.title)+' · '+money(goal.saved).replace(/ (теңге|\$)$/,'')+' из '+money(goal.target)+'</div>':'<div class="personal-savings-preview">Сумма, ежемесячные взносы или срок</div>')+'</div><span class="btn line">Открыть</span>'+I('arrow')+'</a>';
  return datebar+personalNotice()+'<div class="personal-grid">'+section('task','Мой день','list')+section('habit','Мои привычки','personal')+'</div>'+savings;
 }
 function personalHome(){
@@ -2083,7 +2089,7 @@ function personalHome(){
  const nextCard=type=>{
   const row=personalState?Personal.next(personalState,type):null,habit=type==='habit';
   const context=habit?'Привычка':'Задача',nextLabel=row?.current?context+' сейчас':'Ближайшая '+context.toLowerCase();
-  if(!row)return '<section class="card personal-next personal-next-empty" data-personal-next="'+type+'"><div class="personal-next-top">'+I(habit?'personal':'list')+context+'</div><h3>'+(!personalState?'Личные дела недоступны':habit?'На сегодня привычек нет':'Все задачи выполнены')+'</h3><p>'+(!personalState?esc(personalError):habit?'Добавьте привычку в личном разделе.':'Можно добавить новое дело.')+'</p><div class="personal-row-actions"><a class="btn line" href="#personal">Открыть личное</a></div></section>';
+  if(!row)return '<section class="card personal-next personal-next-empty" data-personal-next="'+type+'"><div class="personal-next-top">'+I(habit?'personal':'list')+context+'</div><h3>'+(!personalState?'Личные дела недоступны':habit?(Personal.events(personalState,'habit',personalClock().date).length?'Привычки на сегодня выполнены':'На сегодня привычек нет'):(personalState.tasks.length?'Все задачи выполнены':'Задач пока нет'))+'</h3><p>'+(!personalState?esc(personalError):habit?'Добавьте привычку в личном разделе.':'Можно добавить новое дело.')+'</p><div class="personal-row-actions"><a class="btn line" href="#personal">Открыть личное</a></div></section>';
   const today=personalClock().date,canCheck=!habit||row.date<=today;
   return '<section class="card personal-next" data-personal-next="'+type+'" data-personal-next-id="'+esc(row.id)+'"><div class="personal-next-top">'+I(habit?'book':'list')+esc(nextLabel)+'<span>'+(row.time||'В течение дня')+'</span></div><h3>'+esc(row.title)+'</h3><p>'+esc(row.overdue?'Ожидает выполнения · '+personalDayLabel(row.date):personalDayLabel(row.date))+(habit?' · '+(row.repeat==='daily'?'Каждый день':'Один день'):' · Мой день')+'</p><div class="personal-row-actions">'+
    (canCheck?'<button type="button" class="btn" data-personal-action="'+(habit?'check-habit':'complete-task')+'"'+personalData(row,row.date)+(personalBusy?' disabled':'')+'>'+I('check')+'Выполнено</button>':'<a class="btn line" href="#personal" data-personal-action="open-next" data-personal-date="'+row.date+'">Открыть привычки</a>')+

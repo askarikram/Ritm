@@ -78,6 +78,10 @@ export async function verifyPersonalUI(base){
  check((await read()).state.checks[readingId+'@'+day]===true,name+': completion persists after reload');
  const financeAfter=await (await page.request.get(base+'/api/me',{headers})).json();assert.deepEqual(financeAfter.plan,financeBefore.plan);check(financeAfter.revision===financeBefore.revision,name+': personal editing and day navigation preserve financial plan');
  await navigate('home');if(name==='chromium')console.log('RITM_SCREENSHOT_PERSONAL_HOME '+(await page.screenshot({fullPage:true})).toString('base64'));
+ await navigate('personal');if(await page.locator('[data-personal-action="today"]').count())await page.locator('[data-personal-action="today"]').click();
+ await page.clock.fastForward(14*3600000+1000);
+ await page.waitForFunction(date=>document.getElementById('personal-date')?.value===date,Personal.addDays(day,1));
+ check(await row(readingId).getAttribute('data-personal-complete')==='false'&&(await read()).state.checks[readingId+'@'+day]===true,name+': midnight opens fresh habits and preserves yesterday');
  check(errors.length===0,name+': no personal UI runtime errors');
  }finally{
   if(created)await page.request.delete(base+'/api/account',{headers,data:{currentPassword:password,confirmation:'УДАЛИТЬ'}}).catch(()=>{});

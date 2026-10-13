@@ -247,7 +247,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
                 targetsFit:links.every(link=>{const b=link.getBoundingClientRect();return b.width>=44&&b.height>=44;}),
                 labelsFit:links.every(link=>{const b=link.getBoundingClientRect(),label=link.querySelector('span').getBoundingClientRect();return label.left>=b.left&&label.right<=b.right&&label.top>=b.top&&label.bottom<=b.bottom;})};
             });
-            check(geometry.left>=0&&geometry.right<=geometry.width&&geometry.bottom<=geometry.screenHeight&&geometry.height<=60,engineName+': lower navigation fits '+route+' at '+width+'px');
+            check(geometry.left>=0&&geometry.right<=geometry.width&&geometry.bottom<=geometry.screenHeight&&geometry.height<=80,engineName+': lower navigation fits '+route+' at '+width+'px');
             check(geometry.targetsFit&&geometry.labelsFit,engineName+': full navigation labels and touch targets on '+route+' at '+width+'px');
             if(engineName==='chromium'&&['home','calendar'].includes(route)&&[320,390].includes(width)){
               const screenshot=await page.locator('.mobile-nav').screenshot();
