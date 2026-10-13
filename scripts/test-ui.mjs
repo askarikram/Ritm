@@ -303,6 +303,9 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
         const before=await page.locator('.mobile-nav a').evaluateAll(links=>links.map(link=>{const b=link.getBoundingClientRect();return [b.x,b.y,b.width,b.height];}));
         await page.locator('.mobile-nav [data-nav="'+route+'"]').click();
         await page.waitForFunction(route=>document.querySelector('.mobile-nav a.active')?.dataset.nav===route,route);
+        await page.locator('.mobile-nav a.active').evaluate(async node=>{
+          await Promise.all(node.getAnimations().map(animation=>animation.finished.catch(()=>{})));
+        });
         const indicator=await page.locator('.mobile-nav').evaluate(nav=>{
           const active=nav.querySelector('a.active'),style=getComputedStyle(active),box=active.getBoundingClientRect();
           return {rounded:parseFloat(style.borderRadius)>=12,height:box.height,background:style.backgroundColor,color:style.color};
