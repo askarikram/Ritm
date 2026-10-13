@@ -286,6 +286,7 @@ export async function verifyUI(base) {
       const headers={'X-Ritm-User':username,Origin:base},beforeRecovery=await (await page.request.get(base+'/api/me',{headers})).json();
       await page.locator('#profile-name-form [data-action="account-logout"]').click();
       await page.locator('#auth-screen').waitFor({state:'visible'});
+      check(await page.locator('#content').textContent()===''&&await page.locator('#session-name').textContent()==='',engineName+': logout clears private content from DOM');
       await page.locator('#auth-forgot').click();
       await page.locator('#recover-username').fill(username);
       await page.locator('#recover-code').fill(replacementCode);
@@ -304,6 +305,19 @@ export async function verifyUI(base) {
       assert.deepEqual(afterRecovery.plan,beforeRecovery.plan);
       check(afterRecovery.revision===beforeRecovery.revision,engineName+': UI recovery preserves financial plan');
       await navigate('home');await page.locator('#toast').waitFor({state:'hidden'});
+      // A different worker URL simulates a new release without touching user data.
+      await page.evaluate(()=>navigator.serviceWorker.register('/sw.js?update-test=1',{scope:'/',updateViaCache:'none'}));
+      await page.locator('#update-banner').waitFor({state:'visible'});
+      check(await page.evaluate(async()=>Boolean((await navigator.serviceWorker.getRegistration('/')).waiting)),engineName+': new worker waits for explicit update');
+      await page.locator('.balance-edit').click();
+      await page.locator('#apply-update').evaluate(button=>button.dispatchEvent(new Event('click')));
+      check(await page.evaluate(async()=>Boolean((await navigator.serviceWorker.getRegistration('/')).waiting)),engineName+': update does not activate over open editing dialog');
+      await page.locator('#dialog [data-action="close"]').first().click();
+      const updatedPage=page.waitForEvent('load');await page.locator('#apply-update').click();await updatedPage;
+      await page.waitForFunction(()=>navigator.serviceWorker.controller?.scriptURL.includes('update-test=1'),null,{timeout:15000});
+      await page.locator('#application').waitFor({state:'visible'});
+      await navigate('home');await page.locator('#toast').waitFor({state:'hidden'});
+
       await context.setOffline(true);
       await page.locator('#connection-status').waitFor({state:'visible'});
       await page.locator('.balance-edit').click();

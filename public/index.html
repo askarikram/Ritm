@@ -504,7 +504,7 @@ label,.field>label{font-size:14px;font-weight:500}
 .recovery-code{display:block;padding:18px 16px;margin:20px 0;border:1px dashed #bed4c3;border-radius:16px;background:var(--mint);font-family:ui-monospace,monospace;font-size:17px;line-height:1.7;letter-spacing:.04em;overflow-wrap:anywhere;user-select:all}
 .recovery-dialog-body .actions{display:flex;flex-wrap:wrap;gap:10px}
 @media(max-width:850px){.auth-wrap{grid-template-columns:minmax(0,1fr) minmax(320px,400px);gap:32px}.landing-title{font-size:42px}.landing-lead{font-size:16px}.landing-preview{padding:22px}.landing-preview strong{font-size:25px}.auth-card{padding:28px}}
-@media(max-width:700px){.auth-screen{padding:24px 16px 32px}.auth-wrap{display:flex;flex-direction:column;align-items:stretch;gap:24px;max-width:460px}.landing-header-links{gap:12px}.landing-header-links .btn{font-size:12px;padding:10px 12px}.landing-story{padding:5px 4px 0}.landing-story>.eyebrow,.landing-preview,.landing-tags{display:none}.landing-title{font-size:34px;line-height:1.1;margin:0 0 13px}.landing-title br{display:none}.landing-lead{font-size:15px;margin:0;max-width:none}.auth-card{padding:26px 23px}.landing-footer{font-size:12px;gap:14px}.recovery-dialog-body{padding:24px 20px}.recovery-code{font-size:15px;letter-spacing:0}.update-banner{align-items:flex-start;gap:12px}.update-banner .btn{font-size:12px;padding:10px}.connection-status{font-size:13px;padding:10px 14px}}
+@media(max-width:700px){.auth-screen{padding:24px 16px 32px}.auth-wrap{display:flex;flex-direction:column;align-items:stretch;gap:24px;max-width:460px}.landing-header-links{gap:12px}.landing-header-links .btn{font-size:12px;padding:10px 12px}.landing-story{padding:5px 4px 0}.landing-story>.eyebrow,.landing-preview,.landing-tags{display:none}.landing-title{font-size:34px;line-height:1.1;margin:0 0 13px}.landing-title br{display:none}.auth-screen[data-auth-mode="signup"] .landing-story,.auth-screen[data-auth-mode="recover"] .landing-story{display:none}.landing-lead{font-size:15px;margin:0;max-width:none}.auth-card{padding:26px 23px}.landing-footer{font-size:12px;gap:14px}.recovery-dialog-body{padding:24px 20px}.recovery-code{font-size:15px;letter-spacing:0}.update-banner{align-items:flex-start;gap:12px}.update-banner .btn{font-size:12px;padding:10px}.connection-status{font-size:13px;padding:10px 14px}}
 @media(display-mode:standalone){.landing-story{display:none}.auth-wrap{display:flex;flex-direction:column;max-width:460px;gap:26px}.landing-header{align-self:stretch}.landing-header [data-install-app]{display:none}.auth-screen{padding-top:calc(28px + env(safe-area-inset-top))}}
 </style></head><body>
 <div id="connection-status" class="connection-status" role="status" aria-live="polite" hidden></div>
@@ -940,7 +940,7 @@ async function requestAPI(path,method='GET',data){
 }
 function setAuthMode(mode){
   if(authBusy)return;
-  const changed=authMode!==mode;authMode=mode;
+  const changed=authMode!==mode;authMode=mode;$('auth-screen').dataset.authMode=mode;
   $('auth-form').hidden=mode==='recover';$('recovery-form').hidden=mode!=='recover';$('auth-forgot').hidden=mode!=='login';
   if(mode==='recover'){$('recover-username').value=$('auth-username').value;$('recover-error').textContent='';}
   if(changed){$('recovery-form').reset();resetPasswordVisibility($('recovery-form'));$('recover-match').textContent='';$('recover-confirm').setCustomValidity('');$('recover-confirm').removeAttribute('aria-invalid');if(mode==='recover')$('recover-username').value=$('auth-username').value;}
@@ -962,7 +962,7 @@ function setAuthMode(mode){
 }
 function showAuth(){
   clearProfileSecrets();profileBusy=false;recoveryBusy=false;recoveryEnabled=false;
-  if($('recovery-dialog').open)$('recovery-dialog').close();
+  if($('recovery-dialog').open)closeRecoveryCode();
   clearDailyWish();sessionGeneration++;currentUser=null;S=C.fresh();queuedPlan=null;saving=false;saveConflict=false;remoteRevision=0;storageError='';
   $('content').replaceChildren();$('session-name').textContent='';
   $('application').hidden=true;$('auth-screen').hidden=false;$('auth-form').reset();$('recovery-form').reset();setAuthMode('login');
@@ -970,7 +970,7 @@ function showAuth(){
 }
 function acceptSession(payload){
   clearProfileSecrets();profileBusy=false;recoveryBusy=false;recoveryEnabled=Boolean(payload.recoveryEnabled);
-  if($('recovery-dialog').open)$('recovery-dialog').close();
+  if($('recovery-dialog').open)closeRecoveryCode();
   const plan=C.validate(payload.plan);
   clearDailyWish();wishLoading=true;sessionGeneration++;currentUser=payload.user;S=plan;remoteRevision=payload.revision;queuedPlan=null;saving=false;saveConflict=false;storageError='';
   $('auth-form').reset();resetPasswordVisibility($('auth-form'));$('auth-screen').hidden=true;$('application').hidden=false;
@@ -1166,7 +1166,9 @@ function updateInstallUI(){
 function showRecoveryCode(code){
   $('recovery-code').textContent=code;$('recovery-dialog').showModal();
 }
-$('close-recovery').addEventListener('click',()=>$('recovery-dialog').close());
+function closeRecoveryCode(){$('recovery-code').textContent='';$('recovery-dialog').close();}
+$('close-recovery').addEventListener('click',closeRecoveryCode);
+$('recovery-dialog').addEventListener('cancel',()=>{$('recovery-code').textContent='';});
 $('recovery-dialog').addEventListener('close',()=>{$('recovery-code').textContent='';});
 $('download-recovery').addEventListener('click',()=>{
   if(!currentUser||!$('recovery-code').textContent)return;
