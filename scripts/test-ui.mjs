@@ -22,7 +22,7 @@ export async function verifyUI(base) {
       check(await page.evaluate(()=>[...document.fonts].some(font=>font.family.replaceAll('"','')==='Golos Text'&&font.status==='loaded')),engineName+': self-hosted Golos Text loaded');
       await page.locator('#auth-signup-tab').click();
       check(await page.locator('#auth-confirm-field').isVisible(),engineName+': registration confirmation visible');
-      if(engineName==='chromium'){const screenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_REGISTRATION '+screenshot.toString('base64'));}
+      if(engineName==='chromium'){await page.locator('#toast').waitFor({state:'hidden'});const screenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_REGISTRATION '+screenshot.toString('base64'));}
       await page.locator('#auth-username').fill(username);
       await page.locator('#auth-name').fill('Александр Тестовый');
       await page.locator('#auth-password').fill(oldPassword);
@@ -43,7 +43,7 @@ export async function verifyUI(base) {
       await page.locator('button.daily-wish').waitFor();
       await page.waitForFunction(()=>!document.querySelector('button.daily-wish')?.disabled);
       check(await page.locator('.wish-text').count()===0,engineName+': wish concealed before click');
-      if(engineName==='chromium'){const screenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_WISH_CLOSED '+screenshot.toString('base64'));}
+      if(engineName==='chromium'){await page.locator('#toast').waitFor({state:'hidden'});const screenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_WISH_CLOSED '+screenshot.toString('base64'));}
       await page.locator('button.daily-wish').click();
       await page.locator('.daily-wish.is-open .wish-text').waitFor();
       const dailyText=await page.locator('.wish-text').textContent();
@@ -51,6 +51,25 @@ export async function verifyUI(base) {
       await page.reload({waitUntil:'networkidle'});
       await page.locator('.daily-wish.is-open .wish-text').waitFor();
       check(await page.locator('.wish-text').textContent()===dailyText,engineName+': opened wish persists across reload');
+
+      let dayFetches=0;
+      await page.route('**/api/wish?**',async route=>{
+        const response=await route.fetch(),value=await response.json();
+        if(++dayFetches===1){
+          value.refreshAfterMs=300;value.expiresAt=new Date(Date.now()+300).toISOString();
+        }else{
+          value.opened=false;delete value.text;
+          value.date=new Date(Date.parse(value.date+'T00:00:00Z')+86400000).toISOString().slice(0,10);
+          value.refreshAfterMs=86400000;value.expiresAt=new Date(Date.now()+86400000).toISOString();
+        }
+        await route.fulfill({response,json:value});
+      });
+      await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+      await page.waitForFunction(()=>{const button=document.querySelector('button.daily-wish');return button&&!button.disabled;});
+      check(await page.locator('.wish-text').count()===0,engineName+': new day conceals yesterday wish without reload');
+      await page.unroute('**/api/wish?**');
+      await page.reload({waitUntil:'networkidle'});
+      await page.locator('.daily-wish.is-open .wish-text').waitFor();
       check(signupRequests===1,engineName+': confirmed registration submitted once');
       await page.locator('.account-pill').click();
       await page.waitForFunction(()=>document.getElementById('heading').textContent==='Настройки');
@@ -100,7 +119,7 @@ export async function verifyUI(base) {
             if(width<=850){
               check(await page.locator('.schedule-table .list-label').evaluateAll(labels=>labels.every(label=>{const box=label.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth&&getComputedStyle(label).whiteSpace==='normal';})),engineName+': complete schedule names at '+width+'px');
             }
-            if(engineName==='chromium'&&route==='payment'&&width===390){const screenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_PAYMENTS '+screenshot.toString('base64'));}
+            if(engineName==='chromium'&&route==='payment'&&width===390){await page.locator('#toast').waitFor({state:'hidden'});const screenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_PAYMENTS '+screenshot.toString('base64'));}
           }
 
         }
@@ -111,14 +130,19 @@ export async function verifyUI(base) {
         check(geometry.length===3&&geometry.every(g=>g.height===48&&g.radius==='12px'&&g.buttonFits),engineName+': aligned password fields at '+width+'px');
         if(width<=650)check(await page.locator('#profile-new-password').evaluate(input=>parseFloat(getComputedStyle(input).fontSize)>=16),engineName+': readable mobile input without focus zoom at '+width+'px');
         if(engineName==='chromium'&&width===1440) {
-          const screenshot=await page.screenshot({fullPage:true});
+          await page.locator('#toast').waitFor({state:'hidden'});const screenshot=await page.screenshot({fullPage:true});
           console.log('RITM_SCREENSHOT_DESKTOP '+screenshot.toString('base64'));
-        }
-        if(engineName==='chromium'&&width===390) {
-          const profileScreenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_PROFILE '+profileScreenshot.toString('base64'));
           await page.evaluate(()=>{location.hash='home';});
           await page.waitForFunction(()=>document.getElementById('heading').textContent==='Главная');
-          const screenshot=await page.screenshot({fullPage:true});
+          const homeScreenshot=await page.screenshot({fullPage:true});
+          console.log('RITM_SCREENSHOT_HOME_DESKTOP '+homeScreenshot.toString('base64'));
+
+        }
+        if(engineName==='chromium'&&width===390) {
+          await page.locator('#toast').waitFor({state:'hidden'});const profileScreenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_PROFILE '+profileScreenshot.toString('base64'));
+          await page.evaluate(()=>{location.hash='home';});
+          await page.waitForFunction(()=>document.getElementById('heading').textContent==='Главная');
+          await page.locator('#toast').waitFor({state:'hidden'});const screenshot=await page.screenshot({fullPage:true});
           console.log('RITM_SCREENSHOT_MOBILE '+screenshot.toString('base64'));
         }
         await page.locator('.head-add').click();
