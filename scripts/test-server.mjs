@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { verifyIsolation } from './verify-isolation.mjs';
+import { verifyWishes } from './test-wishes.mjs';
 const base='http://127.0.0.1:4174';
 const child=spawn(process.execPath,['server.js'],{stdio:'inherit',env:{...process.env,NODE_ENV:'test',PORT:'4174',HOST:'127.0.0.1',APP_ORIGIN:base}});
 async function ready(){
@@ -14,6 +15,7 @@ async function ready(){
 try {
   await ready();
   await verifyIsolation(base,base,false);
+  await verifyWishes(base);
   if(process.env.RITM_TEST_UI==='1'){
     const {verifyUI}=await import('./test-ui.mjs');
     await verifyUI(base);

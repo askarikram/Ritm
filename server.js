@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import { randomBytes, randomUUID, createHash, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import pg from 'pg';
+import { wishDay, wishForDay } from './daily-wishes.mjs';
 const Core = (() => {
   const iso = d => d.toISOString().slice(0,10);
   const parse = s => new Date(s + 'T12:00:00Z');
@@ -133,8 +134,8 @@ const validName = value => typeof value==='string' && value.trim().length>=1 && 
 const HTML=readFileSync(new URL('./public/index.html',import.meta.url),'utf8');
 const release=process.env.RENDER_GIT_COMMIT||createHash('sha256').update(HTML).digest('hex').slice(0,16);
 const fonts=new Map(['latin','cyrillic','cyrillic-ext'].map(subset=>[
-  '/assets/fonts/manrope-'+subset+'.woff2',
-  readFileSync(new URL('./node_modules/@fontsource-variable/manrope/files/manrope-'+subset+'-wght-normal.woff2',import.meta.url))
+  '/assets/fonts/golos-text-'+subset+'.woff2',
+  readFileSync(new URL('./node_modules/@fontsource-variable/golos-text/files/golos-text-'+subset+'-wght-normal.woff2',import.meta.url))
 ]));
 
 const scriptHash=createHash('sha256').update(HTML.match(/<script>([\s\S]*?)<\/script>/)[1]).digest('base64');
@@ -177,6 +178,7 @@ async function initialize(){
     await client.query('CREATE TABLE IF NOT EXISTS ritm_plans(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,plan_json JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 0)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_sessions(token_hash TEXT PRIMARY KEY,user_id UUID NOT NULL REFERENCES ritm_users(id) ON DELETE CASCADE,expires_at BIGINT NOT NULL,remember BOOLEAN NOT NULL DEFAULT TRUE)');
     await client.query('CREATE INDEX IF NOT EXISTS ritm_sessions_expiry ON ritm_sessions(expires_at)');
+    await client.query('CREATE TABLE IF NOT EXISTS ritm_wish_accounts(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,lane SMALLINT NOT NULL CHECK(lane BETWEEN 0 AND 4),timezone TEXT NOT NULL,opened_date DATE NOT NULL)');
   });
 }
 const derive=promisify(scrypt),hashToken=t=>createHash('sha256').update(t).digest('hex');
@@ -319,6 +321,35 @@ async function handle(req,res){
       });
       res.setHeader('Set-Cookie',cookie(value,remember,life));
       send(res,200,{user:changed});return;
+    }
+
+
+    if(['GET','POST'].includes(req.method)&&url.pathname==='/api/wish'){
+      const user=await requireUser(req,res);
+      const data=req.method==='POST'?await readJSON(req):null;
+      const requestedZone=(data?data.timeZone:url.searchParams.get('timeZone'))||'UTC';
+      try{wishDay(requestedZone);}catch(error){fail(400,error.message);}
+      if(req.method==='GET'){
+        const row=(await pool.query('SELECT lane,timezone,opened_date::text FROM ritm_wish_accounts WHERE user_id=$1',[user.id])).rows[0];
+        const day=wishDay(row?.timezone||requestedZone),opened=Boolean(row&&row.opened_date===day.date);
+        send(res,200,{...day,opened,...(opened?{text:wishForDay(row.lane,day.date)}:{})});return;
+      }
+      rateLimit('wish-user:'+user.id,100);
+      const result=await transaction(async client=>{
+        // Serialise first-time lane assignments so the first five accounts get different collections.
+        await client.query('SELECT pg_advisory_xact_lock(74691820)');
+        let row=(await client.query('SELECT lane,timezone,opened_date::text FROM ritm_wish_accounts WHERE user_id=$1',[user.id])).rows[0];
+        const day=wishDay(row?.timezone||requestedZone);
+        if(!row){
+          const lane=(await client.query('SELECT candidate.lane FROM generate_series(0,4) AS candidate(lane) LEFT JOIN ritm_wish_accounts a ON a.lane=candidate.lane GROUP BY candidate.lane ORDER BY count(a.user_id),candidate.lane LIMIT 1')).rows[0].lane;
+          row={lane,timezone:requestedZone,opened_date:day.date};
+          await client.query('INSERT INTO ritm_wish_accounts(user_id,lane,timezone,opened_date) VALUES($1,$2,$3,$4::date)',[user.id,lane,requestedZone,day.date]);
+        }else if(row.opened_date!==day.date){
+          await client.query('UPDATE ritm_wish_accounts SET opened_date=$1::date WHERE user_id=$2',[day.date,user.id]);
+        }
+        return {...day,opened:true,text:wishForDay(row.lane,day.date)};
+      });
+      send(res,200,result);return;
     }
 
     if(req.method==='PUT'&&url.pathname==='/api/plan'){
