@@ -157,17 +157,25 @@ export async function verifyUI(base) {
       check(await page.locator('#editor [name="currency"] option[value="KZT"]').textContent()==='Теңге · ₸',engineName+': Kazakh currency name in selector');
       await page.locator('#dialog [data-action="close"]').first().click();
 
-      for(const width of [320,390,768,1440]) {
+      for(const width of [320,360,390,414,768,1440]) {
         await page.setViewportSize({width,height:width>=1000?1000:844});
         for(const route of ['home','income','payment','goals','calendar','settings']) {
           await page.evaluate(route=>{location.hash=route;},route);
           await page.waitForFunction(route=>document.querySelector('[data-nav="'+route+'"][aria-current="page"]')!==null,route);
           check(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),engineName+': '+route+' fits '+width+'px');
-          if(route==='home'&&width<=950){
-            const links=await page.locator('.mobile-nav a').count();
-            const geometry=await page.locator('.mobile-nav').evaluate(nav=>{const box=nav.getBoundingClientRect();return {left:box.left,right:box.right,bottom:box.bottom,width:innerWidth,height:innerHeight};});
-            check(links===5&&geometry.left>=0&&geometry.right<=geometry.width&&geometry.bottom<=geometry.height,engineName+': floating navigation fits '+width+'px');
-            check(await page.locator('.mobile-nav a').evaluateAll(links=>links.every(link=>{const box=link.getBoundingClientRect();return box.width>=44&&box.height>=44;})),engineName+': usable navigation targets at '+width+'px');
+          if(width<=950){
+            const geometry=await page.locator('.mobile-nav').evaluate(nav=>{
+              const box=nav.getBoundingClientRect(),links=[...nav.querySelectorAll('a')];
+              return {left:box.left,right:box.right,bottom:box.bottom,height:box.height,width:innerWidth,screenHeight:innerHeight,
+                targetsFit:links.every(link=>{const b=link.getBoundingClientRect();return b.width>=44&&b.height>=44;}),
+                labelsFit:links.every(link=>{const b=link.getBoundingClientRect(),label=link.querySelector('span').getBoundingClientRect();return label.left>=b.left&&label.right<=b.right&&label.top>=b.top&&label.bottom<=b.bottom;})};
+            });
+            check(geometry.left>=0&&geometry.right<=geometry.width&&geometry.bottom<=geometry.screenHeight&&geometry.height<=60,engineName+': lower navigation fits '+route+' at '+width+'px');
+            check(geometry.targetsFit&&geometry.labelsFit,engineName+': full navigation labels and touch targets on '+route+' at '+width+'px');
+            if(engineName==='chromium'&&['home','calendar'].includes(route)&&[320,390].includes(width)){
+              const screenshot=await page.locator('.mobile-nav').screenshot();
+              console.log('RITM_SCREENSHOT_NAV_'+width+'_'+route.toUpperCase()+' '+screenshot.toString('base64'));
+            }
           }
 
           if(route==='income'||route==='payment'){
@@ -209,6 +217,31 @@ export async function verifyUI(base) {
         check(await page.locator('#dialog').evaluate(dialog=>{const box=dialog.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth&&box.top>=0&&box.bottom<=innerHeight;}),engineName+': dialog fits '+width+'px');
         await page.locator('#dialog [data-action="close"]').first().click();
       }
+
+      // Use real taps and normal motion to catch abrupt switching or moving labels.
+      await page.setViewportSize({width:320,height:844});
+      await navigate('home');
+      await page.emulateMedia({reducedMotion:'no-preference'});
+      for(const route of ['calendar','income','payment','goals','home']){
+        const before=await page.locator('.mobile-nav a').evaluateAll(links=>links.map(link=>{const b=link.getBoundingClientRect();return [b.x,b.y,b.width,b.height];}));
+        await page.locator('.mobile-nav [data-nav="'+route+'"]').click();
+        await page.waitForFunction(route=>document.querySelector('.mobile-nav a.active')?.dataset.nav===route,route);
+        const indicator=await page.locator('.mobile-nav').evaluate(nav=>{
+          const style=getComputedStyle(nav,'::before'),active=nav.querySelector('a.active'),color=getComputedStyle(active).backgroundColor;
+          return {motion:style.transitionProperty.includes('transform')&&parseFloat(style.transitionDuration)>0&&parseFloat(style.transitionDuration)<=.4,background:color};
+        });
+        check(indicator.motion&&indicator.background==='rgba(0, 0, 0, 0)',engineName+': gentle animated selection after tapping '+route);
+        await page.waitForFunction(()=>{
+          const nav=document.querySelector('.mobile-nav'),link=nav.querySelector('a.active'),style=getComputedStyle(nav,'::before'),navBox=nav.getBoundingClientRect(),linkBox=link.getBoundingClientRect();
+          const left=navBox.left+nav.clientLeft+new DOMMatrix(style.transform).m41;
+          return Math.abs(left-linkBox.left)<1&&Math.abs(parseFloat(style.width)-linkBox.width)<1;
+        });
+        const after=await page.locator('.mobile-nav a').evaluateAll(links=>links.map(link=>{const b=link.getBoundingClientRect();return [b.x,b.y,b.width,b.height];}));
+        check(JSON.stringify(before)===JSON.stringify(after),engineName+': labels stay in place when switching to '+route);
+      }
+      await page.emulateMedia({reducedMotion:'reduce'});
+      await page.locator('.mobile-nav [data-nav="calendar"]').click();
+      check(await page.locator('.mobile-nav').evaluate(nav=>getComputedStyle(nav,'::before').transitionDuration==='0s'),engineName+': reduced motion switches without animation');
 
       if(engineName==='chromium'){
         const headers={'X-Ritm-User':username,Origin:base};

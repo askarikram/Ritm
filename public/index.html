@@ -402,11 +402,17 @@ label,.field>label{font-size:14px;font-weight:500}
 .remember-row span,.preview{font-size:14px}
 @media(max-width:950px){
  main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
- .mobile-nav{left:50%;right:auto;bottom:calc(14px + env(safe-area-inset-bottom));width:min(calc(100% - 24px),460px);transform:translateX(-50%);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:7px;border:1px solid #284b3b;border-radius:32px;background:#20362df7;box-shadow:0 9px 30px #183d2426;backdrop-filter:blur(16px)}
- .mobile-nav a{min-height:52px;padding:6px 1px;gap:5px;border-radius:24px;font-size:11px;font-weight:450;line-height:1.25;color:#d6e4da}
- .mobile-nav a:not(.active){color:#d6e4da}
- .mobile-nav a.active{background:#fff;color:#24694e}
- .mobile-nav svg.icon{width:21px;height:21px}
+ .mobile-nav{left:50%;right:auto;bottom:calc(12px + env(safe-area-inset-bottom));width:min(calc(100% - 12px),520px);transform:translateX(-50%);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.84fr) minmax(0,1.16fr);gap:2px;padding:5px;border:1px solid #365044;border-radius:30px;background:#20362df5;box-shadow:0 6px 22px #183d241c;backdrop-filter:blur(16px);isolation:isolate}
+ .mobile-nav::before{content:"";position:absolute;z-index:0;pointer-events:none;top:5px;bottom:5px;left:0;width:var(--nav-width,0px);transform:translateX(var(--nav-left,5px));border:1px solid #d9ead214;border-radius:23px;background:#b8d4be29;opacity:0}
+ .mobile-nav[data-selected]::before{opacity:1}
+ .mobile-nav a{position:relative;z-index:1;min-width:0;min-height:46px;padding:4px 0;gap:3px;border-radius:23px;background:transparent;font-size:11.5px;font-weight:450;line-height:14px;color:#c5d3c9;-webkit-tap-highlight-color:transparent}
+ .mobile-nav a span{white-space:nowrap}
+ .mobile-nav a:not(.active){color:#c5d3c9}
+ .mobile-nav a.active{background:transparent;color:#f3f8f2}
+ .mobile-nav a:focus-visible{outline:2px solid #aacbb5;outline-offset:-2px}
+ .mobile-nav svg.icon{width:19px;height:19px;flex:none}
+ @media(prefers-reduced-motion:no-preference){.mobile-nav::before{transition:transform .28s cubic-bezier(.22,.7,.22,1),width .28s cubic-bezier(.22,.7,.22,1),opacity .18s ease}.mobile-nav a{transition:color .22s ease}}
+ @media(prefers-reduced-motion:reduce){.mobile-nav::before,.mobile-nav a{transition:none}}
  #toast{bottom:calc(106px + env(safe-area-inset-bottom));z-index:30}
 }
 @media(max-width:850px){
@@ -451,7 +457,6 @@ label,.field>label{font-size:14px;font-weight:500}
  .balance-mini strong{font-size:17px}
  .balance-mini .hint{font-size:11px}
  .home-actions .quick-action{font-size:12px;padding:9px 3px;min-height:79px}
- .mobile-nav a{font-size:10.5px}
  .plan-summary{padding:19px}
  .plan-total-value{font-size:28px}
  .plan-summary-top{gap:8px}
@@ -688,10 +693,19 @@ function profileCards(){
 function settings(){
   return profileCards()+'<section class="settings-section"><div class="section-heading"><h2>Финансовый план</h2></div><div class="setting-grid"><div class="card"><div class="tile">'+I('wallet')+'</div><h2 style="margin-top:16px">Баланс и бюджет</h2><p class="muted">Текущая сумма на счетах, валюта и расходы на обычный день.</p><div class="metric-row"><span class="muted">На счетах сейчас</span><b>'+money(S.balance)+'</b></div><div class="metric-row"><span class="muted">Выделено на цели</span><b>'+money(C.reserved(S))+'</b></div><div class="metric-row"><span class="muted">Повседневный бюджет</span><b>'+money(S.daily)+'/день</b></div>'+btn('Изменить','balance','','soft')+'</div><div class="card"><div class="tile blue">'+I('export')+'</div><h2 style="margin-top:16px">Ваши данные</h2><p class="muted">План сохраняется в вашем аккаунте. Экспортируйте его, чтобы иметь отдельную резервную копию.</p><div class="actions">'+btn('Экспорт плана','export')+btn('Импорт','import','','line')+'</div><p class="smallprint">Импорт заменяет текущий план. Данные в файле проверяются до замены.</p></div><div class="card"><h2>Попробовать пример</h2><p class="muted">Готовый план с зарплатой, авансом, подпиской, кредитом и целью.</p>'+btn('Загрузить пример','demo','','soft')+'</div><div class="card"><h2>Начать заново</h2><p class="muted">Очистить баланс, расписание, цели и историю в вашем аккаунте.</p>'+btn('Очистить план','reset','','danger')+'</div></div></section><p class="smallprint">Прогноз строится по вашим данным, включая ожидаемые доходы. Повседневный бюджет служит оценкой будущих трат; реальные расходы записывайте по мере совершения.</p>';
 }
+function syncMobileNav(){
+  const nav=document.querySelector('.mobile-nav'),active=nav.querySelector('a.active');
+  nav.toggleAttribute('data-selected',Boolean(active));
+  if(!active||!nav.getBoundingClientRect().width)return;
+  const navBox=nav.getBoundingClientRect(),linkBox=active.getBoundingClientRect();
+  nav.style.setProperty('--nav-left',(linkBox.left-navBox.left-nav.clientLeft)+'px');
+  nav.style.setProperty('--nav-width',linkBox.width+'px');
+}
 function render(){
   const drafts=captureProfileDrafts();
   route=location.hash.slice(1)||'home';if(!pages[route])route='home';
   document.querySelectorAll('[data-nav]').forEach(a=>{a.classList.toggle('active',a.dataset.nav===route);if(a.dataset.nav===route)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  syncMobileNav();
   $('heading').textContent=pages[route][0];$('subtitle').textContent=pages[route][1];$('header-date').textContent=fullDate(C.today());
   $('storage-notice').innerHTML=storageError?'<div class="notice error">'+I('alert')+'<div>'+esc(storageError)+' '+link('Настройки →','settings')+'</div></div>':'';
   $('content').innerHTML=route==='home'?home():route==='income'||route==='payment'?itemPage(route):route==='goals'?goals():route==='calendar'?calendar():settings();
@@ -1076,6 +1090,8 @@ Object.assign(icons,{
 for(const node of document.querySelectorAll('aside [data-nav],.mobile-nav [data-nav]')){
   const svg=node.querySelector('svg');if(svg)svg.outerHTML=I(node.dataset.nav);
 }
+
+new ResizeObserver(syncMobileNav).observe(document.querySelector('.mobile-nav'));
 
 void startAuth();
 
