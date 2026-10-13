@@ -29,3 +29,46 @@ self.addEventListener('fetch',event=>{
     const response=await fetch(request);if(response.ok)await cache.put(request,response.clone());return response;
   })());
 });
+
+
+// Only an opaque account identifier and display preference are stored here.
+function displayPrefs(write){
+ return new Promise(resolve=>{
+  const request=indexedDB.open('ritm-notification-display',1);
+  request.onupgradeneeded=()=>request.result.createObjectStore('prefs');
+  request.onerror=()=>resolve({owner:null,hidden:true});
+  request.onsuccess=()=>{
+   const db=request.result,transaction=db.transaction('prefs',write?'readwrite':'readonly'),store=transaction.objectStore('prefs');
+   const operation=write?store.put(write,'active'):store.get('active');
+   operation.onsuccess=()=>{const result=write||operation.result||{owner:null,hidden:true};transaction.oncomplete=()=>{db.close();resolve(result);};};
+   operation.onerror=()=>{db.close();resolve({owner:null,hidden:true});};
+  };
+ });
+}
+self.addEventListener('message',event=>{
+ if(event.data?.type!=='RITM_DISPLAY_PREFS')return;
+ const data=event.data,owner=typeof data.owner==='string'&&/^[a-f0-9]{32}$/.test(data.owner)?data.owner:null;
+ event.waitUntil((async()=>{
+  await displayPrefs({owner,hidden:data.hidden!==false});
+  for(const notification of await self.registration.getNotifications())if(notification.data?.owner!==owner)notification.close();
+ })());
+});
+self.addEventListener('push',event=>event.waitUntil((async()=>{
+ let data;try{data=event.data?.json();}catch{return;}
+ const prefs=await displayPrefs();
+ if(!prefs.owner||data?.owner!==prefs.owner)return;
+ const title='Ритм · Напоминание',fallback='Запланирован платёж. Откройте Ритм, чтобы посмотреть.';
+ const body=prefs.hidden?data.genericBody:data.body;
+ await self.registration.showNotification(title,{body:typeof body==='string'?body.slice(0,260):fallback,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:'ritm-'+String(data.tag||'payment').slice(0,40),data:{owner:prefs.owner},renotify:false});
+})()));
+self.addEventListener('notificationclick',event=>{
+ event.notification.close();
+ event.waitUntil((async()=>{
+  const prefs=await displayPrefs();if(!prefs.owner||event.notification.data?.owner!==prefs.owner)return;
+  const url=new URL('/#payment',self.location.origin).href;
+  for(const client of await self.clients.matchAll({type:'window',includeUncontrolled:true})){
+   if(new URL(client.url).origin===self.location.origin){await client.navigate(url);await client.focus();return;}
+  }
+  await self.clients.openWindow(url);
+ })());
+});

@@ -8,10 +8,11 @@
   },
   "scripts": {
     "start": "node scripts/start.mjs",
-    "check": "node --check server.js && node --check scripts/start.mjs && node --check scripts/verify-isolation.mjs && node --check scripts/test-ui.mjs && node --check scripts/test-server.mjs && node scripts/check-client.mjs && node --check daily-wishes.mjs && node --check scripts/test-wishes.mjs && node --check app-icons.mjs && node --check public/sw.js && node --check scripts/test-launch.mjs && node --check scripts/test-months.mjs && node --check scripts/test-month-ui.mjs"
+    "check": "node --check server.js && node --check scripts/start.mjs && node --check scripts/verify-isolation.mjs && node --check scripts/test-ui.mjs && node --check scripts/test-server.mjs && node scripts/check-client.mjs && node --check daily-wishes.mjs && node --check scripts/test-wishes.mjs && node --check app-icons.mjs && node --check public/sw.js && node --check scripts/test-launch.mjs && node --check scripts/test-months.mjs && node --check scripts/test-month-ui.mjs && node --check archive-service.mjs && node --check reminder-domain.mjs && node --check reminder-store.mjs && node --check scheduler-auth.mjs && node --check scripts/dispatch-reminders.mjs && node --check scripts/test-features.mjs && node --check scripts/test-feature-ui.mjs"
   },
   "dependencies": {
     "pg": "8.23.1",
-    "@fontsource-variable/golos-text": "5.3.0"
+    "@fontsource-variable/golos-text": "5.3.0",
+    "web-push": "3.6.7"
   }
 }

@@ -13,6 +13,9 @@ import { promisify } from 'node:util';
 import pg from 'pg';
 import { wishDay, wishForDay } from './daily-wishes.mjs';
 import { appIcons } from './app-icons.mjs';
+import { createArchiveService } from './archive-service.mjs';
+import { createReminderService } from './reminder-store.mjs';
+import { verifySchedulerToken } from './scheduler-auth.mjs';
 const Core = (() => {
   const iso = d => d.toISOString().slice(0,10);
   const parse = s => new Date(s + 'T12:00:00Z');
@@ -242,6 +245,8 @@ if(!['postgres:','postgresql:'].includes(databaseURL.protocol))throw Error('DATA
 for(const option of ['sslmode','sslcert','sslkey','sslrootcert','ssl'])databaseURL.searchParams.delete(option);
 const pool=new pg.Pool({connectionString:databaseURL.toString(),ssl:{rejectUnauthorized:true},enableChannelBinding:true,max:5,idleTimeoutMillis:30000,connectionTimeoutMillis:15000,query_timeout:15000,statement_timeout:15000});
 pool.on('error',error=>console.error('Соединение с базой:',error.code||error.name));
+const archives=createArchiveService({pool,Core});
+const reminders=createReminderService({pool,Core,appOrigin,testMode:process.env.NODE_ENV==='test'});
 const cookieName=production?'__Host-ritm-session':'ritm-session',ttl=30*24*60*60*1000,shortTTL=12*60*60*1000;
 const sql={
   byName:'SELECT id,username,name,password_hash,salt FROM ritm_users WHERE username=$1',
@@ -269,6 +274,7 @@ async function initialize(){
     await client.query('CREATE INDEX IF NOT EXISTS ritm_sessions_expiry ON ritm_sessions(expires_at)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_wish_accounts(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,lane SMALLINT NOT NULL CHECK(lane BETWEEN 0 AND 4),timezone TEXT NOT NULL,opened_date DATE NOT NULL)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_recovery_codes(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL)');
+    await archives.initialize(client);await reminders.initialize(client);
   });
 }
 const derive=promisify(scrypt),hashToken=t=>createHash('sha256').update(t).digest('hex');
@@ -334,6 +340,7 @@ async function clearSession(req,res){
 async function sessionPayload(user){
   const row=(await pool.query(sql.getPlan,[user.id])).rows[0];
   if(!row)throw Error('Отсутствует план аккаунта.');
+  await archives.capture(user.id,row.plan_json,await reminders.accountDay(user.id));
   return {user:{username:user.username,name:user.name},plan:row.plan_json,revision:row.revision,recoveryEnabled:row.recovery_enabled};
 }
 async function readJSON(req){
@@ -370,6 +377,10 @@ async function handle(req,res){
     if(req.method==='GET'&&url.pathname==='/sitemap.xml'){res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8'});res.end('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+['/','/help','/privacy'].map(path=>'<url><loc>'+appOrigin+path+'</loc></url>').join('')+'</urlset>');return;}
     if(req.method==='GET'&&url.pathname==='/favicon.ico'){res.writeHead(204);res.end();return;}
     if(!url.pathname.startsWith('/api/'))fail(404,'Страница не найдена.');
+    if(req.method==='POST'&&url.pathname==='/api/reminders/dispatch'){
+      try{await verifySchedulerToken((req.headers.authorization||'').replace(/^Bearer /,''),appOrigin);}catch{fail(401,'Недействительная подпись планировщика.');}
+      send(res,200,await reminders.dispatch());return;
+    }
     if(['POST','PUT','DELETE','PATCH'].includes(req.method)&&req.headers.origin!==appOrigin)fail(403,'Запрос пришёл с другого адреса.');
     if(req.method==='GET'&&url.pathname==='/api/me'){send(res,200,await sessionPayload(await requireUser(req,res)));return;}
     if(req.method==='POST'&&['/api/signup','/api/login'].includes(url.pathname)){
@@ -513,12 +524,40 @@ async function handle(req,res){
       send(res,200,result);return;
     }
 
+    if(['GET','PUT'].includes(req.method)&&url.pathname==='/api/archive'){
+      const user=await requireUser(req,res),now=await reminders.accountDay(user.id);
+      if(req.method==='GET'){
+        const year=Number(url.searchParams.get('year')||now.slice(0,4));
+        let result;try{result=await archives.list(user.id,year,now);}catch(error){if(error.status)throw error;if(error.message.startsWith('Выберите'))fail(400,error.message);throw error;}
+        send(res,200,result);
+      }else{
+        rateLimit('archive:'+user.id,300);const data=await readJSON(req);
+        let result;try{result=await archives.save(user.id,data,now);}catch(error){if(error.status)throw error;if(['В архиве','Выберите','Введите','Некорректная'].some(prefix=>error.message.startsWith(prefix)))fail(400,error.message);throw error;}
+        send(res,200,{record:result});
+      }return;
+    }
+    if(['GET','PATCH'].includes(req.method)&&url.pathname==='/api/reminders'){
+      const user=await requireUser(req,res);
+      send(res,200,req.method==='GET'?await reminders.settings(user.id,url.searchParams.get('timeZone')):await reminders.savePrefs(user.id,await readJSON(req)));return;
+    }
+    if(['POST','DELETE'].includes(req.method)&&url.pathname==='/api/push/subscription'){
+      const user=await requireUser(req,res);rateLimit('push:'+user.id,100);const data=await readJSON(req);
+      send(res,200,req.method==='POST'?await reminders.subscribe(user.id,hashToken(token(req)),data):await reminders.unsubscribe(user.id,data.endpoint));return;
+    }
+    if(req.method==='POST'&&url.pathname==='/api/push/status'){
+      const user=await requireUser(req,res),data=await readJSON(req);
+      send(res,200,await reminders.status(user.id,hashToken(token(req)),data.endpoint));return;
+    }
+
     if(req.method==='PUT'&&url.pathname==='/api/plan'){
       const user=await requireUser(req,res);rateLimit('save-user:'+user.id,600);const data=await readJSON(req);
       if(!Number.isSafeInteger(data.revision)||data.revision<0||data.revision>=2147483647)fail(400,'Некорректная версия плана.');
       try{Core.validate(data.plan);}catch(error){fail(400,error.message);}
-      const result=await pool.query(sql.updatePlan,[JSON.stringify(data.plan),user.id,data.revision]);
-      if(!result.rowCount)fail(409,'План уже изменён в другой вкладке.');
+      const result=await transaction(async client=>{
+        const updated=await client.query(sql.updatePlan,[JSON.stringify(data.plan),user.id,data.revision]);
+        if(!updated.rowCount)fail(409,'План уже изменён в другой вкладке.');
+        await archives.capture(user.id,data.plan,await reminders.accountDay(user.id,client),client);return updated;
+      });
       send(res,200,{revision:result.rows[0].revision});return;
     }
     fail(404,'Запрос не найден.');

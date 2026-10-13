@@ -1,0 +1,29 @@
+name: Deliver Ritm reminders
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/reminder-delivery.yml'
+      - 'scripts/dispatch-reminders.mjs'
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: ritm-reminder-delivery
+  cancel-in-progress: false
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Deliver due device notifications
+        env:
+          RITM_ORIGIN: https://ritm-r9m8.onrender.com
+        run: node scripts/dispatch-reminders.mjs

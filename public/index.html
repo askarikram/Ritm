@@ -587,11 +587,96 @@ label,.field>label{font-size:14px;font-weight:500}
  .month-budget-option{font-size:14px}
  
 }
+
+/* Archive and reminders */
+.feature-dialog{width:min(900px,calc(100vw - 48px));max-height:88dvh;padding:0;border:1px solid var(--line);border-radius:26px;color:var(--ink);background:var(--bg)}
+.feature-dialog .dialog-head{padding:22px 26px;background:var(--card);border-bottom:1px solid var(--line);margin:0}
+.feature-dialog .dialog-head h2{font-size:23px}
+.feature-dialog-body{padding:24px;overflow:auto}
+.feature-error{color:#984331;font-size:14px;min-height:20px;margin:12px 0}
+.feature-status{color:var(--muted);font-size:14px;line-height:1.6}
+.archive-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.archive-tools select{width:120px;min-height:44px}
+.archive-layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:20px;align-items:start}
+.archive-months{display:grid;gap:8px}
+.archive-month-button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;padding:15px 16px;min-height:58px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.archive-month-button strong{font-size:15px;font-weight:650}
+.archive-month-button small{font-size:12px;color:var(--muted)}
+.archive-month.selected>.archive-month-button{border-color:#77a188;background:#e8f1e9;color:var(--green)}
+.archive-detail{padding:24px;background:var(--card);border:1px solid var(--line);border-radius:20px}
+.archive-detail h3{font-size:21px;margin:0 0 5px}
+.archive-opening{padding:15px 0;border-bottom:1px solid var(--line);margin-bottom:18px}
+.archive-opening span,.archive-metric span{display:block;color:var(--muted);font-size:13px;margin-bottom:7px}
+.archive-opening strong{font-size:22px;font-weight:650;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.archive-metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.archive-metric{background:#f4f6f2;border-radius:15px;padding:16px;min-width:0}
+.archive-metric strong{display:block;font-size:20px;font-weight:650;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.archive-metric.result{background:#e7f0e7;color:var(--green)}
+.archive-empty{padding:24px 0 8px}
+.archive-empty p{margin:0 0 22px;color:var(--muted);font-size:14px}
+.archive-mobile-detail{display:none}
+.archive-editor{width:min(520px,calc(100vw - 40px))}
+.archive-editor form{padding:24px}
+.archive-editor label{display:grid;gap:8px;margin-bottom:16px;font-size:14px}
+.archive-editor input,.archive-editor select{width:100%;min-height:48px}
+.archive-preview{display:flex;align-items:center;justify-content:space-between;gap:16px;border-radius:16px;background:#e7f0e7;padding:17px;margin:18px 0;color:var(--green);font-size:14px}
+.archive-preview strong{font-size:20px;overflow-wrap:anywhere}
+.archive-editor .form-footer{position:static;margin-top:12px;padding:0;background:none}
+.archive-open{display:inline-flex;gap:7px;align-items:center;white-space:nowrap;min-height:44px}
+.reminder-bell{position:relative}
+.reminder-badge{position:absolute;right:4px;top:4px;min-width:16px;height:16px;border-radius:9px;background:var(--green);border:2px solid var(--card);color:white;font-size:9px;display:grid;place-items:center;font-weight:700}
+.reminder-dialog{width:min(580px,calc(100vw - 40px))}
+.reminder-channel{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px;border:1px solid var(--line);background:var(--card);border-radius:18px;margin-bottom:12px}
+.reminder-channel-copy{min-width:0;display:flex;align-items:center;gap:12px}
+.reminder-channel .tile{width:40px;height:40px;flex:none}
+.reminder-channel strong{display:block;font-size:15px;margin-bottom:4px}
+.reminder-channel small{display:block;font-size:12px;color:var(--muted);line-height:1.5}
+.reminder-switch{display:flex;align-items:center;gap:8px;font-size:13px}
+.reminder-switch input{width:22px;height:22px;accent-color:var(--green);flex:none}
+.reminder-setting{margin:24px 0}
+.reminder-setting>span{display:block;font-size:14px;font-weight:600;margin-bottom:10px}
+.reminder-leads{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:4px;gap:4px;border-radius:15px;background:#e9ede6}
+.reminder-leads label{position:relative;min-width:0;cursor:pointer}
+.reminder-leads input{position:absolute;opacity:0;width:1px;height:1px}
+.reminder-leads span{display:grid;place-items:center;min-height:42px;border-radius:12px;padding:7px 4px;font-size:13px;color:var(--muted);transition:background .18s,color .18s}
+.reminder-leads input:checked+span{background:white;color:var(--green);box-shadow:0 2px 6px #204e3310}
+.reminder-leads input:focus-visible+span{outline:2px solid var(--green);outline-offset:2px}
+.reminder-time-row{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.reminder-time-row input{width:138px;min-height:46px}
+.reminder-list{display:grid;gap:8px;margin-top:22px}
+.reminder-list h3{font-size:16px;margin:0 0 6px}
+.reminder-entry{display:flex;justify-content:space-between;gap:15px;align-items:center;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.reminder-entry strong{display:block;font-size:14px;overflow-wrap:anywhere}
+.reminder-entry small{display:block;font-size:12px;color:var(--muted);margin-top:5px}
+.reminder-entry .reminder-amount{white-space:nowrap;font-size:14px;font-weight:600}
+.reminder-dialog .form-footer{position:static;padding:0;margin-top:20px;background:none}
+@media(max-width:600px){
+.feature-dialog{width:100%;max-width:100%;max-height:90dvh;margin:auto 0 0;border-radius:24px 24px 0 0;border-bottom:0}
+.feature-dialog .dialog-head{padding:18px 20px}
+.feature-dialog .dialog-head h2{font-size:21px}
+.feature-dialog-body{padding:18px 16px calc(22px + env(safe-area-inset-bottom))}
+.archive-layout{display:block}
+.archive-desktop-detail{display:none}
+.archive-mobile-detail{display:block;margin-top:8px}
+.archive-detail{padding:18px}
+.archive-metric{padding:13px}
+.archive-metric strong{font-size:17px}
+.archive-editor form{padding:20px 18px calc(22px + env(safe-area-inset-bottom))}
+.reminder-channel{padding:15px 12px;gap:8px}
+.reminder-channel-copy{gap:9px}
+.reminder-channel .btn{font-size:12px;padding:10px 11px}
+.reminder-entry .reminder-amount{font-size:12px}
+.archive-open{font-size:12px;padding:8px 10px}
+}
+@media(max-width:430px){.header-tools{gap:6px}.app-header .eyebrow{max-width:98px;overflow:hidden;white-space:nowrap}.header-tools .account-pill{max-width:44px}}
+
 </style></head><body>
 <div id="connection-status" class="connection-status" role="status" aria-live="polite" hidden></div>
 <div id="update-banner" class="update-banner" role="status" hidden><div><b>Доступно обновление Ритма</b><p>Установим его после сохранения вашего плана.</p></div><button class="btn soft" id="apply-update" type="button">Обновить</button></div>
 <section id="auth-screen" class="auth-screen"><div class="auth-wrap"><div class="landing-header"><a class="brand" href="/"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="landing-header-links"><a href="/help">Помощь</a><button class="btn line" type="button" data-install-app>На телефон</button></div></div><section class="landing-story" aria-label="Что умеет Ритм"><div class="eyebrow">Личный финансовый план</div><h2 class="landing-title">Деньги —<br> <span>в вашем ритме.</span></h2><p class="landing-lead">Планируйте платежи, замечайте возможности и двигайтесь к своим целям. Всё важное — в одном месте.</p><div class="landing-tags"><span>Доходы и платежи</span><span>Накопления</span><span>Календарь</span></div><div class="landing-preview" aria-label="Иллюстрация финансового плана"><div class="landing-preview-top"><span>Понятный план на месяц</span><span>Пример</span></div><strong>Больше ясности.<br>Меньше тревоги.</strong><svg viewBox="0 0 360 68" fill="none" aria-hidden="true"><path d="M0 57 50 44 90 49 136 28 178 34 220 14 268 23 315 9 360 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 67h360" stroke="currentColor" stroke-opacity=".2"/></svg><div class="landing-preview-bottom"><span>Сегодня — первый шаг</span><span>Дальше — ваша цель</span></div></div></section><div class="card auth-card"><div class="eyebrow">Ваш личный финансовый план</div><h1 id="auth-heading">Войти в Ритм</h1><p class="muted" id="auth-description">Ваши цели, платежи и поступления — в одном месте.</p><div class="tabs" role="tablist" aria-label="Вход или регистрация"><button type="button" role="tab" aria-selected="true" data-auth-mode="login" class="selected" id="auth-login-tab">Вход</button><button type="button" role="tab" aria-selected="false" data-auth-mode="signup" id="auth-signup-tab">Регистрация</button></div><form id="auth-form"><label for="auth-username"><span>Логин</span><input id="auth-username" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" pattern="[a-z]+" minlength="1" maxlength="32" required placeholder="Например, arman"><small class="hint">Маленькие латинские буквы, без цифр и пробелов.</small></label><label id="auth-name-field" for="auth-name" hidden><span>Имя</span><input id="auth-name" name="name" autocomplete="given-name" maxlength="80" placeholder="Как к вам обращаться"></label><div class="field"><label for="auth-password">Пароль</label><div class="password-control"><input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" pattern="[A-Za-z0-9]+" required aria-describedby="auth-password-hint"><button type="button" class="password-toggle" data-password-target="auth-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="hint" id="auth-password-hint">От 8 символов: латинские буквы и цифры.</small></div><div id="auth-confirm-field" hidden><div class="field"><label for="auth-confirm-password">Повторите пароль</label><div class="password-control"><input id="auth-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" pattern="[A-Za-z0-9]+" required aria-describedby="auth-confirm-password-hint"><button type="button" class="password-toggle" data-password-target="auth-confirm-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="hint" id="auth-confirm-password-hint">Введите пароль ещё раз.</small></div><span class="field-message" id="auth-password-match" role="status" aria-live="polite"></span></div><label class="remember-row"><input type="checkbox" name="remember" checked><span>Оставаться в системе на этом устройстве</span></label><div id="auth-error" class="form-error" role="alert"></div><button type="submit" class="btn auth-submit" id="auth-submit">Войти</button></form><button class="btn ghost auth-forgot" type="button" id="auth-forgot" data-auth-mode="recover">Забыли пароль?</button><form id="recovery-form" hidden><label for="recover-username"><span>Логин</span><input id="recover-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z]+" maxlength="32" required></label><label for="recover-code"><span>Резервный код</span><input id="recover-code" name="recoveryCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="80" required placeholder="XXXX-XXXX-XXXX-XXXX-…"><small class="hint">Код, который вы сохранили при регистрации или в настройках.</small></label><div class="field"><label for="recover-password">Новый пароль</label><div class="password-control"><input id="recover-password" name="newPassword" type="password" autocomplete="new-password" pattern="[A-Za-z0-9]+" minlength="8" maxlength="128" required><button type="button" class="password-toggle" data-password-target="recover-password" aria-label="Показать пароль" aria-pressed="false"></button></div><small class="hint">От 8 символов: латинские буквы и цифры.</small></div><div class="field"><label for="recover-confirm">Повторите новый пароль</label><div class="password-control"><input id="recover-confirm" name="confirmPassword" type="password" autocomplete="new-password" pattern="[A-Za-z0-9]+" minlength="8" maxlength="128" required><button type="button" class="password-toggle" data-password-target="recover-confirm" aria-label="Показать пароль" aria-pressed="false"></button></div><span class="field-message" id="recover-match" role="status" aria-live="polite"></span></div><div class="form-error" id="recover-error" role="alert"></div><button class="btn auth-submit" id="recover-submit" type="submit">Восстановить доступ</button><button class="btn ghost auth-forgot" data-auth-mode="login" type="button">Вернуться ко входу</button></form><p class="smallprint auth-foot">Создавая аккаунт, вы принимаете <a href="/privacy">условия хранения данных</a>.</p></div><footer class="landing-footer"><span>Небольшие шаги. Понятные цели.</span><a href="/privacy">Ваши данные</a><span>Ритм · 2026</span></footer></div></section>
-<div id="application" hidden><aside><a class="brand" href="#home"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="tagline">Деньги в вашем ритме</div><nav aria-label="Разделы"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#goals" data-nav="goals"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Цели</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a><a href="#settings" data-nav="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--card)"/><circle cx="15" cy="17" r="3" fill="var(--card)"/></svg><span>Настройки</span></a></nav><div class="sidebar-foot"><b>Ваш план — у вас</b>План сохраняется в вашем аккаунте.</div></aside><main><header><div class="header-heading"><div class="eyebrow">Личный финансовый план</div><h1 id="heading" tabindex="-1">Главная</h1><div class="hint" id="subtitle"></div><span class="save-state" id="save-state"></span></div><div class="header-tools"><a class="account-pill" href="#settings" data-nav="settings" aria-label="Открыть профиль и настройки"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span class="session-name" id="session-name"></span></a><button type="button" class="btn line icon-button finance-privacy" id="finance-privacy" data-action="toggle-finances" aria-label="Скрыть суммы" aria-pressed="false" title="Скрыть суммы"></button><button type="button" class="btn line icon-button logout-btn" data-action="account-logout" aria-label="Выйти из аккаунта"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4m6-12 4 4-4 4M8 12h11"/></svg></button><span class="hint header-date" id="header-date"></span><button class="btn head-add" data-action="quick" type="button" aria-label="Добавить событие"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button></div></header><div id="storage-notice"></div><div id="content"></div></main><nav class="mobile-nav" aria-label="Разделы приложения"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#goals" data-nav="goals"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Цели</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a></nav><dialog id="dialog" aria-labelledby="dialog-title"><div class="dialog-head"><h2 id="dialog-title"></h2><button class="btn ghost" data-action="close" type="button" aria-label="Закрыть"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><form id="editor" class="dialog-body"><div id="form-body"></div><div id="form-error" class="form-error" role="alert"></div><div class="form-footer" id="form-footer"><button type="button" class="btn line" data-action="close">Отмена</button><button type="submit" class="btn">Сохранить</button></div></form></dialog><dialog id="recovery-dialog" aria-labelledby="recovery-title"><div class="recovery-dialog-body"><h2 id="recovery-title">Сохраните резервный код</h2><p>Он поможет вернуть доступ, если вы забудете пароль. Код показывается только сейчас.</p><output id="recovery-code" class="recovery-code"></output><p>Сохраните его отдельно от пароля и не передавайте другим людям.</p><div class="actions"><button class="btn" type="button" id="download-recovery">Скачать код</button><button class="btn line" type="button" id="close-recovery">Я сохранил код</button></div></div></dialog><dialog id="install-dialog" aria-labelledby="install-title"><div class="recovery-dialog-body"><h2 id="install-title">Ритм на вашем телефоне</h2><p id="install-instructions"></p><p class="smallprint">Вход и синхронизация плана требуют интернета.</p><button class="btn" id="close-install" type="button">Понятно</button></div></dialog><input id="import-file" type="file" accept="application/json,.json" hidden><div id="toast" role="status" aria-live="polite"></div><noscript>Для работы приложения включите JavaScript в браузере.</noscript></div><script>
+<div id="application" hidden><aside><a class="brand" href="#home"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="tagline">Деньги в вашем ритме</div><nav aria-label="Разделы"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#goals" data-nav="goals"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Цели</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a><a href="#settings" data-nav="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--card)"/><circle cx="15" cy="17" r="3" fill="var(--card)"/></svg><span>Настройки</span></a></nav><div class="sidebar-foot"><b>Ваш план — у вас</b>План сохраняется в вашем аккаунте.</div></aside><main><header><div class="header-heading"><div class="eyebrow">Личный финансовый план</div><h1 id="heading" tabindex="-1">Главная</h1><div class="hint" id="subtitle"></div><span class="save-state" id="save-state"></span></div><div class="header-tools"><button type="button" class="btn line icon-button reminder-bell" id="reminder-bell" data-action="reminders" aria-label="Напоминания"></button><a class="account-pill" href="#settings" data-nav="settings" aria-label="Открыть профиль и настройки"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span class="session-name" id="session-name"></span></a><button type="button" class="btn line icon-button finance-privacy" id="finance-privacy" data-action="toggle-finances" aria-label="Скрыть суммы" aria-pressed="false" title="Скрыть суммы"></button><button type="button" class="btn line icon-button logout-btn" data-action="account-logout" aria-label="Выйти из аккаунта"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4m6-12 4 4-4 4M8 12h11"/></svg></button><span class="hint header-date" id="header-date"></span><button class="btn head-add" data-action="quick" type="button" aria-label="Добавить событие"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button></div></header><div id="storage-notice"></div><div id="content"></div></main><nav class="mobile-nav" aria-label="Разделы приложения"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#goals" data-nav="goals"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Цели</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a></nav><dialog id="archive-dialog" class="feature-dialog" aria-labelledby="archive-title"><div class="dialog-head"><h2 id="archive-title">Архив</h2><button class="btn ghost" type="button" data-feature-close="archive-dialog" aria-label="Закрыть архив">×</button></div><div id="archive-body" class="feature-dialog-body"></div></dialog>
+<dialog id="archive-edit-dialog" class="feature-dialog archive-editor" aria-labelledby="archive-edit-title"><div class="dialog-head"><h2 id="archive-edit-title">Заполнить месяц</h2><button class="btn ghost" type="button" data-feature-close="archive-edit-dialog" aria-label="Закрыть редактор">×</button></div><form id="archive-editor"><div id="archive-fields"></div><div class="archive-preview"><span>Остаток</span><strong id="archive-preview"></strong></div><div id="archive-edit-error" class="feature-error" role="alert"></div><div class="form-footer"><button class="btn line" type="button" data-feature-close="archive-edit-dialog">Отмена</button><button class="btn" type="submit">Сохранить</button></div></form></dialog>
+<dialog id="reminders-dialog" class="feature-dialog reminder-dialog" aria-labelledby="reminders-title"><div class="dialog-head"><h2 id="reminders-title">Напоминания</h2><button class="btn ghost" type="button" data-feature-close="reminders-dialog" aria-label="Закрыть напоминания">×</button></div><div id="reminders-body" class="feature-dialog-body"></div></dialog><dialog id="dialog" aria-labelledby="dialog-title"><div class="dialog-head"><h2 id="dialog-title"></h2><button class="btn ghost" data-action="close" type="button" aria-label="Закрыть"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><form id="editor" class="dialog-body"><div id="form-body"></div><div id="form-error" class="form-error" role="alert"></div><div class="form-footer" id="form-footer"><button type="button" class="btn line" data-action="close">Отмена</button><button type="submit" class="btn">Сохранить</button></div></form></dialog><dialog id="recovery-dialog" aria-labelledby="recovery-title"><div class="recovery-dialog-body"><h2 id="recovery-title">Сохраните резервный код</h2><p>Он поможет вернуть доступ, если вы забудете пароль. Код показывается только сейчас.</p><output id="recovery-code" class="recovery-code"></output><p>Сохраните его отдельно от пароля и не передавайте другим людям.</p><div class="actions"><button class="btn" type="button" id="download-recovery">Скачать код</button><button class="btn line" type="button" id="close-recovery">Я сохранил код</button></div></div></dialog><dialog id="install-dialog" aria-labelledby="install-title"><div class="recovery-dialog-body"><h2 id="install-title">Ритм на вашем телефоне</h2><p id="install-instructions"></p><p class="smallprint">Вход и синхронизация плана требуют интернета.</p><button class="btn" id="close-install" type="button">Понятно</button></div></dialog><input id="import-file" type="file" accept="application/json,.json" hidden><div id="toast" role="status" aria-live="polite"></div><noscript>Для работы приложения включите JavaScript в браузере.</noscript></div><script>
 
 const Core = (() => {
   const iso = d => d.toISOString().slice(0,10);
@@ -802,10 +887,10 @@ let S,storageError='',route='',calMonth=C.today().slice(0,7)+'-01',calDay=C.toda
 S=C.fresh();
 let planningDay=C.today(),planningTimer;
 let amountsHidden=false;
-const money=v=>{
-  if(amountsHidden)return '•••• '+(S.currency==='KZT'?'теңге':'$');
+const money=(v,currency=S.currency)=>{
+  if(amountsHidden)return '•••• '+(currency==='KZT'?'теңге':'$');
   const value=typeof v==='bigint'?(v>=0n?(v+50n)/100n:-((-v+50n)/100n)):v/100;
-  return new Intl.NumberFormat('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:0}).format(value)+' '+(S.currency==='KZT'?'теңге':'$');
+  return new Intl.NumberFormat('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:0}).format(value)+' '+(currency==='KZT'?'теңге':'$');
 };
 const inputMoney=v=>String(Math.round(v/100));
 const dateLabel=(s,long=false)=>s?C.parse(s).toLocaleDateString('ru-RU',{day:'numeric',month:long?'long':'short',...(s.slice(0,4)!==C.today().slice(0,4)?{year:'numeric'}:{})}):'—';
@@ -850,7 +935,7 @@ function home(){
 function monthSummary(now){
   const m=C.monthOverview(S,now),key=now.slice(0,7),label=C.parse(m.start).toLocaleDateString('ru-RU',{month:'long',year:'numeric'}).replace(/\s*г\.$/,'');
   const metric=(title,value,name,cls='')=>'<div class="month-summary-metric '+cls+'"><span class="hint">'+title+'</span><strong data-month-'+name+' class="'+(name==='remaining'&&value<0n?'negative':name==='income'?'positive':'')+'">'+money(value)+'</strong></div>';
-  return '<section class="card month-summary" aria-labelledby="month-summary-title" data-month-summary data-start-date="'+m.start+'" data-end-date="'+m.end+'"><div class="card-head"><div><span class="eyebrow">Бюджет месяца</span><h2 id="month-summary-title" class="month-summary-title">'+esc(label)+'</h2></div>'+link('Календарь →','calendar')+'</div>'+
+  return '<section class="card month-summary" aria-labelledby="month-summary-title" data-month-summary data-start-date="'+m.start+'" data-end-date="'+m.end+'"><div class="card-head"><div><span class="eyebrow">Бюджет месяца</span><h2 id="month-summary-title" class="month-summary-title">'+esc(label)+'</h2></div>'+btn(I('archive')+'Архив','archive','','line archive-open')+'</div>'+
     '<div class="month-opening"><div><span class="hint">На начало месяца</span><strong data-month-opening>'+money(m.opening)+'</strong></div>'+btn(I('edit'),'month-balance','data-month="'+key+'" aria-label="Указать сумму на начало месяца"','small line')+'</div>'+
     '<div class="month-summary-metrics">'+metric('Доходы',m.income,'income')+metric('Расходы',m.expenses,'expenses')+metric('Остаток',m.remaining,'remaining','month-summary-result')+metric('Взносы на цели',m.savings,'savings')+'</div>'+
     '<label class="month-budget-option"><input type="checkbox" data-action="month-daily" '+(m.includeDaily?'checked':'')+'>Учитывать повседневные расходы</label>'+
@@ -936,8 +1021,9 @@ function toggleFinancePrivacy(){
   amountsHidden=!amountsHidden;
   try{localStorage.setItem('ritm-hide-finances:'+currentUser.username,amountsHidden?'1':'0');}catch{}
   render();
-  for(const input of document.querySelectorAll('#editor [data-finance-input]'))input.type=amountsHidden?'password':'text';
+  for(const input of document.querySelectorAll('[data-finance-input]'))input.type=amountsHidden?'password':'text';
   if(active?.kind==='goal')updateGoalPreview();
+  if($('archive-edit-dialog').open)updateArchivePreview();void sendWorkerPrivacy();
 }
 function syncPlanningDate(){
   const now=C.today();if(now===planningDay)return false;
@@ -1072,6 +1158,8 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-action]');if(!b)return;
   try{
     const a=b.dataset.action,id=b.dataset.id,type=b.dataset.type,date=b.dataset.date;
+    if(a==='archive')openArchive();
+    if(a==='reminders'){$('reminders-dialog').showModal();if(reminderState)renderReminders();else void loadReminders();}
     if(a==='toggle-finances')toggleFinancePrivacy();
     if(a==='month-balance')open('month-balance',{month:b.dataset.month});
     if(a==='month-daily')change(s=>{s.monthlyIncludeDaily=s.monthlyIncludeDaily===false;});
@@ -1184,6 +1272,7 @@ function setAuthMode(mode){
   $('auth-error').textContent='';
 }
 function showAuth(){
+  resetFeatures();
   clearTimeout(planningTimer);planningTimer=null;
   clearProfileSecrets();profileBusy=false;recoveryBusy=false;recoveryEnabled=false;amountsHidden=false;syncFinancePrivacy();
   if($('recovery-dialog').open)closeRecoveryCode();
@@ -1193,12 +1282,13 @@ function showAuth(){
   syncConnectivity();
 }
 function acceptSession(payload){
+  resetFeatures();
   clearProfileSecrets();profileBusy=false;recoveryBusy=false;recoveryEnabled=Boolean(payload.recoveryEnabled);amountsHidden=privacyPreference(payload.user.username);
   if($('recovery-dialog').open)closeRecoveryCode();
   const plan=C.validate(payload.plan);
   clearDailyWish();wishLoading=true;sessionGeneration++;currentUser=payload.user;S=plan;remoteRevision=payload.revision;queuedPlan=null;saving=false;saveConflict=false;storageError='';
   $('auth-form').reset();resetPasswordVisibility($('auth-form'));$('auth-screen').hidden=true;$('application').hidden=false;
-  render();authChannel?.postMessage({type:'session-changed',username:currentUser.username});$('session-name').textContent=currentUser.name;$('session-name').title=currentUser.username;void loadDailyWish();
+  render();authChannel?.postMessage({type:'session-changed',username:currentUser.username});$('session-name').textContent=currentUser.name;$('session-name').title=currentUser.username;void loadDailyWish();void loadReminders();
   if(payload.recoveryCode)showRecoveryCode(payload.recoveryCode);
 }
 async function flushPlan(){
@@ -1220,7 +1310,7 @@ function accountChange(fn,message=''){
   const next=JSON.parse(JSON.stringify(S));fn(next);C.validate(next);S=next;queuedPlan=JSON.parse(JSON.stringify(S));render();if(message)notify(message);void flushPlan();
 }
 function accountRender(){
-  baseRender();syncConnectivity();updateInstallUI();
+  baseRender();syncConnectivity();updateInstallUI();syncReminderBadge();if($('archive-dialog').open)renderArchive();if($('reminders-dialog').open)updateReminderList();
   if(currentUser){$('session-name').textContent=currentUser.name;$('session-name').title=currentUser.username;}
   $('save-state').textContent=storageError?'Есть несохранённые изменения':saving||queuedPlan?'Сохраняем план…':'План сохранён';
   if(storageError)$('storage-notice').innerHTML='<div class="notice error"><div>'+esc(storageError)+'<div class="actions" style="margin-top:10px">'+(saveConflict?btn('Загрузить план с сервера','account-reload','','small line'):btn('Повторить сохранение','account-retry','','small line'))+link('Экспортировать →','settings')+'</div></div></div>';
@@ -1456,7 +1546,7 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(updateReloading)location.reload();});
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(registration=>{
-      serviceRegistration=registration;showAppUpdate();
+      serviceRegistration=registration;showAppUpdate();void sendWorkerPrivacy();
       registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed')showAppUpdate();});});
     }).catch(()=>{});
   });
@@ -1464,6 +1554,196 @@ if('serviceWorker' in navigator){
 syncConnectivity();updateInstallUI();syncFinancePrivacy();resetPasswordVisibility($('recovery-form'));
 
 new ResizeObserver(syncMobileNav).observe(document.querySelector('.mobile-nav'));
+
+
+let archiveState=null,archiveYear=Number(C.today().slice(0,4)),archiveSelected='',archiveDraft=null,archiveBusy=false,archiveRequest=0;
+let reminderState=null,reminderError='',reminderBusy=false,deviceEnabled=false,reminderRequest=0,featureTimer=null;
+const featureIcons={
+ archive:'<path d="M3 8h18v12H3Z"/><path d="M2 4h20v4H2ZM9 12h6"/>',
+ bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
+ phone:'<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/>'
+};
+Object.assign(icons,featureIcons);
+const archiveLabel=month=>C.parse(month+'-01').toLocaleDateString('ru-RU',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase()).replace(/ г\.$/,'');
+const archiveRecord=month=>archiveState?.records.find(row=>row.month===month);
+function archiveDetail(month){
+ const row=archiveRecord(month);
+ if(!row)return '<section class="archive-detail" data-archive-detail="'+month+'"><h3>'+esc(archiveLabel(month))+'</h3><div class="archive-empty"><p>Этот месяц ещё не заполнен.</p><button class="btn" type="button" data-archive-edit="'+month+'">'+I('plus')+'Заполнить</button></div></section>';
+ const metric=(label,key,cls='')=>'<div class="archive-metric '+cls+'"><span>'+label+'</span><strong data-archive-value="'+key+'">'+money(BigInt(row[key]),row.currency)+'</strong></div>';
+ return '<section class="archive-detail" data-archive-detail="'+month+'"><h3>'+esc(archiveLabel(month))+'</h3><div class="feature-status">'+(row.source==='manual'?'Заполнено вручную':'Сохранено из плана')+'</div><div class="archive-opening"><span>На начало месяца</span><strong data-archive-value="opening">'+money(BigInt(row.opening),row.currency)+'</strong></div><div class="archive-metrics">'+metric('Доходы','income')+metric('Расходы','expenses')+metric('Остаток','remaining','result')+metric('Взносы на цели','savings')+'</div><button class="btn line" type="button" data-archive-edit="'+month+'">'+I('edit')+'Изменить</button></section>';
+}
+function renderArchive(){
+ if(!$('archive-dialog').open)return;
+ if(!archiveState){$('archive-body').innerHTML='<p class="feature-status">Загружаем архив…</p>';return;}
+ if(!archiveState.months.includes(archiveSelected))archiveSelected=archiveState.months[0]||'';
+ const years=Array.from({length:archiveState.lastYear-2026+1},(_,i)=>2026+i);
+ $('archive-body').innerHTML='<div class="archive-tools"><span class="feature-status">Прошлые месяцы</span><select id="archive-year" aria-label="Год архива">'+years.map(year=>'<option '+(year===archiveYear?'selected':'')+'>'+year+'</option>').join('')+'</select></div>'+
+ (archiveState.months.length?'<div class="archive-layout"><div class="archive-months">'+archiveState.months.map(month=>{
+ const row=archiveRecord(month),selected=archiveSelected===month;
+ return '<div class="archive-month '+(selected?'selected':'')+'"><button class="archive-month-button" type="button" data-archive-month="'+month+'" aria-expanded="'+selected+'"><strong>'+esc(archiveLabel(month).split(' ').slice(0,-1).join(' '))+'</strong><small>'+(row?'Сохранён':'Заполнить')+'</small></button>'+(selected?'<div class="archive-mobile-detail">'+archiveDetail(month)+'</div>':'')+'</div>';
+ }).join('')+'</div><div class="archive-desktop-detail">'+archiveDetail(archiveSelected)+'</div></div>':'<p class="feature-status">Завершённые месяцы появятся здесь.</p>');
+}
+async function loadArchive(year=archiveYear){
+ const generation=sessionGeneration,request=++archiveRequest;archiveYear=year;archiveState=null;renderArchive();
+ try{
+ const reply=await requestAPI('archive?year='+year);
+ if(generation!==sessionGeneration||request!==archiveRequest)return;
+ archiveState=reply;renderArchive();
+ }catch(error){if(generation===sessionGeneration&&request===archiveRequest)$('archive-body').innerHTML='<p class="feature-error" role="alert">'+esc(error.message)+'</p><button class="btn line" type="button" data-archive-retry>Повторить</button>';}
+}
+function openArchive(){if(!currentUser)return;$('archive-dialog').showModal();void loadArchive();}
+const archiveInput=value=>{const n=BigInt(value||0),negative=n<0n,a=negative?-n:n;return (negative?'-':'')+String(a/100n)+(a%100n?'.'+String(a%100n).padStart(2,'0'):'');};
+function readArchiveAmount(value,signed=false){
+ const text=String(value).trim().replace(/\s/g,'').replace(',','.');
+ if(!(signed?/^-?\d{1,13}(?:\.\d{1,2})?$/:/^\d{1,13}(?:\.\d{1,2})?$/).test(text))throw Error('Введите сумму, допускаются два знака после запятой.');
+ const negative=text.startsWith('-'),[whole,fraction='']=text.replace('-','').split('.'),amount=(BigInt(whole)*100n+BigInt(fraction.padEnd(2,'0')))*(negative?-1n:1n);
+ if(amount>100000000000000n||amount< -100000000000000n)throw Error('Слишком большая сумма.');
+ return amount.toString();
+}
+function updateArchivePreview(){
+ const form=$('archive-editor');
+ try{$('archive-preview').textContent=money(BigInt(readArchiveAmount(form.elements.opening.value,true))+BigInt(readArchiveAmount(form.elements.income.value))-BigInt(readArchiveAmount(form.elements.expenses.value))-BigInt(readArchiveAmount(form.elements.savings.value)),form.elements.currency.value);}
+ catch{$('archive-preview').textContent='—';}
+}
+function editArchive(month){
+ const row=archiveRecord(month);archiveDraft={month,revision:row?.revision??null};archiveBusy=false;
+ $('archive-edit-title').textContent=archiveLabel(month);$('archive-edit-error').textContent='';
+ const amount=(label,name)=>field(label,name,archiveInput(row?.[name]),amountsHidden?'password':'text','','inputmode="decimal" autocomplete="off" data-finance-input required maxlength="18"');
+ $('archive-fields').innerHTML=select('Валюта','currency',row?.currency||S.currency,{KZT:'Теңге · ₸',USD:'Доллар · $'})+amount('На начало месяца','opening')+amount('Доходы','income')+amount('Расходы','expenses')+amount('Взносы на цели','savings');
+ $('archive-edit-dialog').showModal();updateArchivePreview();$('archive-editor').elements.opening.focus();
+}
+$('archive-editor').addEventListener('input',updateArchivePreview);
+$('archive-editor').addEventListener('change',updateArchivePreview);
+$('archive-editor').addEventListener('submit',async event=>{
+ event.preventDefault();if(archiveBusy||!archiveDraft||!currentUser)return;
+ const generation=sessionGeneration,form=event.currentTarget,button=form.querySelector('[type="submit"]');$('archive-edit-error').textContent='';
+ try{
+ const data={...archiveDraft,currency:form.elements.currency.value};
+ for(const name of ['opening','income','expenses','savings'])data[name]=readArchiveAmount(form.elements[name].value,name==='opening');
+ archiveBusy=true;button.disabled=true;
+ const reply=await requestAPI('archive','PUT',data);
+ if(generation!==sessionGeneration)return;
+ archiveState.records=archiveState.records.filter(row=>row.month!==data.month);archiveState.records.push(reply.record);
+ archiveSelected=data.month;renderArchive();$('archive-edit-dialog').close();notify('Месяц сохранён');
+ }catch(error){if(generation===sessionGeneration)$('archive-edit-error').textContent=error.message;}
+ finally{if(generation===sessionGeneration){archiveBusy=false;button.disabled=false;}}
+});
+function reminderEventsLocal(){
+ if(!reminderState?.prefs.inApp)return [];
+ const now=C.today(),events=C.scheduled(S,now,C.addDays(now,reminderState.prefs.lead),false,now).filter(item=>item.type==='payment');
+ for(const item of C.currentEvents(S,'payment',now))if(item.overdue&&!events.some(e=>e.key===item.key))events.push(item);
+ return events.sort((a,b)=>a.originalDate.localeCompare(b.originalDate));
+}
+function syncReminderBadge(){
+ const button=$('reminder-bell'),events=reminderEventsLocal();
+ button.innerHTML=I('bell')+(events.length?'<span class="reminder-badge" aria-hidden="true">'+Math.min(events.length,9)+(events.length>9?'+':'')+'</span>':'');
+ button.setAttribute('aria-label','Напоминания'+(events.length?': '+events.length:''));
+}
+async function sendWorkerPrivacy(){
+ if(!('serviceWorker' in navigator))return;
+ try{
+ const registration=await navigator.serviceWorker.getRegistration();
+ registration?.active?.postMessage({type:'RITM_DISPLAY_PREFS',owner:currentUser&&reminderState?reminderState.owner:null,hidden:amountsHidden});
+ }catch{}
+}
+async function checkDevice(generation=sessionGeneration){
+ deviceEnabled=false;
+ if(!reminderState||!('serviceWorker' in navigator)||!('PushManager' in window))return;
+ try{
+ const registration=await navigator.serviceWorker.getRegistration(),subscription=await registration?.pushManager.getSubscription();
+ if(!subscription)return;
+ const result=await requestAPI('push/status','POST',{endpoint:subscription.endpoint});
+ if(generation===sessionGeneration)deviceEnabled=result.enabled;
+ }catch{}
+}
+async function loadReminders(){
+ if(!currentUser)return;
+ const generation=sessionGeneration,request=++reminderRequest;
+ try{
+ const reply=await requestAPI('reminders?timeZone='+encodeURIComponent(wishTimeZone()));
+ if(generation!==sessionGeneration||request!==reminderRequest)return;
+ reminderState=reply;reminderError='';await sendWorkerPrivacy();await checkDevice(generation);
+ if(generation!==sessionGeneration)return;
+ syncReminderBadge();if($('reminders-dialog').open)renderReminders();
+ }catch(error){if(generation===sessionGeneration){reminderError=error.message;if($('reminders-dialog').open)renderReminders();}}
+ clearTimeout(featureTimer);if(generation===sessionGeneration)featureTimer=setTimeout(()=>{if(currentUser){syncReminderBadge();if($('reminders-dialog').open)updateReminderList();}},60000);
+}
+function updateReminderList(){
+ const list=$('reminder-list');if(!list)return;
+ const events=reminderEventsLocal();
+ list.innerHTML='<h3>Ближайшие платежи</h3>'+(events.length?events.slice(0,30).map(event=>'<div class="reminder-entry"><div><strong>'+esc(event.title)+'</strong><small>'+(event.overdue?'Просрочен · ':'')+fullDate(event.originalDate)+'</small></div><span class="reminder-amount">'+money(event.amount)+'</span></div>').join(''):'<p class="feature-status">'+(reminderState?.prefs.inApp?'В выбранный период платежей нет.':'Напоминания в Ритм выключены.')+'</p>');
+}
+function renderReminders(){
+ if(!$('reminders-dialog').open)return;
+ if(!reminderState){$('reminders-body').innerHTML='<p class="'+(reminderError?'feature-error':'feature-status')+'">'+esc(reminderError||'Загружаем настройки…')+'</p><button class="btn line" data-reminder-retry type="button">Повторить</button>';return;}
+ const p=reminderState.prefs,supported='Notification' in window&&'PushManager' in window&&'serviceWorker' in navigator&&window.isSecureContext;
+ const phoneInfo=!supported?'Для iPhone установите Ритм на экран «Домой».':Notification.permission==='denied'?'Разрешите уведомления в настройках браузера.':deviceEnabled?'Уведомления включены на этом устройстве.':'Уведомления даже при закрытом Ритме.';
+ $('reminders-body').innerHTML='<form id="reminders-form"><div class="reminder-channel"><div class="reminder-channel-copy"><div class="tile">'+I('bell')+'</div><div><strong>В Ритм</strong><small>Рядом с вашим аккаунтом</small></div></div><label class="reminder-switch"><input name="inApp" type="checkbox" '+(p.inApp?'checked':'')+' aria-label="Напоминания в Ритм"></label></div><div class="reminder-channel"><div class="reminder-channel-copy"><div class="tile">'+I('phone')+'</div><div><strong>На телефон</strong><small id="device-status">'+esc(phoneInfo)+'</small></div></div><button class="btn '+(deviceEnabled?'line':'')+'" type="button" id="device-toggle" '+(!supported?'disabled':'')+'>'+(deviceEnabled?'Отключить':'Включить')+'</button></div>'+
+ '<div class="reminder-setting"><span>Когда напомнить</span><div class="reminder-leads">'+[[0,'В день платежа'],[1,'За 1 день'],[3,'За 3 дня']].map(([lead,label])=>'<label><input type="radio" name="lead" value="'+lead+'" '+(lead===p.lead?'checked':'')+'><span>'+label+'</span></label>').join('')+'</div></div>'+
+ '<label class="reminder-setting reminder-time-row"><span>Время · '+esc(p.timeZone.replaceAll('_',' '))+'</span><input type="time" name="time" value="'+p.time+'" required aria-label="Время напоминания"></label><label class="reminder-switch"><input type="checkbox" name="showAmounts" '+(p.showAmounts?'checked':'')+'>Показывать суммы в уведомлениях</label><div id="reminder-error" class="feature-error" role="alert">'+esc(reminderError)+'</div><div class="form-footer"><button class="btn" type="submit">Сохранить</button></div></form><div id="reminder-list" class="reminder-list"></div>';
+ updateReminderList();
+ $('reminders-form').addEventListener('submit',saveReminderForm);
+ $('device-toggle').addEventListener('click',toggleDevice);
+}
+async function saveReminderForm(event){
+ event.preventDefault();if(reminderBusy||!reminderState)return;
+ const form=event.currentTarget,generation=sessionGeneration,button=form.querySelector('[type="submit"]');
+ reminderBusy=true;button.disabled=true;$('reminder-error').textContent='';
+ try{
+ const reply=await requestAPI('reminders','PATCH',{inApp:form.elements.inApp.checked,lead:Number(form.elements.lead.value),time:form.elements.time.value,timeZone:wishTimeZone(),showAmounts:form.elements.showAmounts.checked});
+ if(generation!==sessionGeneration)return;
+ reminderState.prefs=reply.prefs;reminderError='';syncReminderBadge();updateReminderList();notify('Напоминания настроены');
+ }catch(error){if(generation===sessionGeneration)$('reminder-error').textContent=error.message;}
+ finally{if(generation===sessionGeneration){reminderBusy=false;button.disabled=false;}}
+}
+const decodePushKey=key=>Uint8Array.from(atob(key.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(key.length/4)*4,'=')),char=>char.charCodeAt(0));
+async function toggleDevice(){
+ if(reminderBusy||!currentUser||!reminderState)return;
+ const generation=sessionGeneration,button=$('device-toggle');reminderBusy=true;button.disabled=true;$('reminder-error').textContent='';
+ try{
+ if(!deviceEnabled){
+ // Permission must be requested directly from the user's button press.
+ const permission=await Notification.requestPermission();
+ if(permission!=='granted')throw Error('Уведомления не разрешены. Их можно включить в настройках браузера.');
+ }
+ const registration=await navigator.serviceWorker.ready;
+ if(generation!==sessionGeneration)return;
+ if(registration.waiting)throw Error('Сначала нажмите «Обновить» в Ритме, затем включите уведомления.');
+ let subscription=await registration.pushManager.getSubscription();
+ if(deviceEnabled){
+ if(subscription){await requestAPI('push/subscription','DELETE',{endpoint:subscription.endpoint});await subscription.unsubscribe();}
+ if(generation===sessionGeneration)deviceEnabled=false;
+ }else{
+ if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decodePushKey(reminderState.publicKey)});
+ if(generation!==sessionGeneration){await subscription.unsubscribe();return;}
+ await requestAPI('push/subscription','POST',subscription.toJSON());deviceEnabled=true;await sendWorkerPrivacy();
+ }
+ if(generation===sessionGeneration){$('device-status').textContent=deviceEnabled?'Уведомления включены на этом устройстве.':'Уведомления выключены.';button.textContent=deviceEnabled?'Отключить':'Включить';}
+ }catch(error){if(generation===sessionGeneration)$('reminder-error').textContent=error.message;}
+ finally{if(generation===sessionGeneration){reminderBusy=false;button.disabled=false;}}
+}
+function resetFeatures(){
+ archiveRequest++;reminderRequest++;clearTimeout(featureTimer);
+ archiveState=null;archiveDraft=null;archiveSelected='';archiveYear=Number(C.today().slice(0,4));archiveBusy=false;
+ reminderState=null;reminderBusy=false;reminderError='';deviceEnabled=false;
+ for(const id of ['archive-dialog','archive-edit-dialog','reminders-dialog'])if($(id).open)$(id).close();
+ $('archive-body').replaceChildren();$('archive-fields').replaceChildren();$('reminders-body').replaceChildren();
+ void sendWorkerPrivacy();syncReminderBadge();
+}
+document.addEventListener('click',event=>{
+ const close=event.target.closest('[data-feature-close]');
+ if(close&&!archiveBusy&&!reminderBusy)$(close.dataset.featureClose).close();
+ const month=event.target.closest('[data-archive-month]');
+ if(month){archiveSelected=month.dataset.archiveMonth;renderArchive();}
+ const edit=event.target.closest('[data-archive-edit]');if(edit)editArchive(edit.dataset.archiveEdit);
+ if(event.target.closest('[data-archive-retry]'))void loadArchive();
+ if(event.target.closest('[data-reminder-retry]'))void loadReminders();
+});
+document.addEventListener('change',event=>{if(event.target.id==='archive-year')void loadArchive(Number(event.target.value));});
+for(const id of ['archive-dialog','archive-edit-dialog','reminders-dialog']){
+ $(id).addEventListener('cancel',event=>{if(archiveBusy||reminderBusy)event.preventDefault();});
+ $(id).addEventListener('click',event=>{if(event.target===$(id)&&!archiveBusy&&!reminderBusy)$(id).close();});
+}
 
 void startAuth();
 
