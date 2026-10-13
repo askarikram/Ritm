@@ -12,6 +12,7 @@ import { randomBytes, randomUUID, createHash, scrypt, timingSafeEqual } from 'no
 import { promisify } from 'node:util';
 import pg from 'pg';
 import { wishDay, wishForDay } from './daily-wishes.mjs';
+import { appIcons } from './app-icons.mjs';
 const Core = (() => {
   const iso = d => d.toISOString().slice(0,10);
   const parse = s => new Date(s + 'T12:00:00Z');
@@ -139,6 +140,14 @@ const fonts=new Map(['latin','cyrillic','cyrillic-ext'].map(subset=>[
 ]));
 
 const scriptHash=createHash('sha256').update(HTML.match(/<script>([\s\S]*?)<\/script>/)[1]).digest('base64');
+const publicFiles=new Map([
+  ['/manifest.webmanifest','manifest.webmanifest','application/manifest+json; charset=utf-8'],
+  ['/sw.js','sw.js','text/javascript; charset=utf-8'],
+  ['/icons/icon.svg','icons/icon.svg','image/svg+xml'],
+  ['/help','help.html','text/html; charset=utf-8'],
+  ['/privacy','privacy.html','text/html; charset=utf-8'],
+  ['/offline.html','offline.html','text/html; charset=utf-8']
+].map(([path,file,type])=>[path,{type,body:readFileSync(new URL('./public/'+file,import.meta.url),'utf8').replaceAll('__RITM_RELEASE__',release)}]));
 const production=process.env.NODE_ENV==='production';
 const port=Number(process.env.PORT||3000),host=process.env.HOST||(production?'0.0.0.0':'127.0.0.1');
 if(!Number.isInteger(port)||port<1||port>65535)throw Error('Некорректный PORT.');
@@ -158,7 +167,7 @@ const sql={
   byName:'SELECT id,username,name,password_hash,salt FROM ritm_users WHERE username=$1',
   addUser:'INSERT INTO ritm_users(id,username,name,password_hash,salt,created_at) VALUES($1,$2,$3,$4,$5,$6)',
   addPlan:'INSERT INTO ritm_plans(user_id,plan_json,revision) VALUES($1,$2::jsonb,0)',
-  getPlan:'SELECT plan_json,revision FROM ritm_plans WHERE user_id=$1',
+  getPlan:'SELECT plan_json,revision,EXISTS(SELECT 1 FROM ritm_recovery_codes r WHERE r.user_id=p.user_id) AS recovery_enabled FROM ritm_plans p WHERE user_id=$1',
   updatePlan:'UPDATE ritm_plans SET plan_json=$1::jsonb,revision=revision+1 WHERE user_id=$2 AND revision=$3 RETURNING revision',
   sessionUser:'SELECT u.id,u.username,u.name,s.expires_at,s.remember FROM ritm_sessions s JOIN ritm_users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>$2',
   addSession:'INSERT INTO ritm_sessions(token_hash,user_id,expires_at,remember) VALUES($1,$2,$3,$4)',
@@ -179,10 +188,22 @@ async function initialize(){
     await client.query('CREATE TABLE IF NOT EXISTS ritm_sessions(token_hash TEXT PRIMARY KEY,user_id UUID NOT NULL REFERENCES ritm_users(id) ON DELETE CASCADE,expires_at BIGINT NOT NULL,remember BOOLEAN NOT NULL DEFAULT TRUE)');
     await client.query('CREATE INDEX IF NOT EXISTS ritm_sessions_expiry ON ritm_sessions(expires_at)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_wish_accounts(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,lane SMALLINT NOT NULL CHECK(lane BETWEEN 0 AND 4),timezone TEXT NOT NULL,opened_date DATE NOT NULL)');
+    await client.query('CREATE TABLE IF NOT EXISTS ritm_recovery_codes(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL)');
   });
 }
 const derive=promisify(scrypt),hashToken=t=>createHash('sha256').update(t).digest('hex');
 const dummySalt=randomBytes(16).toString('hex'),rateWindows=new Map();
+const newRecoveryCode=()=>randomBytes(16).toString('hex').toUpperCase().match(/.{4}/g).join('-');
+const normalizeRecovery=value=>typeof value==='string'&&value.length<=80?value.replace(/[\s-]/g,'').toUpperCase():'';
+const recoveryHash=code=>hashToken(normalizeRecovery(code));
+async function checkCurrentPassword(userId,password){
+  if(!validPassword(password))fail(400,'Введите текущий пароль.');
+  const row=(await pool.query('SELECT password_hash,salt FROM ritm_users WHERE id=$1',[userId])).rows[0];
+  if(!row)fail(401,'Войдите в аккаунт.','not_signed_in');
+  const candidate=await derive(password,row.salt,64,{N:32768,r:8,p:3,maxmem:64*1024*1024}),expected=Buffer.from(row.password_hash,'hex');
+  if(expected.length!==candidate.length||!timingSafeEqual(expected,candidate))fail(401,'Текущий пароль указан неверно.','wrong_password');
+  return row;
+}
 function fail(status,message,code){const error=Error(message);error.status=status;if(code)error.code=code;throw error;}
 function rateLimit(key,limit){
   const now=Date.now();let row=rateWindows.get(key);
@@ -233,7 +254,7 @@ async function clearSession(req,res){
 async function sessionPayload(user){
   const row=(await pool.query(sql.getPlan,[user.id])).rows[0];
   if(!row)throw Error('Отсутствует план аккаунта.');
-  return {user:{username:user.username,name:user.name},plan:row.plan_json,revision:row.revision};
+  return {user:{username:user.username,name:user.name},plan:row.plan_json,revision:row.revision,recoveryEnabled:row.recovery_enabled};
 }
 async function readJSON(req){
   if(!String(req.headers['content-type']||'').toLowerCase().startsWith('application/json'))fail(415,'Нужен JSON-запрос.');
@@ -243,7 +264,7 @@ async function readJSON(req){
 }
 function headers(res){
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');
-  res.setHeader('Content-Security-Policy',"default-src 'none'; script-src 'sha256-"+scriptHash+"'; style-src 'unsafe-inline'; font-src 'self'; connect-src 'self'; img-src data:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+  res.setHeader('Content-Security-Policy',"default-src 'none'; script-src 'sha256-"+scriptHash+"'; style-src 'unsafe-inline'; font-src 'self'; connect-src 'self'; img-src 'self' data:; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
   if(production)res.setHeader('Strict-Transport-Security','max-age=31536000');
 }
 function send(res,status,data){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(data));}
@@ -254,6 +275,18 @@ async function handle(req,res){
     if(['GET','HEAD'].includes(req.method)&&(url.pathname==='/'||url.pathname==='/index.html')){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(req.method==='HEAD'?undefined:HTML);return;}
     if(req.method==='GET'&&url.pathname==='/healthz'){send(res,200,{ok:true,version:release});return;}
     if(['GET','HEAD'].includes(req.method)&&fonts.has(url.pathname)){const font=fonts.get(url.pathname);res.writeHead(200,{'Content-Type':'font/woff2','Content-Length':font.length,'Cache-Control':'public, max-age=31536000, immutable'});res.end(req.method==='HEAD'?undefined:font);return;}
+    if(['GET','HEAD'].includes(req.method)&&publicFiles.has(url.pathname)){
+      const file=publicFiles.get(url.pathname);
+      if(url.pathname==='/sw.js')res.setHeader('Service-Worker-Allowed','/');
+      res.writeHead(200,{'Content-Type':file.type,'Cache-Control':url.pathname==='/sw.js'?'no-cache':'public, max-age=0, must-revalidate'});
+      res.end(req.method==='HEAD'?undefined:file.body);return;
+    }
+    if(['GET','HEAD'].includes(req.method)&&appIcons.has(url.pathname)){
+      const icon=appIcons.get(url.pathname);res.writeHead(200,{'Content-Type':'image/png','Content-Length':icon.length,'Cache-Control':'public, max-age=86400'});
+      res.end(req.method==='HEAD'?undefined:icon);return;
+    }
+    if(req.method==='GET'&&url.pathname==='/robots.txt'){res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});res.end('User-agent: *\nDisallow: /api/\nSitemap: '+appOrigin+'/sitemap.xml\n');return;}
+    if(req.method==='GET'&&url.pathname==='/sitemap.xml'){res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8'});res.end('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+['/','/help','/privacy'].map(path=>'<url><loc>'+appOrigin+path+'</loc></url>').join('')+'</urlset>');return;}
     if(req.method==='GET'&&url.pathname==='/favicon.ico'){res.writeHead(204);res.end();return;}
     if(!url.pathname.startsWith('/api/'))fail(404,'Страница не найдена.');
     if(['POST','PUT','DELETE','PATCH'].includes(req.method)&&req.headers.origin!==appOrigin)fail(403,'Запрос пришёл с другого адреса.');
@@ -266,16 +299,17 @@ async function handle(req,res){
       if(!validUsername(username))fail(400,'Логин — только маленькие латинские буквы, от 1 до 32, без цифр и пробелов.');
       if(!validPassword(password))fail(400,'Пароль — от 8 до 128 символов, только латинские буквы и цифры.');
       rateLimit('auth-user:'+username,10);
-      let user=(await pool.query(sql.byName,[username])).rows[0];
+      let user=(await pool.query(sql.byName,[username])).rows[0],recoveryCode;
       if(url.pathname==='/api/signup'){
         if(data.confirmPassword!==password)fail(400,'Пароли не совпадают. Проверьте оба поля.');
         if(!validName(data.name))fail(400,'Введите имя от 1 до 80 символов.');
         if(user)fail(409,'Этот логин уже занят. Выберите другой.');
         const salt=randomBytes(16).toString('hex'),key=await derive(password,salt,64,{N:32768,r:8,p:3,maxmem:64*1024*1024});
-        user={id:randomUUID(),username,name:data.name.trim()};
+        user={id:randomUUID(),username,name:data.name.trim()};recoveryCode=newRecoveryCode();
         try{await transaction(async client=>{
           await client.query(sql.addUser,[user.id,username,user.name,key.toString('hex'),salt,Date.now()]);
           await client.query(sql.addPlan,[user.id,JSON.stringify(Core.fresh())]);
+          await client.query('INSERT INTO ritm_recovery_codes(user_id,code_hash) VALUES($1,$2)',[user.id,recoveryHash(recoveryCode)]);
         });}
         catch(error){if(error.code==='23505'&&error.constraint==='ritm_users_username_key')fail(409,'Этот логин уже занят. Выберите другой.');throw error;}
       }else{
@@ -283,7 +317,53 @@ async function handle(req,res){
         const expected=user?Buffer.from(user.password_hash,'hex'):Buffer.alloc(64);
         if(!user||expected.length!==candidate.length||!timingSafeEqual(expected,candidate))fail(401,'Неверный логин или пароль.');
       }
-      await setSession(req,res,user.id,data.remember!==false);send(res,200,await sessionPayload(user));return;
+      await setSession(req,res,user.id,data.remember!==false);send(res,200,{...await sessionPayload(user),...(recoveryCode?{recoveryCode}:{})});return;
+    }
+    if(req.method==='POST'&&url.pathname==='/api/recovery-code'){
+      const user=await requireUser(req,res);rateLimit('recovery-create:'+user.id,10);
+      const data=await readJSON(req),record=await checkCurrentPassword(user.id,data.currentPassword),code=newRecoveryCode();
+      await transaction(async client=>{
+        const current=(await client.query('SELECT password_hash,salt FROM ritm_users WHERE id=$1 FOR UPDATE',[user.id])).rows[0];
+        if(!current||current.password_hash!==record.password_hash||current.salt!==record.salt)fail(409,'Пароль изменён. Войдите снова.');
+        await client.query('INSERT INTO ritm_recovery_codes(user_id,code_hash) VALUES($1,$2) ON CONFLICT(user_id) DO UPDATE SET code_hash=EXCLUDED.code_hash',[user.id,recoveryHash(code)]);
+      });
+      send(res,200,{recoveryCode:code});return;
+    }
+    if(req.method==='POST'&&url.pathname==='/api/recover'){
+      rateLimit('recover-address:'+(req.socket.remoteAddress||'unknown'),120);
+      const data=await readJSON(req),code=normalizeRecovery(data.recoveryCode);
+      if(!validUsername(data.username)||!/^[A-F0-9]{32}$/.test(code))fail(401,'Неверный логин или резервный код.');
+      rateLimit('recover-user:'+data.username,10);
+      if(!validPassword(data.newPassword))fail(400,'Новый пароль — от 8 до 128 символов, только латинские буквы и цифры.');
+      if(data.newPassword!==data.confirmPassword)fail(400,'Пароли не совпадают. Проверьте оба поля.');
+      const record=(await pool.query('SELECT u.id,r.code_hash FROM ritm_users u JOIN ritm_recovery_codes r ON r.user_id=u.id WHERE u.username=$1',[data.username])).rows[0];
+      const candidate=recoveryHash(code),expected=record?.code_hash||hashToken('no-recovery-code');
+      if(!timingSafeEqual(Buffer.from(candidate,'hex'),Buffer.from(expected,'hex'))||!record)fail(401,'Неверный логин или резервный код.');
+      const salt=randomBytes(16).toString('hex'),key=await derive(data.newPassword,salt,64,{N:32768,r:8,p:3,maxmem:64*1024*1024}),nextCode=newRecoveryCode();
+      const value=randomBytes(32).toString('base64url'),remember=data.remember!==false,life=remember?ttl:shortTTL;
+      const user=await transaction(async client=>{
+        const locked=(await client.query('SELECT u.id,u.username,u.name,r.code_hash FROM ritm_users u JOIN ritm_recovery_codes r ON r.user_id=u.id WHERE u.id=$1 FOR UPDATE OF u,r',[record.id])).rows[0];
+        if(!locked||locked.code_hash!==candidate)fail(401,'Неверный логин или резервный код.');
+        await client.query('UPDATE ritm_users SET password_hash=$1,salt=$2 WHERE id=$3',[key.toString('hex'),salt,locked.id]);
+        await client.query('UPDATE ritm_recovery_codes SET code_hash=$1 WHERE user_id=$2',[recoveryHash(nextCode),locked.id]);
+        await client.query('DELETE FROM ritm_sessions WHERE user_id=$1',[locked.id]);
+        await client.query(sql.addSession,[hashToken(value),locked.id,Date.now()+life,remember]);
+        return locked;
+      });
+      res.setHeader('Set-Cookie',cookie(value,remember,life));
+      send(res,200,{...await sessionPayload(user),recoveryCode:nextCode});return;
+    }
+    if(req.method==='DELETE'&&url.pathname==='/api/account'){
+      const user=await requireUser(req,res);rateLimit('delete-user:'+user.id,10);
+      const data=await readJSON(req);
+      if(data.confirmation!=='УДАЛИТЬ')fail(400,'Введите УДАЛИТЬ для подтверждения.');
+      const record=await checkCurrentPassword(user.id,data.currentPassword);
+      await transaction(async client=>{
+        const result=await client.query('DELETE FROM ritm_users WHERE id=$1 AND password_hash=$2 AND salt=$3',[user.id,record.password_hash,record.salt]);
+        if(!result.rowCount)fail(409,'Пароль изменён. Войдите снова.');
+      });
+      res.setHeader('Set-Cookie',cookieName+'=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'+(production?'; Secure':''));
+      send(res,200,{ok:true});return;
     }
     if(req.method==='POST'&&url.pathname==='/api/logout'){
       await readJSON(req);const user=await findSession(req);

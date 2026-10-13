@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node scripts/start.mjs",
-    "check": "node --check server.js && node --check scripts/start.mjs && node --check scripts/verify-isolation.mjs && node --check scripts/test-ui.mjs && node --check scripts/test-server.mjs && node scripts/check-client.mjs && node --check daily-wishes.mjs && node --check scripts/test-wishes.mjs"
+    "check": "node --check server.js && node --check scripts/start.mjs && node --check scripts/verify-isolation.mjs && node --check scripts/test-ui.mjs && node --check scripts/test-server.mjs && node scripts/check-client.mjs && node --check daily-wishes.mjs && node --check scripts/test-wishes.mjs && node --check app-icons.mjs && node --check public/sw.js && node --check scripts/test-launch.mjs"
   },
   "dependencies": {
     "pg": "8.23.1",

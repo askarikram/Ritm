@@ -19,6 +19,15 @@ export async function verifyUI(base) {
       await page.goto(base,{waitUntil:'networkidle'});
       await page.evaluate(()=>document.fonts.ready);
       check(await page.locator('#auth-screen').isVisible(),engineName+': login screen');
+      check(await page.locator('.landing-story').isVisible(),engineName+': public site introduction');
+      for(const width of [320,390,768,1440]){
+        await page.setViewportSize({width,height:844});
+        check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),engineName+': public site fits '+width+'px');
+        if(engineName==='chromium'&&[390,1440].includes(width)){
+          const screenshot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_LANDING_'+width+' '+screenshot.toString('base64'));
+        }
+      }
+      await page.setViewportSize({width:390,height:844});
       check(await page.evaluate(()=>[...document.fonts].some(font=>font.family.replaceAll('"','')==='Golos Text'&&font.status==='loaded')),engineName+': self-hosted Golos Text loaded');
       await page.locator('#auth-signup-tab').click();
       check(await page.locator('#auth-confirm-field').isVisible(),engineName+': registration confirmation visible');
@@ -40,6 +49,15 @@ export async function verifyUI(base) {
       check(await page.locator('#auth-password-match').textContent()==='Пароли совпадают.',engineName+': registration match feedback');
       await page.locator('#auth-submit').click();
       await page.locator('#application').waitFor({state:'visible'});
+      await page.locator('#recovery-dialog').waitFor({state:'visible'});
+      const signupCode=await page.locator('#recovery-code').textContent();
+      check(/^[A-F0-9]{4}(?:-[A-F0-9]{4}){7}$/.test(signupCode),engineName+': signup displays recovery code');
+      const codeDownloadPromise=page.waitForEvent('download');await page.locator('#download-recovery').click();
+      const codeDownload=await codeDownloadPromise,codeStream=await codeDownload.createReadStream();let codeFile='';
+      for await(const chunk of codeStream)codeFile+=chunk.toString();
+      check(codeFile.includes(username)&&codeFile.includes(signupCode)&&codeDownload.suggestedFilename()==='ritm-recovery-'+username+'.txt',engineName+': recovery code can be saved as a file');
+      await page.locator('#close-recovery').click();
+      check(await page.locator('#recovery-code').textContent()==='',engineName+': dismissed recovery code removed from DOM');
       await page.locator('button.daily-wish').waitFor();
       await page.waitForFunction(()=>!document.querySelector('button.daily-wish')?.disabled);
       check(await page.locator('.wish-text').count()===0,engineName+': wish concealed before click');
@@ -243,6 +261,81 @@ export async function verifyUI(base) {
       await page.locator('.mobile-nav [data-nav="calendar"]').click();
       check(await page.locator('.mobile-nav').evaluate(nav=>getComputedStyle(nav,'::before').transitionDuration==='0s'),engineName+': reduced motion switches without animation');
 
+      // Verify installation assets and offline behavior with a real service worker.
+      await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller),null,{timeout:15000});
+      check(await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;return r.active?.state==='activated';}),engineName+': app worker controls page');
+      await navigate('settings');
+      await page.locator('.install-card [data-install-app]').click();
+      check(await page.locator('#install-dialog').isVisible()&&(await page.locator('#install-instructions').textContent()).length>30,engineName+': installation instructions available');
+      await page.locator('#close-install').click();
+      check(await page.evaluate(async()=>{
+        const image=new Image();image.src='/icons/icon-512.png';await image.decode();return image.naturalWidth===512;
+      }),engineName+': app icon decodes in browser');
+
+      const codeForm=page.locator('#recovery-code-form');
+      await codeForm.locator('[name="currentPassword"]').fill('WrongPassword123');
+      await codeForm.locator('button[type="submit"]').click();
+      await page.waitForFunction(()=>document.getElementById('recovery-feedback')?.textContent==='Текущий пароль указан неверно.');
+      check(!(await page.locator('#recovery-dialog').isVisible()),engineName+': wrong password cannot reveal a recovery code');
+      await codeForm.locator('[name="currentPassword"]').fill(newPassword);
+      await codeForm.locator('button[type="submit"]').click();
+      await page.locator('#recovery-dialog').waitFor({state:'visible'});
+      const replacementCode=await page.locator('#recovery-code').textContent();
+      check(replacementCode!==signupCode,engineName+': settings generate replacement code');
+      await page.locator('#close-recovery').click();
+      const headers={'X-Ritm-User':username,Origin:base},beforeRecovery=await (await page.request.get(base+'/api/me',{headers})).json();
+      await page.locator('#profile-name-form [data-action="account-logout"]').click();
+      await page.locator('#auth-screen').waitFor({state:'visible'});
+      await page.locator('#auth-forgot').click();
+      await page.locator('#recover-username').fill(username);
+      await page.locator('#recover-code').fill(replacementCode);
+      const recoveredPassword='UIRecoveryPassword789';
+      await page.locator('#recover-password').fill(recoveredPassword);
+      await page.locator('#recover-confirm').fill('MismatchPassword789');
+      await page.locator('#recover-submit').click();
+      check(await page.locator('#recover-confirm').getAttribute('aria-invalid')==='true',engineName+': recovery confirmation mismatch shown');
+      await page.locator('#recover-confirm').fill(recoveredPassword);
+      await page.locator('#recover-submit').click();
+      await page.locator('#application').waitFor({state:'visible'});
+      await page.locator('#recovery-dialog').waitFor({state:'visible'});
+      check(await page.locator('#recovery-code').textContent()!==replacementCode,engineName+': recovery rotates code in interface');
+      await page.locator('#close-recovery').click();
+      const afterRecovery=await (await page.request.get(base+'/api/me',{headers})).json();
+      assert.deepEqual(afterRecovery.plan,beforeRecovery.plan);
+      check(afterRecovery.revision===beforeRecovery.revision,engineName+': UI recovery preserves financial plan');
+      await navigate('home');await page.locator('#toast').waitFor({state:'hidden'});
+      await context.setOffline(true);
+      await page.locator('#connection-status').waitFor({state:'visible'});
+      await page.locator('.balance-edit').click();
+      await page.locator('#editor [name="balance"]').fill('43000');
+      await page.locator('#editor button[type="submit"]').click();
+      await page.waitForFunction(()=>document.getElementById('save-state').textContent==='Есть несохранённые изменения');
+      check(await page.locator('#connection-status').isVisible(),engineName+': offline edits clearly marked unsaved');
+      await navigate('settings');
+      const exportPromise=page.waitForEvent('download');await page.locator('[data-action="export"]').first().click();
+      const backup=await exportPromise,backupStream=await backup.createReadStream();let backupText='';
+      for await(const chunk of backupStream)backupText+=chunk.toString();
+      check(JSON.parse(backupText).balance===4300000,engineName+': offline unsaved plan can be exported');
+      await context.setOffline(false);await waitSaved();
+      const onlinePlan=await (await page.request.get(base+'/api/me',{headers})).json();
+      check(onlinePlan.plan.balance===4300000,engineName+': pending plan saves automatically after reconnection');
+      const cachesSafe=await page.evaluate(async({username,code})=>{
+        let root='';
+        for(const key of await caches.keys()){
+          const cache=await caches.open(key);for(const request of await cache.keys()){
+            if(new URL(request.url).pathname.startsWith('/api/'))return false;
+            if(new URL(request.url).pathname==='/')root=await (await cache.match(request)).text();
+          }
+        }
+        return Boolean(root)&&!root.includes(username)&&!root.includes(code);
+      },{username,code:replacementCode});
+      check(cachesSafe,engineName+': app cache excludes private responses and user data');
+      await context.setOffline(true);await page.reload({waitUntil:'domcontentloaded'});
+      await page.locator('#auth-screen').waitFor({state:'visible'});
+      check(await page.locator('#connection-status').isVisible()&&!(await page.locator('#application').isVisible()),engineName+': offline launch loads public shell without private plan');
+      await context.setOffline(false);await page.locator('#application').waitFor({state:'visible'});
+      check((await (await page.request.get(base+'/api/me',{headers})).json()).plan.balance===4300000,engineName+': reconnection restores saved account');
+
       if(engineName==='chromium'){
         const headers={'X-Ritm-User':username,Origin:base};
         const saved=await (await page.request.get(base+'/api/me',{headers})).json();
@@ -257,6 +350,13 @@ export async function verifyUI(base) {
         check((await page.locator('[data-planned-total="payment"]').textContent()).replace(/\s/g,'')===((expected+50n)/100n).toString()+'теңге','large total formatted without precision loss');
       }
 
+      await navigate('settings');
+      await page.locator('.account-deletion summary').click();
+      await page.locator('#delete-current-password').fill(recoveredPassword);
+      await page.locator('#delete-confirmation').fill('УДАЛИТЬ');
+      await page.locator('#delete-account-form button[type="submit"]').click();
+      await page.locator('#auth-screen').waitFor({state:'visible'});
+      check((await page.request.get(base+'/api/me')).status()===401,engineName+': deleting account ends its session');
       check(errors.length===0,engineName+': no browser JavaScript errors');
     } finally { await context.close();await browser.close(); }
   }

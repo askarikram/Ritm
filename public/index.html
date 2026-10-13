@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f5f7f5"><title>Ритм · Личный финансовый план</title><style>
+<!doctype html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#24694e"><meta name="description" content="Ритм — личный финансовый план: доходы, платежи, накопления и календарь в одном месте."><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Ритм"><meta property="og:type" content="website"><meta property="og:title" content="Ритм — деньги в вашем ритме"><meta property="og:description" content="Понятный план для доходов, платежей и финансовых целей."><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" type="image/svg+xml" href="/icons/icon.svg"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"><title>Ритм · Личный финансовый план</title><style>
 @font-face{font-family:"Golos Text";font-style:normal;font-weight:400 900;font-display:swap;src:url('/assets/fonts/golos-text-cyrillic-ext.woff2?v=5.3.0') format('woff2');unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}
 @font-face{font-family:"Golos Text";font-style:normal;font-weight:400 900;font-display:swap;src:url('/assets/fonts/golos-text-cyrillic.woff2?v=5.3.0') format('woff2');unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
 @font-face{font-family:"Golos Text";font-style:normal;font-weight:400 900;font-display:swap;src:url('/assets/fonts/golos-text-latin.woff2?v=5.3.0') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
@@ -464,9 +464,53 @@ label,.field>label{font-size:14px;font-weight:500}
  .schedule-table tr{padding:16px}
 }
 
+
+/* Public site and installation; the financial workspace keeps its green layout. */
+.auth-screen{display:block;padding:30px 28px 40px;background:radial-gradient(ellipse at 10% 15%,#e7f0e7,transparent 55%),var(--bg)}
+.auth-wrap{width:100%;max-width:1120px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(340px,440px);gap:38px 64px;align-items:center}
+.landing-header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.landing-header .brand{margin:0;justify-content:flex-start}
+.landing-header-links{display:flex;align-items:center;gap:22px;font-size:14px}
+.landing-story{min-width:0;padding:22px 0}
+.landing-story>.eyebrow{font-size:12px;letter-spacing:.1em;color:var(--green)}
+.landing-title{font-size:clamp(40px,5vw,62px);font-weight:650;line-height:1.08;letter-spacing:-.045em;margin:20px 0}
+.landing-title span{color:var(--green)}
+.landing-lead{max-width:450px;font-size:18px;line-height:1.6;color:#64776b;margin:0 0 26px}
+.landing-tags{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:#4c6958}
+.landing-tags span{padding:7px 12px;border:1px solid #d8e4d9;border-radius:30px;background:#ffffff75}
+.landing-preview{margin-top:32px;padding:26px;border-radius:25px;background:#24694e;color:#f4f8f2;max-width:440px;box-shadow:0 16px 45px #24694e12}
+.landing-preview-top{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#d7e6d4}
+.landing-preview strong{display:block;font-size:29px;font-weight:600;letter-spacing:-.03em;margin:13px 0 17px}
+.landing-preview svg{display:block;width:100%;height:68px;color:#b8d3b8}
+.landing-preview-bottom{display:flex;justify-content:space-between;gap:18px;margin-top:14px;font-size:12px;color:#d7e6d4}
+.landing-footer{grid-column:1/-1;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.landing-footer a,.site-links a{text-decoration:underline;text-underline-offset:4px}
+.auth-card{width:100%;padding:32px;box-shadow:0 8px 32px #183d2408}
+.auth-forgot{margin-top:12px;min-height:34px;font-size:13px}
+.auth-card .auth-foot{font-size:12px;line-height:1.55}
+.connection-status{position:sticky;top:0;z-index:40;padding:12px 20px;text-align:center;background:#f7efdf;border-bottom:1px solid #e9dfc9;color:#755d33;font-size:14px}
+.update-banner{max-width:740px;margin:0 auto 20px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 18px;border:1px solid #d3e3d6;border-radius:16px;background:var(--mint);font-size:14px}
+.update-banner p{margin:0;color:var(--muted);font-size:13px}
+.install-card p,.recovery-card p{font-size:14px}
+.install-card .btn{margin-top:8px}
+.site-links{display:flex;gap:20px;flex-wrap:wrap;margin:22px 0 8px;font-size:14px;color:var(--muted)}
+.account-deletion{margin:20px 0;border:1px solid var(--line);border-radius:18px;background:#fff;padding:16px 20px}
+.account-deletion summary{cursor:pointer;font-size:14px;color:var(--muted);min-height:28px}
+.account-deletion form{max-width:440px;margin-top:20px}
+.account-deletion p{font-size:14px;color:var(--muted)}
+.recovery-dialog-body{padding:28px}
+.recovery-dialog-body h2{margin:0 0 12px}
+.recovery-dialog-body p{font-size:14px;color:var(--muted)}
+.recovery-code{display:block;padding:18px 16px;margin:20px 0;border:1px dashed #bed4c3;border-radius:16px;background:var(--mint);font-family:ui-monospace,monospace;font-size:17px;line-height:1.7;letter-spacing:.04em;overflow-wrap:anywhere;user-select:all}
+.recovery-dialog-body .actions{display:flex;flex-wrap:wrap;gap:10px}
+@media(max-width:850px){.auth-wrap{grid-template-columns:minmax(0,1fr) minmax(320px,400px);gap:32px}.landing-title{font-size:42px}.landing-lead{font-size:16px}.landing-preview{padding:22px}.landing-preview strong{font-size:25px}.auth-card{padding:28px}}
+@media(max-width:700px){.auth-screen{padding:24px 16px 32px}.auth-wrap{display:flex;flex-direction:column;align-items:stretch;gap:24px;max-width:460px}.landing-header-links{gap:12px}.landing-header-links .btn{font-size:12px;padding:10px 12px}.landing-story{padding:5px 4px 0}.landing-story>.eyebrow,.landing-preview,.landing-tags{display:none}.landing-title{font-size:34px;line-height:1.1;margin:0 0 13px}.landing-title br{display:none}.landing-lead{font-size:15px;margin:0;max-width:none}.auth-card{padding:26px 23px}.landing-footer{font-size:12px;gap:14px}.recovery-dialog-body{padding:24px 20px}.recovery-code{font-size:15px;letter-spacing:0}.update-banner{align-items:flex-start;gap:12px}.update-banner .btn{font-size:12px;padding:10px}.connection-status{font-size:13px;padding:10px 14px}}
+@media(display-mode:standalone){.landing-story{display:none}.auth-wrap{display:flex;flex-direction:column;max-width:460px;gap:26px}.landing-header{align-self:stretch}.landing-header [data-install-app]{display:none}.auth-screen{padding-top:calc(28px + env(safe-area-inset-top))}}
 </style></head><body>
-<section id="auth-screen" class="auth-screen"><div class="auth-wrap"><a class="brand" href="/"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="card auth-card"><div class="eyebrow">Ваш личный финансовый план</div><h1 id="auth-heading">Войти в Ритм</h1><p class="muted" id="auth-description">Ваши цели, платежи и поступления — в одном месте.</p><div class="tabs" role="tablist" aria-label="Вход или регистрация"><button type="button" role="tab" aria-selected="true" data-auth-mode="login" class="selected" id="auth-login-tab">Вход</button><button type="button" role="tab" aria-selected="false" data-auth-mode="signup" id="auth-signup-tab">Регистрация</button></div><form id="auth-form"><label for="auth-username"><span>Логин</span><input id="auth-username" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" pattern="[a-z]+" minlength="1" maxlength="32" required placeholder="Например, arman"><small class="hint">Маленькие латинские буквы, без цифр и пробелов.</small></label><label id="auth-name-field" for="auth-name" hidden><span>Имя</span><input id="auth-name" name="name" autocomplete="given-name" maxlength="80" placeholder="Как к вам обращаться"></label><div class="field"><label for="auth-password">Пароль</label><div class="password-control"><input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" pattern="[A-Za-z0-9]+" required aria-describedby="auth-password-hint"><button type="button" class="password-toggle" data-password-target="auth-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="hint" id="auth-password-hint">От 8 символов: латинские буквы и цифры.</small></div><div id="auth-confirm-field" hidden><div class="field"><label for="auth-confirm-password">Повторите пароль</label><div class="password-control"><input id="auth-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" pattern="[A-Za-z0-9]+" required aria-describedby="auth-confirm-password-hint"><button type="button" class="password-toggle" data-password-target="auth-confirm-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="hint" id="auth-confirm-password-hint">Введите пароль ещё раз.</small></div><span class="field-message" id="auth-password-match" role="status" aria-live="polite"></span></div><label class="remember-row"><input type="checkbox" name="remember" checked><span>Оставаться в системе на этом устройстве</span></label><div id="auth-error" class="form-error" role="alert"></div><button type="submit" class="btn auth-submit" id="auth-submit">Войти</button></form><p class="smallprint auth-foot">Ваш финансовый план доступен в вашем аккаунте.</p></div></div></section>
-<div id="application" hidden><aside><a class="brand" href="#home"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="tagline">Деньги в вашем ритме</div><nav aria-label="Разделы"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#goals" data-nav="goals"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Цели</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a><a href="#settings" data-nav="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--card)"/><circle cx="15" cy="17" r="3" fill="var(--card)"/></svg><span>Настройки</span></a></nav><div class="sidebar-foot"><b>Ваш план — у вас</b>План сохраняется в вашем аккаунте.</div></aside><main><header><div class="header-heading"><div class="eyebrow">Личный финансовый план</div><h1 id="heading" tabindex="-1">Главная</h1><div class="hint" id="subtitle"></div><span class="save-state" id="save-state"></span></div><div class="header-tools"><a class="account-pill" href="#settings" data-nav="settings" aria-label="Открыть профиль и настройки"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span class="session-name" id="session-name"></span></a><button type="button" class="btn line icon-button logout-btn" data-action="account-logout" aria-label="Выйти из аккаунта"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4m6-12 4 4-4 4M8 12h11"/></svg></button><span class="hint header-date" id="header-date"></span><button class="btn head-add" data-action="quick" type="button" aria-label="Добавить событие"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button></div></header><div id="storage-notice"></div><div id="content"></div></main><nav class="mobile-nav" aria-label="Разделы приложения"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#goals" data-nav="goals"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Цели</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a></nav><dialog id="dialog" aria-labelledby="dialog-title"><div class="dialog-head"><h2 id="dialog-title"></h2><button class="btn ghost" data-action="close" type="button" aria-label="Закрыть"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><form id="editor" class="dialog-body"><div id="form-body"></div><div id="form-error" class="form-error" role="alert"></div><div class="form-footer" id="form-footer"><button type="button" class="btn line" data-action="close">Отмена</button><button type="submit" class="btn">Сохранить</button></div></form></dialog><input id="import-file" type="file" accept="application/json,.json" hidden><div id="toast" role="status" aria-live="polite"></div><noscript>Для работы приложения включите JavaScript в браузере.</noscript></div><script>
+<div id="connection-status" class="connection-status" role="status" aria-live="polite" hidden></div>
+<div id="update-banner" class="update-banner" role="status" hidden><div><b>Доступно обновление Ритма</b><p>Установим его после сохранения вашего плана.</p></div><button class="btn soft" id="apply-update" type="button">Обновить</button></div>
+<section id="auth-screen" class="auth-screen"><div class="auth-wrap"><div class="landing-header"><a class="brand" href="/"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="landing-header-links"><a href="/help">Помощь</a><button class="btn line" type="button" data-install-app>На телефон</button></div></div><section class="landing-story" aria-label="Что умеет Ритм"><div class="eyebrow">Личный финансовый план</div><h2 class="landing-title">Деньги —<br> <span>в вашем ритме.</span></h2><p class="landing-lead">Планируйте платежи, замечайте возможности и двигайтесь к своим целям. Всё важное — в одном месте.</p><div class="landing-tags"><span>Доходы и платежи</span><span>Накопления</span><span>Календарь</span></div><div class="landing-preview" aria-label="Иллюстрация финансового плана"><div class="landing-preview-top"><span>Понятный план на месяц</span><span>Пример</span></div><strong>Больше ясности.<br>Меньше тревоги.</strong><svg viewBox="0 0 360 68" fill="none" aria-hidden="true"><path d="M0 57 50 44 90 49 136 28 178 34 220 14 268 23 315 9 360 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 67h360" stroke="currentColor" stroke-opacity=".2"/></svg><div class="landing-preview-bottom"><span>Сегодня — первый шаг</span><span>Дальше — ваша цель</span></div></div></section><div class="card auth-card"><div class="eyebrow">Ваш личный финансовый план</div><h1 id="auth-heading">Войти в Ритм</h1><p class="muted" id="auth-description">Ваши цели, платежи и поступления — в одном месте.</p><div class="tabs" role="tablist" aria-label="Вход или регистрация"><button type="button" role="tab" aria-selected="true" data-auth-mode="login" class="selected" id="auth-login-tab">Вход</button><button type="button" role="tab" aria-selected="false" data-auth-mode="signup" id="auth-signup-tab">Регистрация</button></div><form id="auth-form"><label for="auth-username"><span>Логин</span><input id="auth-username" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" pattern="[a-z]+" minlength="1" maxlength="32" required placeholder="Например, arman"><small class="hint">Маленькие латинские буквы, без цифр и пробелов.</small></label><label id="auth-name-field" for="auth-name" hidden><span>Имя</span><input id="auth-name" name="name" autocomplete="given-name" maxlength="80" placeholder="Как к вам обращаться"></label><div class="field"><label for="auth-password">Пароль</label><div class="password-control"><input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" pattern="[A-Za-z0-9]+" required aria-describedby="auth-password-hint"><button type="button" class="password-toggle" data-password-target="auth-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="hint" id="auth-password-hint">От 8 символов: латинские буквы и цифры.</small></div><div id="auth-confirm-field" hidden><div class="field"><label for="auth-confirm-password">Повторите пароль</label><div class="password-control"><input id="auth-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" pattern="[A-Za-z0-9]+" required aria-describedby="auth-confirm-password-hint"><button type="button" class="password-toggle" data-password-target="auth-confirm-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="hint" id="auth-confirm-password-hint">Введите пароль ещё раз.</small></div><span class="field-message" id="auth-password-match" role="status" aria-live="polite"></span></div><label class="remember-row"><input type="checkbox" name="remember" checked><span>Оставаться в системе на этом устройстве</span></label><div id="auth-error" class="form-error" role="alert"></div><button type="submit" class="btn auth-submit" id="auth-submit">Войти</button></form><button class="btn ghost auth-forgot" type="button" id="auth-forgot" data-auth-mode="recover">Забыли пароль?</button><form id="recovery-form" hidden><label for="recover-username"><span>Логин</span><input id="recover-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z]+" maxlength="32" required></label><label for="recover-code"><span>Резервный код</span><input id="recover-code" name="recoveryCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="80" required placeholder="XXXX-XXXX-XXXX-XXXX-…"><small class="hint">Код, который вы сохранили при регистрации или в настройках.</small></label><div class="field"><label for="recover-password">Новый пароль</label><div class="password-control"><input id="recover-password" name="newPassword" type="password" autocomplete="new-password" pattern="[A-Za-z0-9]+" minlength="8" maxlength="128" required><button type="button" class="password-toggle" data-password-target="recover-password" aria-label="Показать пароль" aria-pressed="false"></button></div><small class="hint">От 8 символов: латинские буквы и цифры.</small></div><div class="field"><label for="recover-confirm">Повторите новый пароль</label><div class="password-control"><input id="recover-confirm" name="confirmPassword" type="password" autocomplete="new-password" pattern="[A-Za-z0-9]+" minlength="8" maxlength="128" required><button type="button" class="password-toggle" data-password-target="recover-confirm" aria-label="Показать пароль" aria-pressed="false"></button></div><span class="field-message" id="recover-match" role="status" aria-live="polite"></span></div><div class="form-error" id="recover-error" role="alert"></div><button class="btn auth-submit" id="recover-submit" type="submit">Восстановить доступ</button><button class="btn ghost auth-forgot" data-auth-mode="login" type="button">Вернуться ко входу</button></form><p class="smallprint auth-foot">Создавая аккаунт, вы принимаете <a href="/privacy">условия хранения данных</a>.</p></div><footer class="landing-footer"><span>Небольшие шаги. Понятные цели.</span><a href="/privacy">Ваши данные</a><span>Ритм · 2026</span></footer></div></section>
+<div id="application" hidden><aside><a class="brand" href="#home"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="tagline">Деньги в вашем ритме</div><nav aria-label="Разделы"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#goals" data-nav="goals"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Цели</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a><a href="#settings" data-nav="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--card)"/><circle cx="15" cy="17" r="3" fill="var(--card)"/></svg><span>Настройки</span></a></nav><div class="sidebar-foot"><b>Ваш план — у вас</b>План сохраняется в вашем аккаунте.</div></aside><main><header><div class="header-heading"><div class="eyebrow">Личный финансовый план</div><h1 id="heading" tabindex="-1">Главная</h1><div class="hint" id="subtitle"></div><span class="save-state" id="save-state"></span></div><div class="header-tools"><a class="account-pill" href="#settings" data-nav="settings" aria-label="Открыть профиль и настройки"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span class="session-name" id="session-name"></span></a><button type="button" class="btn line icon-button logout-btn" data-action="account-logout" aria-label="Выйти из аккаунта"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4m6-12 4 4-4 4M8 12h11"/></svg></button><span class="hint header-date" id="header-date"></span><button class="btn head-add" data-action="quick" type="button" aria-label="Добавить событие"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button></div></header><div id="storage-notice"></div><div id="content"></div></main><nav class="mobile-nav" aria-label="Разделы приложения"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#goals" data-nav="goals"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Цели</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a></nav><dialog id="dialog" aria-labelledby="dialog-title"><div class="dialog-head"><h2 id="dialog-title"></h2><button class="btn ghost" data-action="close" type="button" aria-label="Закрыть"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><form id="editor" class="dialog-body"><div id="form-body"></div><div id="form-error" class="form-error" role="alert"></div><div class="form-footer" id="form-footer"><button type="button" class="btn line" data-action="close">Отмена</button><button type="submit" class="btn">Сохранить</button></div></form></dialog><dialog id="recovery-dialog" aria-labelledby="recovery-title"><div class="recovery-dialog-body"><h2 id="recovery-title">Сохраните резервный код</h2><p>Он поможет вернуть доступ, если вы забудете пароль. Код показывается только сейчас.</p><output id="recovery-code" class="recovery-code"></output><p>Сохраните его отдельно от пароля и не передавайте другим людям.</p><div class="actions"><button class="btn" type="button" id="download-recovery">Скачать код</button><button class="btn line" type="button" id="close-recovery">Я сохранил код</button></div></div></dialog><dialog id="install-dialog" aria-labelledby="install-title"><div class="recovery-dialog-body"><h2 id="install-title">Ритм на вашем телефоне</h2><p id="install-instructions"></p><p class="smallprint">Вход и синхронизация плана требуют интернета.</p><button class="btn" id="close-install" type="button">Понятно</button></div></dialog><input id="import-file" type="file" accept="application/json,.json" hidden><div id="toast" role="status" aria-live="polite"></div><noscript>Для работы приложения включите JavaScript в браузере.</noscript></div><script>
 
 const Core = (() => {
   const iso = d => d.toISOString().slice(0,10);
@@ -690,8 +734,14 @@ function profileCards(){
   return '<section class="settings-section" aria-label="Профиль и безопасность"><div class="profile-grid"><div class="card profile-card"><div class="profile-heading"><div class="profile-avatar" data-profile-avatar>'+esc(initials(currentUser.name))+'</div><div class="grow"><h2 data-profile-name>'+name+'</h2><div class="account-login">@'+username+'</div></div></div><form id="profile-name-form" data-profile-form="name" data-owner="'+username+'"><label for="profile-name"><span>Ваше имя</span><input id="profile-name" name="name" value="'+name+'" autocomplete="given-name" maxlength="80" required></label><label for="profile-username"><span>Логин</span><input id="profile-username" name="username" value="'+username+'" autocomplete="username" readonly></label><div class="profile-actions"><button type="submit" class="btn">Сохранить имя</button>'+btn(I('logout')+'Выйти','account-logout','','line')+'</div><div class="field-message profile-feedback" id="profile-name-feedback" role="status" aria-live="polite"></div></form></div><div class="card profile-card"><div class="profile-heading"><div class="tile">'+I('lock')+'</div><div class="grow"><h2>Смена пароля</h2><div class="hint">Защитите доступ к своему плану</div></div></div><form id="profile-password-form" data-profile-form="password" data-owner="'+username+'"><input type="hidden" name="username" value="'+username+'" autocomplete="username">'+passwordField('Текущий пароль','profile-current-password','currentPassword','current-password')+passwordField('Новый пароль','profile-new-password','newPassword','new-password','От 8 символов: латинские буквы и цифры.')+passwordField('Повторите новый пароль','profile-confirm-password','confirmPassword','new-password')+'<span class="field-message" id="profile-password-match" role="status" aria-live="polite"></span><p class="smallprint">После смены пароля другие сеансы будут завершены.</p><button type="submit" class="btn profile-password-submit">Изменить пароль</button><div class="field-message profile-feedback" id="profile-password-feedback" role="status" aria-live="polite"></div></form></div></div></section>';
 }
 
+function siteSettings(){
+  return '<section class="settings-section" aria-label="Приложение и восстановление"><div class="setting-grid"><div class="card install-card"><div class="tile">'+I('home')+'</div><h2 style="margin-top:16px">Ритм всегда под рукой</h2><p class="muted" data-install-status>Установите Ритм на телефон: своя иконка и отдельное окно.</p><button class="btn soft" type="button" data-install-app>Установить Ритм</button><p class="smallprint">План синхронизируется через интернет.</p></div><div class="card recovery-card"><div class="tile">'+I('lock')+'</div><h2 style="margin-top:16px">Восстановление доступа</h2><p class="muted">'+(recoveryEnabled?'Резервный код уже создан. Новый код заменит предыдущий.':'Создайте резервный код, чтобы вернуть доступ, если забудете пароль.')+'</p><form id="recovery-code-form" data-sensitive-form data-owner="'+esc(currentUser.username)+'">'+passwordField('Текущий пароль','recovery-current-password','currentPassword','current-password')+'<button class="btn soft" type="submit">'+(recoveryEnabled?'Создать новый код':'Создать резервный код')+'</button><div class="field-message profile-feedback" id="recovery-feedback" role="status" aria-live="polite"></div></form></div></div></section>';
+}
+function accountOptions(){
+  return '<div class="site-links"><a href="/help">Как пользоваться Ритмом</a><a href="/privacy">Ваши данные</a></div><details class="account-deletion"><summary>Удалить аккаунт</summary><form id="delete-account-form" data-sensitive-form data-owner="'+esc(currentUser.username)+'"><p>Аккаунт, план, история и пожелания будут удалены из рабочей базы. Сначала скачайте копию плана.</p><button class="btn line small" type="button" data-action="export">Скачать копию плана</button>'+passwordField('Текущий пароль','delete-current-password','currentPassword','current-password')+'<label for="delete-confirmation"><span>Введите УДАЛИТЬ</span><input id="delete-confirmation" name="confirmation" autocomplete="off" required pattern="УДАЛИТЬ" maxlength="7"></label><button class="btn danger" type="submit">Удалить аккаунт и данные</button><div class="field-message profile-feedback" id="delete-feedback" role="status" aria-live="polite"></div></form></details>';
+}
 function settings(){
-  return profileCards()+'<section class="settings-section"><div class="section-heading"><h2>Финансовый план</h2></div><div class="setting-grid"><div class="card"><div class="tile">'+I('wallet')+'</div><h2 style="margin-top:16px">Баланс и бюджет</h2><p class="muted">Текущая сумма на счетах, валюта и расходы на обычный день.</p><div class="metric-row"><span class="muted">На счетах сейчас</span><b>'+money(S.balance)+'</b></div><div class="metric-row"><span class="muted">Выделено на цели</span><b>'+money(C.reserved(S))+'</b></div><div class="metric-row"><span class="muted">Повседневный бюджет</span><b>'+money(S.daily)+'/день</b></div>'+btn('Изменить','balance','','soft')+'</div><div class="card"><div class="tile blue">'+I('export')+'</div><h2 style="margin-top:16px">Ваши данные</h2><p class="muted">План сохраняется в вашем аккаунте. Экспортируйте его, чтобы иметь отдельную резервную копию.</p><div class="actions">'+btn('Экспорт плана','export')+btn('Импорт','import','','line')+'</div><p class="smallprint">Импорт заменяет текущий план. Данные в файле проверяются до замены.</p></div><div class="card"><h2>Попробовать пример</h2><p class="muted">Готовый план с зарплатой, авансом, подпиской, кредитом и целью.</p>'+btn('Загрузить пример','demo','','soft')+'</div><div class="card"><h2>Начать заново</h2><p class="muted">Очистить баланс, расписание, цели и историю в вашем аккаунте.</p>'+btn('Очистить план','reset','','danger')+'</div></div></section><p class="smallprint">Прогноз строится по вашим данным, включая ожидаемые доходы. Повседневный бюджет служит оценкой будущих трат; реальные расходы записывайте по мере совершения.</p>';
+  return profileCards()+siteSettings()+'<section class="settings-section"><div class="section-heading"><h2>Финансовый план</h2></div><div class="setting-grid"><div class="card"><div class="tile">'+I('wallet')+'</div><h2 style="margin-top:16px">Баланс и бюджет</h2><p class="muted">Текущая сумма на счетах, валюта и расходы на обычный день.</p><div class="metric-row"><span class="muted">На счетах сейчас</span><b>'+money(S.balance)+'</b></div><div class="metric-row"><span class="muted">Выделено на цели</span><b>'+money(C.reserved(S))+'</b></div><div class="metric-row"><span class="muted">Повседневный бюджет</span><b>'+money(S.daily)+'/день</b></div>'+btn('Изменить','balance','','soft')+'</div><div class="card"><div class="tile blue">'+I('export')+'</div><h2 style="margin-top:16px">Ваши данные</h2><p class="muted">План сохраняется в вашем аккаунте. Экспортируйте его, чтобы иметь отдельную резервную копию.</p><div class="actions">'+btn('Экспорт плана','export')+btn('Импорт','import','','line')+'</div><p class="smallprint">Импорт заменяет текущий план. Данные в файле проверяются до замены.</p></div><div class="card"><h2>Попробовать пример</h2><p class="muted">Готовый план с зарплатой, авансом, подпиской, кредитом и целью.</p>'+btn('Загрузить пример','demo','','soft')+'</div><div class="card"><h2>Начать заново</h2><p class="muted">Очистить баланс, расписание, цели и историю в вашем аккаунте.</p>'+btn('Очистить план','reset','','danger')+'</div></div></section><p class="smallprint">Прогноз строится по вашим данным, включая ожидаемые доходы. Повседневный бюджет служит оценкой будущих трат; реальные расходы записывайте по мере совершения.</p>'+accountOptions();
 }
 function syncMobileNav(){
   const nav=document.querySelector('.mobile-nav'),active=nav.querySelector('a.active');
@@ -829,11 +879,12 @@ $('editor').addEventListener('input',()=>{if(active?.kind==='goal')updateGoalPre
 $('editor').addEventListener('change',()=>{if(active?.kind==='goal')updateGoalPreview();});
 $('import-file').addEventListener('change',e=>importPlan(e.target.files[0]));
 $('dialog').addEventListener('click',e=>{if(e.target===$('dialog')){$('dialog').close();active=null;}});
-window.addEventListener('hashchange',()=>{render();window.scrollTo({top:0,behavior:'instant'});$('heading').focus({preventScroll:true});});
+window.addEventListener('hashchange',()=>{if(!currentUser)return;render();window.scrollTo({top:0,behavior:'instant'});$('heading').focus({preventScroll:true});});
 
 
 
 let authMode='login',currentUser=null,remoteRevision=0,queuedPlan=null,saving=false,saveConflict=false,sessionGeneration=0,authBusy=false;
+let recoveryEnabled=false,recoveryBusy=false;
 let wishState=null,wishLoading=false,wishBusy=false,wishError='',wishTimer,wishRequest=0;
 const wishTimeZone=()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC';}catch{return 'UTC';}};
 function clearDailyWish(){
@@ -881,6 +932,7 @@ async function revealDailyWish(){
   }
 }
 async function requestAPI(path,method='GET',data){
+  if(!navigator.onLine)throw Error('Нет связи. Подключитесь к интернету и повторите действие.');
   const response=await fetch('/api/'+path,{method,credentials:'same-origin',headers:{...(currentUser?{'X-Ritm-User':currentUser.username}:{}),...(data?{'Content-Type':'application/json'}:{})},body:data?JSON.stringify(data):undefined,cache:'no-store'});
   let value;try{value=await response.json();}catch{throw Error('Сервер вернул непонятный ответ. Попробуйте позже.');}
   if(!response.ok){const error=Error(value.error||'Не удалось выполнить запрос.');error.status=response.status;error.code=value.code;throw error;}
@@ -889,8 +941,11 @@ async function requestAPI(path,method='GET',data){
 function setAuthMode(mode){
   if(authBusy)return;
   const changed=authMode!==mode;authMode=mode;
-  $('auth-heading').textContent=mode==='signup'?'Создать свой план':'Войти в Ритм';
-  $('auth-description').textContent=mode==='signup'?'Начните с аккаунта — ваш план всегда будет под рукой.':'Ваши цели, платежи и поступления — в одном месте.';
+  $('auth-form').hidden=mode==='recover';$('recovery-form').hidden=mode!=='recover';$('auth-forgot').hidden=mode!=='login';
+  if(mode==='recover'){$('recover-username').value=$('auth-username').value;$('recover-error').textContent='';}
+  if(changed){$('recovery-form').reset();resetPasswordVisibility($('recovery-form'));$('recover-match').textContent='';$('recover-confirm').setCustomValidity('');$('recover-confirm').removeAttribute('aria-invalid');if(mode==='recover')$('recover-username').value=$('auth-username').value;}
+  $('auth-heading').textContent=mode==='recover'?'Вернуть доступ':mode==='signup'?'Создать свой план':'Войти в Ритм';
+  $('auth-description').textContent=mode==='recover'?'Введите логин и сохранённый резервный код.':mode==='signup'?'Начните с аккаунта — ваш план всегда будет под рукой.':'Ваши цели, платежи и поступления — в одном месте.';
   $('auth-submit').textContent=mode==='signup'?'Зарегистрироваться':'Войти';
   $('auth-name-field').hidden=mode!=='signup';$('auth-form').elements.name.required=mode==='signup';
   $('auth-confirm-field').hidden=mode!=='signup';
@@ -906,16 +961,21 @@ function setAuthMode(mode){
   $('auth-error').textContent='';
 }
 function showAuth(){
-  clearProfileSecrets();profileBusy=false;
+  clearProfileSecrets();profileBusy=false;recoveryBusy=false;recoveryEnabled=false;
+  if($('recovery-dialog').open)$('recovery-dialog').close();
   clearDailyWish();sessionGeneration++;currentUser=null;S=C.fresh();queuedPlan=null;saving=false;saveConflict=false;remoteRevision=0;storageError='';
-  $('application').hidden=true;$('auth-screen').hidden=false;$('auth-form').reset();setAuthMode('login');
+  $('content').replaceChildren();$('session-name').textContent='';
+  $('application').hidden=true;$('auth-screen').hidden=false;$('auth-form').reset();$('recovery-form').reset();setAuthMode('login');
+  syncConnectivity();
 }
 function acceptSession(payload){
-  clearProfileSecrets();profileBusy=false;
+  clearProfileSecrets();profileBusy=false;recoveryBusy=false;recoveryEnabled=Boolean(payload.recoveryEnabled);
+  if($('recovery-dialog').open)$('recovery-dialog').close();
   const plan=C.validate(payload.plan);
   clearDailyWish();wishLoading=true;sessionGeneration++;currentUser=payload.user;S=plan;remoteRevision=payload.revision;queuedPlan=null;saving=false;saveConflict=false;storageError='';
   $('auth-form').reset();resetPasswordVisibility($('auth-form'));$('auth-screen').hidden=true;$('application').hidden=false;
   render();authChannel?.postMessage({type:'session-changed',username:currentUser.username});$('session-name').textContent=currentUser.name;$('session-name').title=currentUser.username;void loadDailyWish();
+  if(payload.recoveryCode)showRecoveryCode(payload.recoveryCode);
 }
 async function flushPlan(){
   if(saving||!queuedPlan||!currentUser||saveConflict)return;
@@ -936,7 +996,7 @@ function accountChange(fn,message=''){
   const next=JSON.parse(JSON.stringify(S));fn(next);C.validate(next);S=next;queuedPlan=JSON.parse(JSON.stringify(S));render();if(message)notify(message);void flushPlan();
 }
 function accountRender(){
-  baseRender();
+  baseRender();syncConnectivity();updateInstallUI();
   if(currentUser){$('session-name').textContent=currentUser.name;$('session-name').title=currentUser.username;}
   $('save-state').textContent=storageError?'Есть несохранённые изменения':saving||queuedPlan?'Сохраняем план…':'План сохранён';
   if(storageError)$('storage-notice').innerHTML='<div class="notice error"><div>'+esc(storageError)+'<div class="actions" style="margin-top:10px">'+(saveConflict?btn('Загрузить план с сервера','account-reload','','small line'):btn('Повторить сохранение','account-retry','','small line'))+link('Экспортировать →','settings')+'</div></div></div>';
@@ -962,7 +1022,7 @@ document.addEventListener('click',async e=>{
     if(action==='account-retry'){if(!queuedPlan)queuedPlan=JSON.parse(JSON.stringify(S));void flushPlan();}
     if(action==='account-reload'){if((queuedPlan||saveConflict)&&!confirm('Загрузить серверный план и заменить изменения на этом экране? Сначала их можно экспортировать.'))return;acceptSession(await requestAPI('me'));}
     if(action==='account-logout'){
-      if(saving||profileBusy){notify('Дождитесь окончания сохранения.');return;}
+      if(saving||profileBusy||recoveryBusy){notify('Дождитесь окончания сохранения.');return;}
       if(queuedPlan&&!confirm('Есть несохранённые изменения. Выйти без них?'))return;
       await requestAPI('logout','POST',{});if($('dialog').open)$('dialog').close();active=null;showAuth();authChannel?.postMessage({type:'session-changed',username:null});
     }
@@ -977,11 +1037,11 @@ function resetPasswordVisibility(container){
   }
 }
 function clearProfileSecrets(){
-  for(const input of document.querySelectorAll('form[data-profile-form] input'))if(input.name!=='username')input.value='';
+  for(const input of document.querySelectorAll('form[data-profile-form] input,form[data-sensitive-form] input'))if(input.name!=='username')input.value='';
 }
 function captureProfileDrafts(){
   if(typeof currentUser==='undefined'||!currentUser)return null;
-  const forms=[...document.querySelectorAll('form[data-profile-form]')].filter(form=>form.dataset.owner===currentUser.username);
+  const forms=[...document.querySelectorAll('form[data-profile-form],form[data-sensitive-form]')].filter(form=>form.dataset.owner===currentUser.username);
   if(!forms.length)return null;
   const values=forms.flatMap(form=>[...form.querySelectorAll('input')].map(input=>({id:input.id,value:input.value,type:input.type}))).filter(x=>x.id);
   const feedback=forms.map(form=>{const node=form.querySelector('.profile-feedback');return node?{id:node.id,text:node.textContent,state:node.dataset.state}:null;}).filter(Boolean);
@@ -1008,6 +1068,7 @@ function syncPasswordPair(passwordId,confirmationId,messageId){
 }
 function onPasswordInput(e){
   if(['auth-password','auth-confirm-password'].includes(e.target.id))syncPasswordPair('auth-password','auth-confirm-password','auth-password-match');
+  if(['recover-password','recover-confirm'].includes(e.target.id))syncPasswordPair('recover-password','recover-confirm','recover-match');
   if(['profile-new-password','profile-confirm-password'].includes(e.target.id))syncPasswordPair('profile-new-password','profile-confirm-password','profile-password-match');
 }
 for(const event of ['input','change'])document.addEventListener(event,onPasswordInput);
@@ -1026,7 +1087,7 @@ function updateProfileUser(user){
 }
 document.addEventListener('submit',async e=>{
   const form=e.target.closest('form[data-profile-form]');if(!form)return;
-  e.preventDefault();if(profileBusy||!currentUser)return;
+  e.preventDefault();if(profileBusy||recoveryBusy||!currentUser)return;
   const kind=form.dataset.profileForm,feedbackId=kind==='name'?'profile-name-feedback':'profile-password-feedback';
   let feedback=$(feedbackId);feedback.textContent='';feedback.dataset.state='';
   const data=kind==='name'?{name:form.elements.name.value.trim()}:{currentPassword:form.elements.currentPassword.value,newPassword:form.elements.newPassword.value,confirmPassword:form.elements.confirmPassword.value};
@@ -1057,7 +1118,8 @@ async function startAuth(){
   try{const reply=await requestAPI('me');if(generation===sessionGeneration)acceptSession(reply);}
   catch(error){if(generation===sessionGeneration&&error.status!==401)$('auth-error').textContent='Не удалось связаться с сервером. '+error.message;}
 }
-window.addEventListener('online',()=>{if(queuedPlan&&!saveConflict)void flushPlan();});
+window.addEventListener('online',()=>{syncConnectivity();if(queuedPlan&&!saveConflict)void flushPlan();if(!currentUser&&!authBusy)void startAuth();});
+window.addEventListener('offline',syncConnectivity);
 window.addEventListener('beforeunload',e=>{if(queuedPlan||saving){e.preventDefault();e.returnValue='';}});
 
 const authChannel=typeof BroadcastChannel==='function'?new BroadcastChannel('ritm-session'):null;
@@ -1090,6 +1152,90 @@ Object.assign(icons,{
 for(const node of document.querySelectorAll('aside [data-nav],.mobile-nav [data-nav]')){
   const svg=node.querySelector('svg');if(svg)svg.outerHTML=I(node.dataset.nav);
 }
+
+function syncConnectivity(){
+  const notice=$('connection-status');notice.hidden=navigator.onLine;
+  notice.textContent=currentUser?'Нет связи. Оставьте Ритм открытым: изменения сохранятся после подключения.':'Нет связи. Для входа и загрузки плана нужен интернет.';
+}
+let installPrompt=null,serviceRegistration=null,updateReloading=false;
+const installed=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function updateInstallUI(){
+  for(const node of document.querySelectorAll('[data-install-status]'))node.textContent=installed()?'Ритм уже открыт как приложение.':'Установите Ритм на телефон: своя иконка и отдельное окно.';
+  for(const button of document.querySelectorAll('[data-install-app]'))button.hidden=installed();
+}
+function showRecoveryCode(code){
+  $('recovery-code').textContent=code;$('recovery-dialog').showModal();
+}
+$('close-recovery').addEventListener('click',()=>$('recovery-dialog').close());
+$('recovery-dialog').addEventListener('close',()=>{$('recovery-code').textContent='';});
+$('download-recovery').addEventListener('click',()=>{
+  if(!currentUser||!$('recovery-code').textContent)return;
+  const content='Ритм — резервный код\nЛогин: '+currentUser.username+'\nКод: '+$('recovery-code').textContent+'\n\nХраните код отдельно от пароля. Восстановление: «Забыли пароль?» на странице входа.\nПосле восстановления сохраните новый код.\n';
+  const url=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'})),link=document.createElement('a');
+  link.href=url;link.download='ritm-recovery-'+currentUser.username+'.txt';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+});
+$('recovery-form').addEventListener('submit',async event=>{
+  event.preventDefault();if(authBusy)return;
+  if(!syncPasswordPair('recover-password','recover-confirm','recover-match'))return;
+  const form=event.currentTarget,data={username:form.elements.username.value,recoveryCode:form.elements.recoveryCode.value,newPassword:form.elements.newPassword.value,confirmPassword:form.elements.confirmPassword.value,remember:true};
+  authBusy=true;$('recover-submit').disabled=true;$('recover-error').textContent='';
+  try{acceptSession(await requestAPI('recover','POST',data));form.reset();notify('Доступ восстановлен. Сохраните новый резервный код.');}
+  catch(error){$('recover-error').textContent=error.message;}
+  finally{authBusy=false;$('recover-submit').disabled=false;}
+});
+document.addEventListener('submit',async event=>{
+  const form=event.target.closest('#recovery-code-form,#delete-account-form');if(!form)return;
+  event.preventDefault();if(!currentUser||recoveryBusy)return;
+  const deleting=form.id==='delete-account-form',feedback=$(deleting?'delete-feedback':'recovery-feedback'),generation=sessionGeneration,username=currentUser.username;
+  feedback.textContent='';
+  if(saving||queuedPlan||profileBusy){feedback.textContent='Сначала дождитесь сохранения плана и профиля.';return;}
+  recoveryBusy=true;const button=form.querySelector('button[type="submit"]');button.disabled=true;
+  const data={currentPassword:form.elements.currentPassword.value,...(deleting?{confirmation:form.elements.confirmation.value}:{})};
+  try{
+    const reply=await requestAPI(deleting?'account':'recovery-code',deleting?'DELETE':'POST',data);
+    if(generation!==sessionGeneration||currentUser?.username!==username)return;
+    form.reset();resetPasswordVisibility(form);
+    if(deleting){showAuth();authChannel?.postMessage({type:'session-changed',username:null});notify('Аккаунт и данные удалены.');}
+    else{recoveryEnabled=true;feedback.textContent='Новый код создан. Предыдущий больше не действует.';feedback.dataset.state='success';showRecoveryCode(reply.recoveryCode);}
+  }catch(error){
+    if(generation!==sessionGeneration)return;
+    if(error.code==='not_signed_in'||error.code==='account_changed'){showAuth();void startAuth();return;}
+    feedback.textContent=error.message;feedback.dataset.state='error';
+  }finally{if(generation===sessionGeneration){recoveryBusy=false;button.disabled=false;}}
+});
+async function installApp(){
+  if(installed()){notify('Ритм уже установлен.');return;}
+  if(installPrompt){
+    const prompt=installPrompt;installPrompt=null;await prompt.prompt();await prompt.userChoice;updateInstallUI();return;
+  }
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),android=/Android/.test(navigator.userAgent);
+  $('install-instructions').textContent=ios?'Откройте Ритм в Safari. Нажмите «Поделиться» и выберите «На экран Домой». Если доступно «Открывать как веб-приложение», включите его.':android?'Откройте Ритм в Chrome. В меню браузера выберите «Установить приложение» или «Добавить на главный экран».':'В Chrome или Edge откройте меню браузера и выберите установку Ритма. На iPhone используйте Safari → «Поделиться» → «На экран Домой».';
+  $('install-dialog').showModal();
+}
+document.addEventListener('click',event=>{if(event.target.closest('[data-install-app]'))void installApp().catch(()=>notify('Откройте установку через меню браузера.'));});
+$('close-install').addEventListener('click',()=>$('install-dialog').close());
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;updateInstallUI();});
+window.addEventListener('appinstalled',()=>{installPrompt=null;updateInstallUI();notify('Ритм установлен — открывайте его с экрана телефона.');});
+function showAppUpdate(){if(serviceRegistration?.waiting&&navigator.serviceWorker.controller)$('update-banner').hidden=false;}
+$('apply-update').addEventListener('click',()=>{
+  if(!serviceRegistration?.waiting)return;
+  const profileDraft=$('profile-name')?.value!==undefined&&$('profile-name').value!==currentUser?.name;
+  const secretDraft=[...document.querySelectorAll('#content input[type="password"]')].some(input=>input.value);
+  if(queuedPlan||saving||profileBusy||recoveryBusy||authBusy||document.querySelector('dialog[open]')||profileDraft||secretDraft||!currentUser&&($('auth-username').value||$('recover-username').value)){
+    notify('Завершите текущие изменения и сохраните план перед обновлением.');return;
+  }
+  updateReloading=true;serviceRegistration.waiting.postMessage({type:'ACTIVATE_UPDATE'});
+});
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(updateReloading)location.reload();});
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(registration=>{
+      serviceRegistration=registration;showAppUpdate();
+      registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed')showAppUpdate();});});
+    }).catch(()=>{});
+  });
+}
+syncConnectivity();updateInstallUI();resetPasswordVisibility($('recovery-form'));
 
 new ResizeObserver(syncMobileNav).observe(document.querySelector('.mobile-nav'));
 
