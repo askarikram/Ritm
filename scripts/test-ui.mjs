@@ -177,6 +177,63 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       check(await page.locator('#editor [name="currency"] option[value="KZT"]').textContent()==='Теңге · ₸',engineName+': Kazakh currency name in selector');
       await page.locator('#dialog [data-action="close"]').first().click();
 
+      // Finance privacy is a view preference, never a financial-plan mutation.
+      await navigate('home');await waitSaved();
+      const privacyHeaders={'X-Ritm-User':username,Origin:base};
+      const beforePrivacy=await (await page.request.get(base+'/api/me',{headers:privacyHeaders})).json();
+      const originalBalance=await page.locator('.balance-overview .big').textContent();
+      await page.locator('#finance-privacy').click();
+      check(await page.locator('#finance-privacy').getAttribute('aria-pressed')==='true',engineName+': eye enables finance privacy');
+      check(await page.locator('.balance-overview .big').textContent()==='•••• теңге',engineName+': balance replaced by fixed dots');
+      check(await page.locator('.chart-private').isVisible()&&await page.locator('.progress[aria-valuenow]').count()===0,engineName+': chart and goal percentage concealed');
+      for(const width of [320,390,768,1440]){
+        await page.setViewportSize({width,height:844});
+        for(const route of ['home','income','payment','goals','calendar','settings']){
+          await navigate(route);
+          const text=await page.locator('#content').innerText();
+          check(!/[0-9][0-9\s\u00a0.,]*\s*(?:теңге|\$)/.test(text)&&!/\d+%/.test(text),engineName+': private finance figures concealed on '+route+' at '+width+'px');
+          const geometry=await page.locator('#finance-privacy').evaluate(button=>{
+            const b=button.getBoundingClientRect(),heading=document.getElementById('heading').getBoundingClientRect();
+            return b.left>=0&&b.right<=innerWidth&&b.width>=44&&b.height>=44&&heading.left>=0&&heading.right<=innerWidth;
+          });
+          check(geometry&&await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),engineName+': eye and full heading fit '+route+' at '+width+'px');
+          if(route==='income'||route==='payment')check(await page.locator('[data-planned-total]').getAttribute('data-total-cents')==='',engineName+': hidden total exposes no numeric dataset');
+        }
+        if(engineName==='chromium'&&[390,1440].includes(width)){
+          await navigate('home');const screenshot=await page.screenshot({fullPage:true});
+          console.log('RITM_SCREENSHOT_PRIVACY_'+width+' '+screenshot.toString('base64'));
+        }
+      }
+      await navigate('calendar');
+      await page.locator('[data-action="cal-view"][data-view="forecast"]').click();
+      check(!/[0-9][0-9\s\u00a0.,]*\s*(?:теңге|\$)/.test(await page.locator('#content').innerText()),engineName+': forecast table amounts concealed');
+      await navigate('home');
+      await page.locator('.balance-edit').click();
+      check(await page.locator('#editor [data-finance-input]').evaluateAll(inputs=>inputs.length===2&&inputs.every(input=>input.type==='password')),engineName+': money fields concealed in edit dialog');
+      await page.locator('#dialog [data-action="close"]').first().click();
+      await page.reload({waitUntil:'networkidle'});
+      await page.locator('#application').waitFor({state:'visible'});
+      check(await page.locator('#finance-privacy').getAttribute('aria-pressed')==='true'&&await page.locator('.balance-overview .big').textContent()==='•••• теңге',engineName+': hidden view survives reload');
+
+      const alternateUsername='privacy'+suffix,alternatePassword='PrivacyTestPassword123';
+      const alternative=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username:alternateUsername,name:'Проверка режима',password:alternatePassword,confirmPassword:alternatePassword}});
+      check(alternative.ok(),engineName+': second account available for privacy isolation');
+      await page.reload({waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});
+      check(await page.locator('#finance-privacy').getAttribute('aria-pressed')==='false',engineName+': privacy preference belongs to account');
+      const removedAlternate=await page.request.delete(base+'/api/account',{headers:{Origin:base,'X-Ritm-User':alternateUsername},data:{currentPassword:alternatePassword,confirmation:'УДАЛИТЬ'}});
+      check(removedAlternate.ok(),engineName+': secondary privacy test account removed');
+      const restored=await page.request.post(base+'/api/login',{headers:{Origin:base},data:{username,password:newPassword}});
+      check(restored.ok(),engineName+': original account restored');
+      await page.reload({waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});
+      check(await page.locator('#finance-privacy').getAttribute('aria-pressed')==='true',engineName+': original privacy preference restored after switching account');
+      await page.locator('#finance-privacy').click();
+      check(await page.locator('.balance-overview .big').textContent()===originalBalance&&await page.locator('.chart-private').count()===0&&await page.locator('.progress[aria-valuenow]').count()>0,engineName+': eye restores amounts and chart');
+      const afterPrivacy=await (await page.request.get(base+'/api/me',{headers:privacyHeaders})).json();
+      assert.deepEqual(afterPrivacy.plan,beforePrivacy.plan);
+      check(afterPrivacy.revision===beforePrivacy.revision,engineName+': hiding and revealing leave financial plan unchanged');
+      await page.reload({waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});
+      check(await page.locator('#finance-privacy').getAttribute('aria-pressed')==='false',engineName+': visible preference also persists');
+
       for(const width of [320,360,390,414,768,1440]) {
         await page.setViewportSize({width,height:width>=1000?1000:844});
         for(const route of ['home','income','payment','goals','calendar','settings']) {
