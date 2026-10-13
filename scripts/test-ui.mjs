@@ -71,6 +71,13 @@ export async function verifyUI(base) {
       await page.reload({waitUntil:'networkidle'});
       await page.locator('.daily-wish.is-open .wish-text').waitFor();
       check(signupRequests===1,engineName+': confirmed registration submitted once');
+
+      for(const route of ['income','payment']){
+        await page.evaluate(route=>{location.hash=route;},route);
+        await page.waitForFunction(route=>document.querySelector('[data-planned-total="'+route+'"]')!==null,route);
+        check(await page.locator('[data-planned-total="'+route+'"]').getAttribute('data-total-cents')==='0',engineName+': empty '+route+' planned total is zero');
+        check((await page.locator('[data-planned-total="'+route+'"]').textContent()).replace(/\s/g,'')==='0теңге',engineName+': Kazakh currency label in empty total');
+      }
       await page.locator('.account-pill').click();
       await page.waitForFunction(()=>document.getElementById('heading').textContent==='Настройки');
       check(await page.locator('#profile-name-form').isVisible()&&await page.locator('#profile-password-form').isVisible(),engineName+': profile available in settings');
@@ -108,13 +115,65 @@ export async function verifyUI(base) {
       const after=await (await page.request.get(base+'/api/me',{headers:{'X-Ritm-User':username}})).json();
       assert.deepEqual(after.plan,before.plan);
       check(after.revision===before.revision&&after.user.name==='Александр Новый',engineName+': profile changes preserve financial plan');
+
+      const navigate=async route=>{
+        await page.evaluate(route=>{location.hash=route;},route);
+        await page.waitForFunction(route=>document.querySelector('[data-nav="'+route+'"][aria-current="page"]')!==null,route);
+      };
+      const waitSaved=()=>page.waitForFunction(()=>document.getElementById('save-state').textContent==='План сохранён');
+      for(const [type,baseCents] of [['income',7000000n],['payment',2529900n]]){
+        await navigate('home');
+        await page.locator('.home-actions [data-action="add-'+type+'"]').click();
+        await page.locator('#dialog').waitFor({state:'visible'});
+        const title='Проверка итога '+type;
+        await page.locator('#editor [name="title"]').fill(title);
+        await page.locator('#editor [name="amount"]').fill('1234');
+        await page.locator('#editor [name="repeat"]').selectOption('weekly');
+        await page.locator('#editor button[type="submit"]').click();
+        await waitSaved();await navigate(type);
+        const total=page.locator('[data-planned-total="'+type+'"]');
+        check(await total.getAttribute('data-total-cents')===(baseCents+123400n).toString(),engineName+': '+type+' total updates after adding a recurring entry once');
+        check((await total.textContent()).includes('теңге'),engineName+': '+type+' total uses теңге');
+        const row=page.locator('.schedule-table tbody tr').filter({has:page.getByText(title,{exact:true})});
+        await row.locator('[data-action="edit-item"]').click();
+        await page.locator('#editor [name="amount"]').fill('4321');
+        await page.locator('#editor button[type="submit"]').click();
+        await waitSaved();
+        check(await total.getAttribute('data-total-cents')===(baseCents+432100n).toString(),engineName+': '+type+' total updates after editing');
+        await page.reload({waitUntil:'networkidle'});
+        await total.waitFor();
+        check(await total.getAttribute('data-total-cents')===(baseCents+432100n).toString(),engineName+': '+type+' total survives reload');
+        await row.locator('[data-action="delete-item"]').click();
+        await waitSaved();
+        check(await total.getAttribute('data-total-cents')===baseCents.toString(),engineName+': '+type+' total updates after deletion');
+      }
+      await navigate('home');
+      for(const [action,title] of [['expense','Записать расход'],['edit-goal','Новая цель']]){
+        await page.locator('.home-actions [data-action="'+action+'"]').click();
+        check(await page.locator('#dialog-title').textContent()===title,engineName+': working '+action+' shortcut');
+        await page.locator('#dialog [data-action="close"]').first().click();
+      }
+      await page.locator('.balance-edit').click();
+      check(await page.locator('#editor [name="currency"] option[value="KZT"]').textContent()==='Теңге · ₸',engineName+': Kazakh currency name in selector');
+      await page.locator('#dialog [data-action="close"]').first().click();
+
       for(const width of [320,390,768,1440]) {
         await page.setViewportSize({width,height:width>=1000?1000:844});
         for(const route of ['home','income','payment','goals','calendar','settings']) {
           await page.evaluate(route=>{location.hash=route;},route);
           await page.waitForFunction(route=>document.querySelector('[data-nav="'+route+'"][aria-current="page"]')!==null,route);
           check(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),engineName+': '+route+' fits '+width+'px');
+          if(route==='home'&&width<=950){
+            const links=await page.locator('.mobile-nav a').count();
+            const geometry=await page.locator('.mobile-nav').evaluate(nav=>{const box=nav.getBoundingClientRect();return {left:box.left,right:box.right,bottom:box.bottom,width:innerWidth,height:innerHeight};});
+            check(links===5&&geometry.left>=0&&geometry.right<=geometry.width&&geometry.bottom<=geometry.height,engineName+': floating navigation fits '+width+'px');
+            check(await page.locator('.mobile-nav a').evaluateAll(links=>links.every(link=>{const box=link.getBoundingClientRect();return box.width>=44&&box.height>=44;})),engineName+': usable navigation targets at '+width+'px');
+          }
+
           if(route==='income'||route==='payment'){
+            const expected=route==='income'?'7000000':'2529900';
+            check(await page.locator('[data-planned-total="'+route+'"]').getAttribute('data-total-cents')===expected,engineName+': '+route+' aggregate remains correct at '+width+'px');
+
             check(await page.locator('.schedule-table .row-name .tile').count()===0,engineName+': '+route+' names have no decorative icons');
             if(width<=850){
               check(await page.locator('.schedule-table .list-label').evaluateAll(labels=>labels.every(label=>{const box=label.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth&&getComputedStyle(label).whiteSpace==='normal';})),engineName+': complete schedule names at '+width+'px');
@@ -150,6 +209,21 @@ export async function verifyUI(base) {
         check(await page.locator('#dialog').evaluate(dialog=>{const box=dialog.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth&&box.top>=0&&box.bottom<=innerHeight;}),engineName+': dialog fits '+width+'px');
         await page.locator('#dialog [data-action="close"]').first().click();
       }
+
+      if(engineName==='chromium'){
+        const headers={'X-Ritm-User':username,Origin:base};
+        const saved=await (await page.request.get(base+'/api/me',{headers})).json();
+        const date=new Date().toISOString().slice(0,10);
+        const items=Array.from({length:500},(_,i)=>({id:'largetotal'+i,title:'Проверка большой суммы '+i,type:'payment',amount:99999999999999,date,repeat:'none'}));
+        const response=await page.request.put(base+'/api/plan',{headers,data:{revision:saved.revision,plan:{...saved.plan,items}}});
+        check(response.ok(),'large valid plan accepted for total precision check');
+        await navigate('payment');await page.reload({waitUntil:'networkidle'});
+        await page.locator('[data-planned-total="payment"]').waitFor();
+        const expected=500n*99999999999999n;
+        check(await page.locator('[data-planned-total="payment"]').getAttribute('data-total-cents')===expected.toString(),'exact total beyond Number integer precision');
+        check((await page.locator('[data-planned-total="payment"]').textContent()).replace(/\s/g,'')===((expected+50n)/100n).toString()+'теңге','large total formatted without precision loss');
+      }
+
       check(errors.length===0,engineName+': no browser JavaScript errors');
     } finally { await context.close();await browser.close(); }
   }
