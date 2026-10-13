@@ -185,7 +185,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       await page.locator('#finance-privacy').click();
       check(await page.locator('#finance-privacy').getAttribute('aria-pressed')==='true',engineName+': eye enables finance privacy');
       check(await page.locator('.balance-overview .big').textContent()==='•••• теңге',engineName+': balance replaced by fixed dots');
-      check(await page.locator('.chart-private').isVisible()&&await page.locator('.progress[aria-valuenow]').count()===0,engineName+': chart and goal percentage concealed');
+      check(await page.locator('[data-month-summary] strong').evaluateAll(nodes=>nodes.length===5&&nodes.every(node=>node.textContent.includes('••••')))&&await page.locator('.progress[aria-valuenow]').count()===0,engineName+': monthly amounts and goal percentage concealed');
       for(const width of [320,390,768,1440]){
         await page.setViewportSize({width,height:844});
         for(const route of ['home','income','payment','goals','calendar','settings']){
@@ -227,7 +227,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       await page.reload({waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});
       check(await page.locator('#finance-privacy').getAttribute('aria-pressed')==='true',engineName+': original privacy preference restored after switching account');
       await page.locator('#finance-privacy').click();
-      check(await page.locator('.balance-overview .big').textContent()===originalBalance&&await page.locator('.chart-private').count()===0&&await page.locator('.progress[aria-valuenow]').count()>0,engineName+': eye restores amounts and chart');
+      check(await page.locator('.balance-overview .big').textContent()===originalBalance&&!(await page.locator('[data-month-income]').textContent()).includes('••••')&&await page.locator('.progress[aria-valuenow]').count()>0,engineName+': eye restores amounts and monthly summary');
       const afterPrivacy=await (await page.request.get(base+'/api/me',{headers:privacyHeaders})).json();
       assert.deepEqual(afterPrivacy.plan,beforePrivacy.plan);
       check(afterPrivacy.revision===beforePrivacy.revision,engineName+': hiding and revealing leave financial plan unchanged');

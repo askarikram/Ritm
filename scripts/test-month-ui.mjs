@@ -43,6 +43,10 @@ export async function verifyMonthUI(base){
       await page.clock.install({time:new Date('2024-01-31T23:00:00Z')});
       await page.goto(base,{waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});
       await page.evaluate(()=>document.fonts.ready);
+      const summaryValues=async()=>page.locator('[data-month-summary]').evaluate(section=>Object.fromEntries(['opening','income','expenses','remaining','savings'].map(name=>[name,section.querySelector('[data-month-'+name+']').textContent])));
+      const initialSummary=await summaryValues();
+      check(await page.locator('[data-month-summary]').getAttribute('data-start-date')==='2024-01-01',name+': summary begins first day even when today is last day');
+      check(await page.locator('.chart').count()===0,name+': home chart removed');
       await navigate('income');
       check(await page.locator('[data-planned-total="income"]').getAttribute('data-total-cents')==='301000',name+': active income total before confirmation');
       await confirm('income','once-income@2024-01-31');
@@ -64,12 +68,42 @@ export async function verifyMonthUI(base){
       const january=await read();
       check(january.balance===1295000&&january.ledger.length===4,name+': actual transactions saved once');
       await navigate('home');
-      check(await page.locator('[data-month-forecast]').getAttribute('data-end-date')==='2024-01-31',name+': home forecast ends this month');
+      check(await page.locator('[data-month-summary]').getAttribute('data-end-date')==='2024-01-31',name+': home summary ends last calendar day');
+      assert.deepEqual(await summaryValues(),initialSummary);check(true,name+': receiving and paying leave full monthly summary unchanged');
       const amount=async selector=>(await page.locator(selector).textContent()).replace(/\D/g,'');
-      check(await amount('[data-month-account-end]')==='12940'&&await amount('[data-month-available-end]')==='12340',name+': monthly account and available totals distinguish goal transfers');
+      check(await amount('[data-month-income]')==='3010'&&await amount('[data-month-expenses]')==='370'&&await amount('[data-month-savings]')==='100'&&await amount('[data-month-remaining]')==='12540',name+': monthly summary includes confirmed plans, all daily allocations and goals');
+      await page.locator('[data-action="month-daily"]').click();await saved();
+      check(await amount('[data-month-expenses]')==='60'&&await amount('[data-month-remaining]')==='12850',name+': daily switch excludes only daily budget');
+      await page.reload({waitUntil:'networkidle'});await saved();
+      check(!await page.locator('[data-action="month-daily"]').isChecked()&&await amount('[data-month-expenses]')==='60',name+': monthly daily choice persists after reload');
+      await page.locator('[data-action="month-daily"]').click();await saved();
+      await page.locator('[data-action="month-balance"]').click();
+      await page.locator('#editor [name="opening"]').fill('9000');
+      await page.locator('#editor button[type="submit"]').click();await page.locator('#dialog').waitFor({state:'hidden'});await saved();
+      check(await amount('[data-month-opening]')==='9000'&&await amount('[data-month-remaining]')==='11540',name+': custom opening changes remainder by same amount');
+      check((await read()).balance===1295000,name+': editing opening preserves actual balance');
+      await page.reload({waitUntil:'networkidle'});await saved();
+      check(await amount('[data-month-opening]')==='9000',name+': opening persists after reload');
+      await page.locator('[data-action="month-balance"]').click();await page.locator('#editor [name="opening"]').fill('10000');
+      await page.locator('#editor button[type="submit"]').click();await page.locator('#dialog').waitFor({state:'hidden'});await saved();
+      await page.locator('[data-action="reserve"]').first().click();
+      await page.locator('#editor [name="amount"]').fill('50');
+      await page.locator('#editor button[type="submit"]').click();await page.locator('#dialog').waitFor({state:'hidden'});await saved();
+      check(await amount('[data-month-savings]')==='100'&&await amount('[data-month-remaining]')==='12540',name+': partial actual goal contribution retains planned monthly amount');
+      check((await read()).goals[0].saved===55000&&(await read()).balance===1295000,name+': goal action changes reserved money and leaves accounts untouched');
       await page.locator('#finance-privacy').click();
-      check((await page.locator('[data-month-account-end]').textContent()).includes('••••')&&(await page.locator('[data-month-available-end]').textContent()).includes('••••'),name+': privacy hides new month-end totals');
+      check(await page.locator('[data-month-summary] strong').evaluateAll(nodes=>nodes.length===5&&nodes.every(node=>node.textContent.includes('••••'))),name+': privacy hides all five monthly amounts');
+      await page.locator('[data-action="month-balance"]').click();
+      check(await page.locator('#editor [name="opening"]').getAttribute('type')==='password',name+': privacy hides opening balance editor');
+      await page.locator('#dialog [data-action="close"]').first().click();
       await page.locator('#finance-privacy').click();
+      for(const width of [320,390,768,1440]){
+        await page.setViewportSize({width,height:844});
+        check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+': monthly summary fits '+width+'px');
+        check(await page.locator('.month-summary-metric').evaluateAll(nodes=>nodes.every(node=>node.scrollWidth<=node.clientWidth+1)),name+': monthly values fit inside cards at '+width+'px');
+      }
+      await page.setViewportSize({width:390,height:844});
+      if(name==='chromium'){const shot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_SUMMARY_390 '+shot.toString('base64'));}
       if(name==='chromium'){await page.setViewportSize({width:1440,height:1000});const shot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_MONTH_HOME_1440 '+shot.toString('base64'));await page.setViewportSize({width:390,height:844});}
       await navigate('calendar');await page.locator('[data-action="cal-view"][data-view="forecast"]').click();
       check(await page.locator('[data-two-month-forecast]').getAttribute('data-end-date')==='2024-02-29',name+': long forecast covers current and next month');
@@ -90,7 +124,8 @@ export async function verifyMonthUI(base){
       check(await active('income','month-income@2024-02-29').count()===1&&await active('income','once-income@2024-01-31').count()===0,name+': only monthly income returns in February');
       await confirm('income','month-income@2024-02-29');
       await navigate('home');
-      check(await page.locator('[data-month-forecast]').getAttribute('data-end-date')==='2024-02-29',name+': February home forecast ends on leap day');
+      check(await page.locator('[data-month-summary]').getAttribute('data-start-date')==='2024-02-01'&&await page.locator('[data-month-summary]').getAttribute('data-end-date')==='2024-02-29',name+': February summary covers all leap-month days');
+      check(await amount('[data-month-income]')==='3000'&&await amount('[data-month-expenses]')==='330'&&await amount('[data-month-savings]')==='100'&&await amount('[data-month-opening]')==='12950'&&await amount('[data-month-remaining]')==='15520',name+': February includes confirmed monthly entries and carries actual opening once');
       await navigate('calendar');await page.locator('[data-action="cal-view"][data-view="forecast"]').click();
       check(await page.locator('[data-two-month-forecast]').getAttribute('data-end-date')==='2024-03-31',name+': February long forecast ends in March');
       await navigate('payment');

@@ -129,6 +129,43 @@ const Core = (() => {
     const plannedSaving=result.rows.reduce((sum,row)=>sum+row.saving,0);
     return {...result,end,availableEnd,accountEnd:availableEnd+reserved(s)+plannedSaving};
   };
+  const goalMonthAmount = (g,date=today()) => {
+    const key=date.slice(0,7),from=monthStart(date),to=monthEnd(date);
+    if(Object.hasOwn(g.monthPlans||{},key))return g.monthPlans[key];
+    const done=(g.done||[]).filter(date=>date>=from&&date<=to);
+    if(g.mode==='monthly'&&done.length)return Math.min(g.monthly,g.target);
+    const p=goalPlan({...g,done:(g.done||[]).filter(date=>date<from)},from);
+    if(!p.slots.some(date=>date>=from&&date<=to))return 0;
+    return Math.min(p.amount,p.remaining);
+  };
+  const freezeGoalMonth = (g,date=today()) => {
+    const key=date.slice(0,7);
+    if(!Object.hasOwn(g.monthPlans||{},key))g.monthPlans={...(g.monthPlans||{}),[key]:goalMonthAmount(g,date)};
+  };
+  const monthOpening = (s,date=today()) => {
+    const start=monthStart(date),key=date.slice(0,7);
+    return Object.hasOwn(s.monthBalances||{},key)?BigInt(s.monthBalances[key]):s.ledger.filter(e=>e.date>=start).reduce((balance,e)=>balance+(e.type==='income'?-BigInt(e.amount):BigInt(e.amount)),BigInt(s.balance));
+  };
+  const monthOverview = (s,date=today()) => {
+    const start=monthStart(date),end=monthEnd(date),key=date.slice(0,7),count=days(start,end)+1;
+    let income=0n,payments=0n;
+    for(const item of s.items){
+      const amount=BigInt(item.amount)*BigInt(dates(item,start,end).length);
+      if(item.type==='income')income+=amount;else payments+=amount;
+    }
+    const savings=s.goals.reduce((sum,g)=>sum+BigInt(goalMonthAmount(g,date)),0n);
+    const includeDaily=s.monthlyIncludeDaily!==false,daily=includeDaily?BigInt(s.daily)*BigInt(count):0n,expenses=payments+daily;
+    const specified=Object.hasOwn(s.monthBalances||{},key);
+    const opening=monthOpening(s,date);
+    return {start,end,count,income,payments,daily,expenses,savings,opening,remaining:opening+income-expenses-savings,includeDaily,specified};
+  };
+  const freezeMonthBalance = (s,date=today()) => {
+    const key=date.slice(0,7);
+    if(!Object.hasOwn(s.monthBalances||{},key)){
+      const opening=Number(monthOpening(s,date));
+      if(Number.isSafeInteger(opening)&&Math.abs(opening)<=100000000000000)s.monthBalances={...(s.monthBalances||{}),[key]:opening};
+    }
+  };
   const allowance = (s,now=today()) => {
     const es=scheduled(s,now,addDays(now,365),true);
     const next=es.find(e=>e.type==='income');
@@ -139,10 +176,11 @@ const Core = (() => {
     const left=available(s)-obligations-goals;
     return {next,count,last,obligations,goals,left,perDay:Math.max(0,Math.floor(left/count/100)*100),need:Math.max(0,s.daily*count-left)};
   };
-  const record = (s,event,amount,date) => {
+  const record = (s,event,amount,date,now=today()) => {
     if(s.done[event.key]) throw Error('Это событие уже подтверждено.');
     if(!Number.isSafeInteger(amount)||amount<=0) throw Error('Введите сумму больше нуля.');
-    if(!validDate(date)||date>today()) throw Error('Дата фактической операции не может быть в будущем.');
+    if(!validDate(date)||date>now) throw Error('Дата фактической операции не может быть в будущем.');
+    freezeMonthBalance(s,now);
     s.balance+=event.type==='income'?amount:-amount;
     const entry={id:id(),key:event.key,itemId:event.id,title:event.title,type:event.type,amount,date,plannedDate:event.originalDate};
     s.ledger.unshift(entry);s.done[event.key]=true;
@@ -152,18 +190,24 @@ const Core = (() => {
     if(!s||s.version!==1||!Array.isArray(s.items)||!Array.isArray(s.goals)||!Array.isArray(s.ledger)||!s.done||typeof s.done!=='object'||Array.isArray(s.done)) throw Error('Неподдерживаемый файл плана.');
     const money=(v,negative=false)=>Number.isSafeInteger(v)&&Math.abs(v)<=100000000000000&&(negative||v>=0);
     if(!money(s.balance,true)||!money(s.daily)||!['KZT','USD'].includes(s.currency))throw Error('Некорректный баланс или валюта.');
+    const monthMap=(map,label)=>{
+      if(map===undefined)return;
+      if(!map||typeof map!=='object'||Array.isArray(map)||Object.keys(map).length>2400||Object.entries(map).some(([key,value])=>!/^\d{4}-(0[1-9]|1[0-2])$/.test(key)||!money(value,label==='balance')))throw Error('Некорректные суммы по месяцам.');
+    };
+    monthMap(s.monthBalances,'balance');
+    if(s.monthlyIncludeDaily!==undefined&&typeof s.monthlyIncludeDaily!=='boolean')throw Error('Некорректная настройка месячных расходов.');
     const name=v=>typeof v==='string'&&v.trim().length>0&&v.length<=120;
     const ident=v=>typeof v==='string'&&/^[a-zA-Z0-9-]{1,80}$/.test(v);
     if(s.items.length>500||s.goals.length>100||s.ledger.length>10000)throw Error('В файле слишком много записей.');
     s.items.forEach(i=>{if(!ident(i.id)||!name(i.title)||!money(i.amount)||i.amount<=0||!validDate(i.date)||!['income','payment'].includes(i.type)||!['none','monthly','weekly','yearly'].includes(i.repeat))throw Error('Некорректное поступление или платёж.');});
-    s.goals.forEach(g=>{if(!ident(g.id)||!name(g.title)||!money(g.target)||!g.target||!money(g.saved)||!money(g.monthly)||!validDate(g.start)||!['deadline','monthly'].includes(g.mode)||(g.mode==='deadline'&&!validDate(g.deadline))||(g.mode==='monthly'&&g.monthly<=0)||!Array.isArray(g.done)||!g.done.every(validDate))throw Error('Некорректная цель накопления.');});
+    s.goals.forEach(g=>{monthMap(g.monthPlans,'goal');if(!ident(g.id)||!name(g.title)||!money(g.target)||!g.target||!money(g.saved)||!money(g.monthly)||!validDate(g.start)||!['deadline','monthly'].includes(g.mode)||(g.mode==='deadline'&&!validDate(g.deadline))||(g.mode==='monthly'&&g.monthly<=0)||!Array.isArray(g.done)||!g.done.every(validDate))throw Error('Некорректная цель накопления.');});
     if(new Set([...s.items.map(i=>i.id),...s.goals.map(g=>g.id)]).size!==s.items.length+s.goals.length)throw Error('Повторяющиеся записи в файле.');
     s.ledger.forEach(e=>{if(!ident(e.id)||!ident(e.itemId)||!name(e.title)||!money(e.amount)||!e.amount||!validDate(e.date)||!validDate(e.plannedDate)||e.key!==e.itemId+'@'+e.plannedDate||!['income','payment'].includes(e.type))throw Error('Некорректная история операций.');});
     const marks=new Set(s.ledger.map(e=>e.key));
     if(marks.size!==s.ledger.length||Object.keys(s.done).some(k=>!marks.has(k)||s.done[k]!==true)||s.ledger.some(e=>!s.done[e.key]))throw Error('Некорректные отметки платежей.');
     return s;
   };
-  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,allowance,record,validate};
+  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,goalMonthAmount,freezeGoalMonth,monthOpening,monthOverview,freezeMonthBalance,allowance,record,validate};
 })();
 const validUsername = value => typeof value==='string' && /^[a-z]{1,32}$/.test(value);
 const validPassword = value => typeof value==='string' && /^[A-Za-z0-9]{8,128}$/.test(value);

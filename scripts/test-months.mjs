@@ -73,5 +73,67 @@ export async function verifyMonths() {
   eq(savings.availableEnd,939000,'available month-end deducts reserved and planned saving');
   eq(savings.accountEnd,999000,'goal transfers do not reduce total on accounts');
   eq(C.allowance(plan([]),'2024-02-28').count,2,'without incomes daily limit uses remaining calendar days');
+  const budget=plan([
+    item('first','income','monthly','2024-01-01',150000),
+    item('salary','income','monthly','2024-01-31',300000),
+    item('week','payment','weekly','2024-01-03',5000),
+    item('purchase','payment','none','2024-01-10',10000),
+    item('rent','payment','monthly','2024-01-31',20000),
+    item('outside','income','none','2024-02-01',999999),
+    item('past','payment','none','2023-12-31',999999)
+  ]);
+  budget.daily=1000;
+  budget.goals=[{id:'budgetgoal',title:'Подушка',target:100000,saved:50000,mode:'monthly',monthly:10000,start:'2024-01-31',deadline:'2024-01-31',done:[]}];
+  const totals=()=>C.monthOverview(budget,'2024-01-15');
+  const before=totals();
+  eq([before.start,before.end,before.count],['2024-01-01','2024-01-31',31],'summary covers full month, including days before today');
+  eq([before.income,before.payments,before.daily,before.expenses,before.savings,before.opening,before.remaining],[450000n,55000n,31000n,86000n,10000n,1000000n,1354000n],'full-month totals include all occurrences, daily budget and opening balance');
+  C.record(budget,C.currentEvents(budget,'payment','2024-01-15').find(e=>e.id==='purchase'),12000,'2024-01-14','2024-01-15');
+  eq(totals(),{...before,specified:true},'paying a different actual amount does not change monthly plan or opening');
+  C.record(budget,C.currentEvents(budget,'income','2024-01-15').find(e=>e.id==='salary'),280000,'2024-01-15','2024-01-15');
+  eq(totals(),{...before,specified:true},'early income confirmation leaves complete monthly summary unchanged');
+  C.record(budget,C.currentEvents(budget,'income','2024-01-15').find(e=>e.id==='first'),160000,'2023-12-31','2024-01-15');
+  eq(totals(),{...before,specified:true},'backdated confirmation does not shift already fixed opening budget');
+  const entry=budget.ledger[0];budget.balance-=entry.amount;delete budget.done[entry.key];budget.ledger=budget.ledger.filter(e=>e.id!==entry.id);
+  eq(totals(),{...before,specified:true},'undo does not remove planned income from monthly totals');
+  const expense=item('expense','payment','none','2024-01-05',6000);
+  budget.items.push(expense);C.record(budget,C.currentEvents(budget,'payment','2024-01-15').find(e=>e.id==='expense'),6000,'2024-01-05','2024-01-15');
+  eq([totals().payments,totals().expenses,totals().remaining],[61000n,92000n,1348000n],'quick recorded expense is included exactly once through its plan item');
+  const goal=budget.goals[0];
+  C.freezeGoalMonth(goal,'2024-01-15');goal.saved+=5000;goal.done.push('2024-01-31');
+  eq(totals().savings,10000n,'partial actual goal contribution does not remove planned monthly contribution');
+  goal.saved=goal.target;
+  eq(totals().savings,10000n,'completing goal retains this month contribution');
+  eq(C.monthOverview(budget,'2024-02-01').savings,0n,'completed goal does not add a new contribution next month');
+  budget.monthlyIncludeDaily=false;
+  eq([totals().daily,totals().expenses,totals().remaining],[0n,61000n,1379000n],'daily-budget switch excludes only daily allocation');
+  const actualBalance=budget.balance;budget.monthBalances['2024-01']=200000;
+  eq([totals().opening,totals().remaining],[200000n,579000n],'explicit opening balance is added once');
+  eq(budget.balance,actualBalance,'editing opening does not change actual balance');
+  eq(C.validate(budget),budget,'new month fields persist in a valid plan');
+  const legacy=plan([]);legacy.balance=1000;
+  legacy.ledger=[{type:'income',date:'2024-01-05',amount:600},{type:'payment',date:'2024-01-10',amount:800},{type:'payment',date:'2023-12-31',amount:500}];
+  eq(C.monthOpening(legacy,'2024-01-15'),1200n,'legacy opening is reconstructed from actual month history');
+  legacy.ledger.push({type:'income',date:'2024-02-01',amount:400});
+  eq(C.monthOpening(legacy,'2024-01-15'),800n,'reconstruction reverses later-month actual operations too');
+  const leap=plan([item('leap','income','monthly','2024-01-31',10000)]);leap.daily=1000;
+  eq([C.monthOverview(leap,'2024-02-15').income,C.monthOverview(leap,'2024-02-15').daily],[10000n,29000n],'summary uses leap February last-day anchor and all 29 days');
+  eq(C.monthOverview(leap,'2025-02-15').daily,28000n,'summary uses ordinary February 28 days');
+  const deadline={id:'deadline',title:'deadline',target:90000,saved:0,mode:'deadline',monthly:0,start:'2024-01-31',deadline:'2024-03-31',done:[]};
+  eq(C.goalMonthAmount(deadline,'2024-01-15'),30000,'deadline goal monthly allocation');
+  C.freezeGoalMonth(deadline,'2024-01-15');deadline.saved=30000;deadline.done=['2024-01-31'];
+  eq(C.goalMonthAmount(deadline,'2024-01-15'),30000,'deadline contribution remains after reservation');
+  eq(C.goalMonthAmount(deadline,'2024-02-01'),30000,'deadline remaining allocation for following month');
+  const finalGoal={...deadline,target:5000,saved:0,mode:'monthly',monthly:10000,start:'2024-01-01',done:[],monthPlans:undefined};
+  eq(C.goalMonthAmount(finalGoal,'2024-01-15'),5000,'last contribution is capped at remaining goal amount');
+  C.freezeGoalMonth(finalGoal,'2024-01-15');finalGoal.saved=5000;finalGoal.done=['2024-01-01'];
+  eq(C.goalMonthAmount(finalGoal,'2024-01-15'),5000,'capped final contribution stays in monthly budget after completion');
+  const huge=plan(Array.from({length:500},(_,n)=>item('huge'+n,'payment','none','2024-01-15',99999999999999)));
+  eq(C.monthOverview(huge,'2024-01-15').expenses,500n*99999999999999n,'monthly total stays exact beyond Number integer precision');
+  for(const invalid of [
+    {...budget,monthBalances:{'2024-13':1}},
+    {...budget,monthlyIncludeDaily:'false'},
+    {...budget,goals:[{...budget.goals[0],monthPlans:{'2024-01':-1}}]}
+  ]){assert.throws(()=>C.validate(invalid),/Некоррект/);checks++;}
   console.log('RITM_MONTHS_PASS '+checks+' checks');
 }
