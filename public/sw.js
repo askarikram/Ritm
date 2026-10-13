@@ -53,14 +53,17 @@ self.addEventListener('message',event=>{
   for(const notification of await self.registration.getNotifications())if(notification.data?.owner!==owner)notification.close();
  })());
 });
-self.addEventListener('push',event=>event.waitUntil((async()=>{
- let data;try{data=event.data?.json();}catch{return;}
+async function showReminder(data){
  const prefs=await displayPrefs();
  if(!prefs.owner||data?.owner!==prefs.owner)return;
  const title='Ритм · Напоминание',fallback='Запланирован платёж. Откройте Ритм, чтобы посмотреть.';
  const body=prefs.hidden?data.genericBody:data.body;
  await self.registration.showNotification(title,{body:typeof body==='string'?body.slice(0,260):fallback,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:'ritm-'+String(data.tag||'payment').slice(0,40),data:{owner:prefs.owner},renotify:false});
-})()));
+}
+self.addEventListener('push',event=>{
+ let data;try{data=event.data?.json();}catch{return;}
+ event.waitUntil(showReminder(data));
+});
 self.addEventListener('notificationclick',event=>{
  event.notification.close();
  event.waitUntil((async()=>{

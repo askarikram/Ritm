@@ -590,7 +590,7 @@ label,.field>label{font-size:14px;font-weight:500}
 
 /* Archive and reminders */
 .feature-dialog{width:min(900px,calc(100vw - 48px));max-height:88dvh;padding:0;border:1px solid var(--line);border-radius:26px;color:var(--ink);background:var(--bg)}
-.feature-dialog .dialog-head{padding:22px 26px;background:var(--card);border-bottom:1px solid var(--line);margin:0}
+.feature-dialog .dialog-head{position:sticky;top:0;z-index:1;padding:22px 26px;background:var(--card);border-bottom:1px solid var(--line);margin:0}
 .feature-dialog .dialog-head h2{font-size:23px}
 .feature-dialog-body{padding:24px;overflow:auto}
 .feature-error{color:#984331;font-size:14px;min-height:20px;margin:12px 0}
@@ -668,7 +668,7 @@ label,.field>label{font-size:14px;font-weight:500}
 .reminder-entry .reminder-amount{font-size:12px}
 .archive-open{font-size:12px;padding:8px 10px}
 }
-@media(max-width:430px){.header-tools{gap:6px}.app-header .eyebrow{max-width:98px;overflow:hidden;white-space:nowrap}.header-tools .account-pill{max-width:44px}}
+@media(max-width:430px){.header-tools{gap:6px}#application .header-heading>.eyebrow{max-width:98px;width:100%;overflow:hidden;white-space:normal}.header-tools .account-pill{max-width:44px}}
 
 </style></head><body>
 <div id="connection-status" class="connection-status" role="status" aria-live="polite" hidden></div>
