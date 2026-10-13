@@ -538,6 +538,23 @@ label,.field>label{font-size:14px;font-weight:500}
 .past-events summary .pill{margin-left:auto}
 .past-events>p{margin:14px 0 20px}
 @media(max-width:650px){.month-result{grid-template-columns:1fr;gap:16px;padding:18px;margin-top:20px}.month-result strong{font-size:29px}.month-result b{font-size:22px;margin-top:6px}.past-events summary{font-size:14px}}
+
+@media(max-width:650px){
+ .history-table,.history-table tbody{display:block;width:100%;white-space:normal}
+ .history-table thead{display:none}
+ .history-table tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 16px;padding:18px 0;border-bottom:1px solid var(--line)}
+ .history-table tr:last-child{border-bottom:0;padding-bottom:0}
+ .history-table td{display:block;min-width:0;padding:0;border:0;text-align:left;font-size:14px;white-space:normal;word-break:normal;overflow-wrap:break-word}
+ .history-table td:first-child,.history-table td:last-child{grid-column:1/-1}
+ .history-table td:first-child b{font-size:16px;font-weight:600}
+ .history-table td:first-child .hint{margin-top:5px}
+ .history-table td:nth-child(2)::before,.history-table td:nth-child(3)::before{display:block;margin-bottom:4px;font-size:12px;color:var(--muted);font-weight:400}
+ .history-table td:nth-child(2)::before{content:'Фактическая дата'}
+ .history-table td:nth-child(3)::before{content:'Сумма'}
+ .history-table td:nth-child(3){font-weight:600}
+ .history-table td:last-child .actions{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:8px}
+ .history-table .btn.small{flex:1 1 150px;min-height:40px;white-space:normal;text-align:center}
+}
 </style></head><body>
 <div id="connection-status" class="connection-status" role="status" aria-live="polite" hidden></div>
 <div id="update-banner" class="update-banner" role="status" hidden><div><b>Доступно обновление Ритма</b><p>Установим его после сохранения вашего плана.</p></div><button class="btn soft" id="apply-update" type="button">Обновить</button></div>
@@ -765,7 +782,7 @@ function home(){
 function history(type){
   const entries=S.ledger.filter(e=>e.type===type);
   if(!entries.length)return '<div class="hint">Подтверждённых операций пока нет.</div>';
-  return '<div class="table-wrap"><table><thead><tr><th>Операция</th><th>Фактическая дата</th><th class="number">Сумма</th><th></th></tr></thead><tbody>'+entries.map(e=>{
+  return '<div class="table-wrap"><table class="history-table"><thead><tr><th>Операция</th><th>Фактическая дата</th><th class="number">Сумма</th><th></th></tr></thead><tbody>'+entries.map(e=>{
     const item=S.items.find(item=>item.id===e.itemId);
     return '<tr data-history-key="'+esc(e.key)+'"><td class="wrap"><b>'+esc(e.title)+'</b><div class="hint">По плану: '+dateLabel(e.plannedDate,true)+'</div></td><td>'+dateLabel(e.date,true)+'</td><td class="number '+(type==='income'?'positive':'')+'">'+money(e.amount)+'</td><td class="number"><div class="actions">'+btn('Отменить отметку','undo','data-id="'+e.id+'"','small ghost')+(item?btn('Настроить повторение','edit-item','data-id="'+item.id+'" data-type="'+item.type+'"','small line'):'')+'</div></td></tr>';
   }).join('')+'</tbody></table></div>';

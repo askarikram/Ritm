@@ -106,6 +106,10 @@ export async function verifyMonthUI(base){
       for(const width of [320,390,768,1440]){
         await page.setViewportSize({width,height:844});
         check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+': new active and history layout fits '+width+'px');
+        if(width<=650){
+          check(await page.locator('.history-table').evaluate(table=>table.scrollWidth<=table.clientWidth+1),name+': mobile history has no horizontal scrolling at '+width+'px');
+          check(await page.locator('.history-table').evaluate(table=>[...table.querySelectorAll('button')].every(button=>{const a=button.getBoundingClientRect(),b=table.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1;})),name+': all history actions visible at '+width+'px');
+        }
       }
       check(errors.length===0,name+': no month-flow browser errors');
     } finally {
