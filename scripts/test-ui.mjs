@@ -70,22 +70,22 @@ export async function verifyUI(base) {
       await page.locator('.daily-wish.is-open .wish-text').waitFor();
       check(await page.locator('.wish-text').textContent()===dailyText,engineName+': opened wish persists across reload');
 
-      let dayFetches=0;
-      await page.route('**/api/wish?**',async route=>{
-        const response=await route.fetch(),value=await response.json();
-        if(++dayFetches===1){
-          value.refreshAfterMs=300;value.expiresAt=new Date(Date.now()+300).toISOString();
-        }else{
-          value.opened=false;delete value.text;
-          value.date=new Date(Date.parse(value.date+'T00:00:00Z')+86400000).toISOString().slice(0,10);
-          value.refreshAfterMs=86400000;value.expiresAt=new Date(Date.now()+86400000).toISOString();
-        }
-        await route.fulfill({response,json:value});
+      // Page-level mock works in WebKit even when Service Worker owns the network request.
+      await page.evaluate(()=>{
+        window.__ritmOriginalFetch=window.fetch;const realFetch=window.fetch.bind(window);let dayFetches=0;
+        window.fetch=async(...args)=>{
+          const response=await realFetch(...args),path=typeof args[0]==='string'?args[0]:args[0].url;
+          if(!path.startsWith('/api/wish?')||!response.ok)return response;
+          const value=await response.json();
+          if(++dayFetches===1){value.refreshAfterMs=300;value.expiresAt=new Date(Date.now()+300).toISOString();}
+          else{value.opened=false;delete value.text;value.date=new Date(Date.parse(value.date+'T00:00:00Z')+86400000).toISOString().slice(0,10);value.refreshAfterMs=86400000;value.expiresAt=new Date(Date.now()+86400000).toISOString();}
+          return new Response(JSON.stringify(value),{status:response.status,headers:response.headers});
+        };
       });
       await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
       await page.waitForFunction(()=>{const button=document.querySelector('button.daily-wish');return button&&!button.disabled;});
       check(await page.locator('.wish-text').count()===0,engineName+': new day conceals yesterday wish without reload');
-      await page.unroute('**/api/wish?**');
+      await page.evaluate(()=>{window.fetch=window.__ritmOriginalFetch;delete window.__ritmOriginalFetch;});
       await page.reload({waitUntil:'networkidle'});
       await page.locator('.daily-wish.is-open .wish-text').waitFor();
       check(signupRequests===1,engineName+': confirmed registration submitted once');
