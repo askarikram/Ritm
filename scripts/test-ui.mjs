@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { chromium, webkit } from 'playwright';
 
-export async function verifyUI(base) {
+export async function verifyUI(base,{setOriginAvailable}={}) {
   let checks=0;
   const check=(condition,label)=>{assert.ok(condition,label);checks++;console.log('RITM_UI_CHECK '+label);};
   for(const [engineName,engine] of [['chromium',chromium],['webkit',webkit]]) {
@@ -359,10 +359,23 @@ export async function verifyUI(base) {
         return Boolean(root)&&!root.includes(username)&&!root.includes(code);
       },{username,code:replacementCode});
       check(cachesSafe,engineName+': app cache excludes private responses and user data');
-      await context.setOffline(true);await page.reload({waitUntil:'domcontentloaded'});
+      // WebKit's offline-emulation navigation bug: microsoft/playwright#42775.
+      // Stop the disposable origin instead; do not skip cached-navigation coverage.
+      let cachedNavigation;
+      if(engineName==='webkit'){
+        assert.equal(typeof setOriginAvailable,'function','Origin outage fixture required for WebKit');
+        await setOriginAvailable(false);
+        cachedNavigation=await page.reload({waitUntil:'domcontentloaded'});
+        await page.waitForFunction(()=>Boolean(document.getElementById('auth-error').textContent));
+      }else{
+        await context.setOffline(true);cachedNavigation=await page.reload({waitUntil:'domcontentloaded'});
+        await page.locator('#connection-status').waitFor({state:'visible'});
+      }
       await page.locator('#auth-screen').waitFor({state:'visible'});
-      check(await page.locator('#connection-status').isVisible()&&!(await page.locator('#application').isVisible()),engineName+': offline launch loads public shell without private plan');
-      await context.setOffline(false);await page.locator('#application').waitFor({state:'visible'});
+      check(cachedNavigation?.status()===200&&cachedNavigation.fromServiceWorker()&&!(await page.locator('#application').isVisible()),engineName+': unavailable origin loads cached public shell without private plan');
+      if(engineName==='webkit'){await setOriginAvailable(true);await page.reload({waitUntil:'networkidle'});}
+      else await context.setOffline(false);
+      await page.locator('#application').waitFor({state:'visible'});
       check((await (await page.request.get(base+'/api/me',{headers})).json()).plan.balance===4300000,engineName+': reconnection restores saved account');
 
       if(engineName==='chromium'){

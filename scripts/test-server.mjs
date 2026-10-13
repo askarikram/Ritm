@@ -4,7 +4,8 @@ import { verifyIsolation } from './verify-isolation.mjs';
 import { verifyWishes } from './test-wishes.mjs';
 import { verifyLaunch } from './test-launch.mjs';
 const base='http://127.0.0.1:4174';
-const child=spawn(process.execPath,['server.js'],{stdio:'inherit',env:{...process.env,NODE_ENV:'test',PORT:'4174',HOST:'127.0.0.1',APP_ORIGIN:base}});
+const spawnServer=()=>spawn(process.execPath,['server.js'],{stdio:'inherit',env:{...process.env,NODE_ENV:'test',PORT:'4174',HOST:'127.0.0.1',APP_ORIGIN:base}});
+let child=spawnServer();
 async function ready(){
   for(let i=0;i<60;i++){
     if(child.exitCode!==null)throw Error('Test server exited');
@@ -13,6 +14,19 @@ async function ready(){
   }
   throw Error('Test server did not start');
 }
+async function stopServer(){
+  if(child.exitCode!==null)return;
+  await new Promise(resolve=>{
+    const current=child;
+    current.once('exit',()=>{clearTimeout(deadline);resolve();});
+    const deadline=setTimeout(()=>current.kill('SIGKILL'),10000);deadline.unref();
+    current.kill('SIGTERM');
+  });
+}
+async function setOriginAvailable(available){
+  if(available){child=spawnServer();await ready();}
+  else await stopServer();
+}
 try {
   await ready();
   await verifyIsolation(base,base,false);
@@ -20,8 +34,6 @@ try {
   await verifyLaunch(base);
   if(process.env.RITM_TEST_UI==='1'){
     const {verifyUI}=await import('./test-ui.mjs');
-    await verifyUI(base);
+    await verifyUI(base,{setOriginAvailable});
   }
-} finally {
-  if(child.exitCode===null){child.kill('SIGTERM');await new Promise(resolve=>{child.once('exit',resolve);setTimeout(()=>{child.kill('SIGKILL');resolve();},10000).unref();});}
-}
+} finally { await stopServer(); }
