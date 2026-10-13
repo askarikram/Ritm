@@ -94,7 +94,10 @@ export async function verifyMonthUI(base){
       await navigate('calendar');await page.locator('[data-action="cal-view"][data-view="forecast"]').click();
       check(await page.locator('[data-two-month-forecast]').getAttribute('data-end-date')==='2024-03-31',name+': February long forecast ends in March');
       await navigate('payment');
-      await page.clock.fastForward(29*86400000);
+      // Keep each jump below the injected browser timer's signed 32-bit millisecond range.
+      await page.clock.fastForward(15*86400000);
+      check(await page.locator('[data-active-list="payment"] [data-event-key]').count()===0,name+': paid February entry stays hidden in mid-month');
+      await page.clock.fastForward(14*86400000);
       await active('payment','month-payment@2024-03-31').waitFor();
       check(await page.locator('[data-active-list="payment"] [data-event-key]').count()===1,name+': March restores original day 31 and no one-time payment');
       check(await page.locator('[data-history-list="payment"] [data-history-key]').count()===3,name+': March retains January and February history');
