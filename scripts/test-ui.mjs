@@ -281,7 +281,7 @@ export async function verifyUI(base) {
       await codeForm.locator('button[type="submit"]').click();
       await page.locator('#recovery-dialog').waitFor({state:'visible'});
       const replacementCode=await page.locator('#recovery-code').textContent();
-      check(replacementCode!==signupCode,engineName+': settings generate replacement code');
+      check(/^[A-F0-9]{4}(?:-[A-F0-9]{4}){7}$/.test(replacementCode)&&replacementCode!==signupCode,engineName+': settings generate replacement code');
       await page.locator('#close-recovery').click();
       const headers={'X-Ritm-User':username,Origin:base},beforeRecovery=await (await page.request.get(base+'/api/me',{headers})).json();
       await page.locator('#profile-name-form [data-action="account-logout"]').click();
@@ -296,8 +296,13 @@ export async function verifyUI(base) {
       await page.locator('#recover-submit').click();
       check(await page.locator('#recover-confirm').getAttribute('aria-invalid')==='true',engineName+': recovery confirmation mismatch shown');
       await page.locator('#recover-confirm').fill(recoveredPassword);
-      await page.locator('#recover-submit').click();
-      await page.locator('#application').waitFor({state:'visible'});
+      const validity=await page.locator('#recovery-form').evaluate(form=>[...form.elements].filter(input=>input.willValidate&&!input.validity.valid).map(input=>({id:input.id,reason:input.validationMessage})));
+      check(validity.length===0,engineName+': recovery form valid '+JSON.stringify(validity));
+      const resetResponse=page.waitForResponse(response=>response.url().endsWith('/api/recover')&&response.request().method()==='POST');
+      await page.locator('#recover-submit').click();const reset=await resetResponse;
+      check(reset.ok(),engineName+': recovery request accepted with status '+reset.status());
+      await page.waitForFunction(()=>!document.getElementById('application').hidden||Boolean(document.getElementById('recover-error').textContent));
+      check(await page.locator('#application').isVisible(),engineName+': recovery opens account '+await page.locator('#recover-error').textContent());
       await page.locator('#recovery-dialog').waitFor({state:'visible'});
       check(await page.locator('#recovery-code').textContent()!==replacementCode,engineName+': recovery rotates code in interface');
       await page.locator('#close-recovery').click();
@@ -309,6 +314,13 @@ export async function verifyUI(base) {
       await page.evaluate(()=>navigator.serviceWorker.register('/sw.js?update-test=1',{scope:'/',updateViaCache:'none'}));
       await page.locator('#update-banner').waitFor({state:'visible'});
       check(await page.evaluate(async()=>Boolean((await navigator.serviceWorker.getRegistration('/')).waiting)),engineName+': new worker waits for explicit update');
+      await navigate('settings');
+      await page.locator('#profile-current-password').fill('PendingPassword123');
+      await page.locator('[data-password-target="profile-current-password"]').click();
+      await page.locator('#apply-update').click();
+      check(await page.evaluate(async()=>Boolean((await navigator.serviceWorker.getRegistration('/')).waiting)),engineName+': update protects visible password draft');
+      await page.locator('#profile-current-password').fill('');
+      await navigate('home');
       await page.locator('.balance-edit').click();
       await page.locator('#apply-update').evaluate(button=>button.dispatchEvent(new Event('click')));
       check(await page.evaluate(async()=>Boolean((await navigator.serviceWorker.getRegistration('/')).waiting)),engineName+': update does not activate over open editing dialog');

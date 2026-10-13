@@ -1222,7 +1222,7 @@ function showAppUpdate(){if(serviceRegistration?.waiting&&navigator.serviceWorke
 $('apply-update').addEventListener('click',()=>{
   if(!serviceRegistration?.waiting)return;
   const profileDraft=$('profile-name')?.value!==undefined&&$('profile-name').value!==currentUser?.name;
-  const secretDraft=[...document.querySelectorAll('#content input[type="password"]')].some(input=>input.value);
+  const secretDraft=[...document.querySelectorAll('#content .password-control input')].some(input=>input.value);
   if(queuedPlan||saving||profileBusy||recoveryBusy||authBusy||document.querySelector('dialog[open]')||profileDraft||secretDraft||!currentUser&&($('auth-username').value||$('recover-username').value)){
     notify('Завершите текущие изменения и сохраните план перед обновлением.');return;
   }
