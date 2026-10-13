@@ -5,6 +5,7 @@ import { verifyWishes } from './test-wishes.mjs';
 import { verifyLaunch } from './test-launch.mjs';
 import { verifyMonths } from './test-months.mjs';
 import { verifyFeatures } from './test-features.mjs';
+import { verifyPersonal } from './test-personal.mjs';
 const base='http://127.0.0.1:4174';
 const spawnServer=()=>spawn(process.execPath,['server.js'],{stdio:'inherit',env:{...process.env,NODE_ENV:'test',PORT:'4174',HOST:'127.0.0.1',APP_ORIGIN:base}});
 let child=spawnServer();
@@ -36,7 +37,9 @@ try {
   await verifyWishes(base);
   await verifyLaunch(base);
   await verifyFeatures(base);
+  await verifyPersonal(base);
   if(process.env.RITM_TEST_UI==='1'){
+    const {verifyPersonalUI}=await import('./test-personal-ui.mjs');await verifyPersonalUI(base);
     const {verifyFeatureUI}=await import('./test-feature-ui.mjs');await verifyFeatureUI(base);
     const {verifyMonthUI}=await import('./test-month-ui.mjs');
     await verifyMonthUI(base);

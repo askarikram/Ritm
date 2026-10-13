@@ -17,7 +17,7 @@ export async function verifyMonthUI(base){
     const saved=()=>page.waitForFunction(()=>document.getElementById('save-state')?.textContent==='План сохранён');
     const navigate=async route=>{
       await page.evaluate(route=>{location.hash=route;},route);
-      await page.waitForFunction(route=>document.querySelector('[data-nav="'+route+'"][aria-current="page"]'),route);
+      await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route)+'"][aria-current="page"]'),route);
     };
     const read=async()=>{const response=await page.request.get(base+'/api/me',{headers});assert.ok(response.ok());return (await response.json()).plan;};
     const active=(type,key)=>page.locator('[data-active-list="'+type+'"] [data-event-key="'+key+'"]');

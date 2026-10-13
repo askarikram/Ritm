@@ -16,6 +16,7 @@ import { appIcons } from './app-icons.mjs';
 import { createArchiveService } from './archive-service.mjs';
 import { createReminderService } from './reminder-store.mjs';
 import { verifySchedulerToken } from './scheduler-auth.mjs';
+import { createPersonalService } from './personal-service.mjs';
 const Core = (() => {
   const iso = d => d.toISOString().slice(0,10);
   const parse = s => new Date(s + 'T12:00:00Z');
@@ -246,6 +247,7 @@ for(const option of ['sslmode','sslcert','sslkey','sslrootcert','ssl'])databaseU
 const pool=new pg.Pool({connectionString:databaseURL.toString(),ssl:{rejectUnauthorized:true},enableChannelBinding:true,max:5,idleTimeoutMillis:30000,connectionTimeoutMillis:15000,query_timeout:15000,statement_timeout:15000});
 pool.on('error',error=>console.error('Соединение с базой:',error.code||error.name));
 const archives=createArchiveService({pool,Core});
+const personal=createPersonalService({pool});
 const reminders=createReminderService({pool,Core,appOrigin,testMode:process.env.NODE_ENV==='test'});
 const cookieName=production?'__Host-ritm-session':'ritm-session',ttl=30*24*60*60*1000,shortTTL=12*60*60*1000;
 const sql={
@@ -274,7 +276,7 @@ async function initialize(){
     await client.query('CREATE INDEX IF NOT EXISTS ritm_sessions_expiry ON ritm_sessions(expires_at)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_wish_accounts(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,lane SMALLINT NOT NULL CHECK(lane BETWEEN 0 AND 4),timezone TEXT NOT NULL,opened_date DATE NOT NULL)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_recovery_codes(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL)');
-    await archives.initialize(client);await reminders.initialize(client);
+    await archives.initialize(client);await personal.initialize(client);await reminders.initialize(client);
   });
 }
 const derive=promisify(scrypt),hashToken=t=>createHash('sha256').update(t).digest('hex');
@@ -524,6 +526,12 @@ async function handle(req,res){
       send(res,200,result);return;
     }
 
+    if(['GET','POST'].includes(req.method)&&url.pathname==='/api/personal'){
+      const user=await requireUser(req,res);
+      if(req.method==='GET')send(res,200,await personal.get(user.id,url.searchParams.get('timeZone')));
+      else{rateLimit('personal:'+user.id,600);send(res,200,await personal.mutate(user.id,await readJSON(req)));}
+      return;
+    }
     if(['GET','PUT'].includes(req.method)&&url.pathname==='/api/archive'){
       const user=await requireUser(req,res),now=await reminders.accountDay(user.id);
       if(req.method==='GET'){

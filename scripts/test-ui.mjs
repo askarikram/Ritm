@@ -138,7 +138,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
 
       const navigate=async route=>{
         await page.evaluate(route=>{location.hash=route;},route);
-        await page.waitForFunction(route=>document.querySelector('[data-nav="'+route+'"][aria-current="page"]')!==null,route);
+        await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route)+'"][aria-current="page"]')!==null,route);
       };
       const waitSaved=()=>page.waitForFunction(()=>document.getElementById('save-state').textContent==='План сохранён');
       for(const [type,baseCents] of [['income',7000000n],['payment',2529900n]]){
@@ -238,7 +238,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
         await page.setViewportSize({width,height:width>=1000?1000:844});
         for(const route of ['home','income','payment','goals','calendar','settings']) {
           await page.evaluate(route=>{location.hash=route;},route);
-          await page.waitForFunction(route=>document.querySelector('[data-nav="'+route+'"][aria-current="page"]')!==null,route);
+          await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route)+'"][aria-current="page"]')!==null,route);
           check(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),engineName+': '+route+' fits '+width+'px');
           if(width<=950){
             const geometry=await page.locator('.mobile-nav').evaluate(nav=>{
@@ -299,26 +299,21 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       await page.setViewportSize({width:320,height:844});
       await navigate('home');
       await page.emulateMedia({reducedMotion:'no-preference'});
-      for(const route of ['calendar','income','payment','goals','home']){
+      for(const route of ['calendar','income','payment','personal','home']){
         const before=await page.locator('.mobile-nav a').evaluateAll(links=>links.map(link=>{const b=link.getBoundingClientRect();return [b.x,b.y,b.width,b.height];}));
         await page.locator('.mobile-nav [data-nav="'+route+'"]').click();
         await page.waitForFunction(route=>document.querySelector('.mobile-nav a.active')?.dataset.nav===route,route);
         const indicator=await page.locator('.mobile-nav').evaluate(nav=>{
-          const style=getComputedStyle(nav,'::before'),active=nav.querySelector('a.active'),color=getComputedStyle(active).backgroundColor;
-          return {motion:style.transitionProperty.includes('transform')&&parseFloat(style.transitionDuration)>0&&parseFloat(style.transitionDuration)<=.4,background:color};
+          const active=nav.querySelector('a.active'),style=getComputedStyle(active),box=active.getBoundingClientRect();
+          return {rounded:parseFloat(style.borderRadius)>=12,height:box.height,background:style.backgroundColor,color:style.color};
         });
-        check(indicator.motion&&indicator.background==='rgba(0, 0, 0, 0)',engineName+': gentle animated selection after tapping '+route);
-        await page.waitForFunction(()=>{
-          const nav=document.querySelector('.mobile-nav'),link=nav.querySelector('a.active'),style=getComputedStyle(nav,'::before'),navBox=nav.getBoundingClientRect(),linkBox=link.getBoundingClientRect();
-          const left=navBox.left+nav.clientLeft+new DOMMatrix(style.transform).m41;
-          return Math.abs(left-linkBox.left)<1&&Math.abs(parseFloat(style.width)-linkBox.width)<1;
-        });
+        check(indicator.rounded&&indicator.height>=44&&indicator.background!=='rgba(0, 0, 0, 0)',engineName+': rounded selected tile after tapping '+route);
         const after=await page.locator('.mobile-nav a').evaluateAll(links=>links.map(link=>{const b=link.getBoundingClientRect();return [b.x,b.y,b.width,b.height];}));
         check(JSON.stringify(before)===JSON.stringify(after),engineName+': labels stay in place when switching to '+route);
       }
       await page.emulateMedia({reducedMotion:'reduce'});
       await page.locator('.mobile-nav [data-nav="calendar"]').click();
-      check(await page.locator('.mobile-nav').evaluate(nav=>getComputedStyle(nav,'::before').transitionDuration==='0s'),engineName+': reduced motion switches without animation');
+      check(await page.locator('.mobile-nav').evaluate(nav=>getComputedStyle(nav.querySelector('a.active')).transitionDuration==='0s'),engineName+': reduced motion switches without animation');
 
       // Verify installation assets and offline behavior with a real service worker.
       await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller),null,{timeout:15000});
