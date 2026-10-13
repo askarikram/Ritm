@@ -34,6 +34,8 @@ export async function verifyUI(base) {
       await page.locator('#auth-confirm-password').fill('DifferentPassword123');
       await page.locator('#auth-submit').click();
       check(signupRequests===0&&await page.locator('#auth-screen').isVisible(),engineName+': mismatched registration never submitted');
+      await page.evaluate(value=>{const input=document.getElementById('auth-confirm-password');input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));},oldPassword);
+      check(await page.locator('#auth-confirm-password').evaluate(input=>input.validity.valid),engineName+': registration confirmation updates after autofill change');
       await page.locator('#auth-confirm-password').fill(oldPassword);
       check(await page.locator('#auth-password-match').textContent()==='Пароли совпадают.',engineName+': registration match feedback');
       await page.locator('#auth-submit').click();
@@ -62,6 +64,8 @@ export async function verifyUI(base) {
       await page.locator('#profile-confirm-password').fill('DifferentPassword456');
       await page.locator('#profile-password-form button[type="submit"]').click();
       check(await page.locator('#profile-confirm-password').getAttribute('aria-invalid')==='true',engineName+': profile mismatch shown');
+      await page.evaluate(value=>{const input=document.getElementById('profile-confirm-password');input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));},newPassword);
+      check(await page.locator('#profile-confirm-password').evaluate(input=>input.validity.valid),engineName+': profile confirmation updates after autofill change');
       await page.locator('#profile-confirm-password').fill(newPassword);
       await page.locator('#profile-current-password').fill('WrongPassword123');
       await page.locator('#profile-password-form button[type="submit"]').click();

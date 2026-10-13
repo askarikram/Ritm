@@ -665,10 +665,11 @@ function syncPasswordPair(passwordId,confirmationId,messageId){
   message.dataset.state=mismatch?'error':'success';
   return !mismatch;
 }
-document.addEventListener('input',e=>{
+function onPasswordInput(e){
   if(['auth-password','auth-confirm-password'].includes(e.target.id))syncPasswordPair('auth-password','auth-confirm-password','auth-password-match');
   if(['profile-new-password','profile-confirm-password'].includes(e.target.id))syncPasswordPair('profile-new-password','profile-confirm-password','profile-password-match');
-});
+}
+for(const event of ['input','change'])document.addEventListener(event,onPasswordInput);
 document.addEventListener('click',e=>{
   const button=e.target.closest('[data-password-target]');if(!button)return;
   e.preventDefault();const input=$(button.dataset.passwordTarget);if(!input)return;
