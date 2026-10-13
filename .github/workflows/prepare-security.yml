@@ -1,0 +1,26 @@
+name: Prepare security dependencies
+on:
+  push:
+    branches: [updates/security-oct2026]
+    paths: ['.github/workflows/prepare-security.yml', 'package.json']
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - name: Resolve a reproducible dependency lock
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Report the lock file
+        run: node -e "console.log('RITM_LOCK_BEGIN'); console.log(JSON.stringify(JSON.parse(require('fs').readFileSync('package-lock.json','utf8')))); console.log('RITM_LOCK_END')"
+      - name: Audit dependencies
+        continue-on-error: true
+        run: npm audit --json > /tmp/ritm-audit.json
+      - name: Report audit results
+        if: always()
+        run: node -e "const a=JSON.parse(require('fs').readFileSync('/tmp/ritm-audit.json','utf8')); console.log('RITM_AUDIT_RESULT '+JSON.stringify({metadata:a.metadata,vulnerabilities:a.vulnerabilities,error:a.error}))"
