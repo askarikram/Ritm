@@ -50,7 +50,7 @@ self.addEventListener('message',event=>{
  const data=event.data,owner=typeof data.owner==='string'&&/^[a-f0-9]{32}$/.test(data.owner)?data.owner:null;
  event.waitUntil((async()=>{
   await displayPrefs({owner,hidden:data.hidden!==false});
-  for(const notification of await self.registration.getNotifications())if(notification.data?.owner!==owner)notification.close();
+  for(const notification of await self.registration.getNotifications())if(notification.data?.owner!==owner||data.hidden!==false)notification.close();
  })());
 });
 async function showReminder(data){

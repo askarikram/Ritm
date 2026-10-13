@@ -32,29 +32,42 @@ export async function verifyFeatureUI(base){
  check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),name+': home header has no horizontal overflow '+width);
  await page.locator('[data-action="archive"]').click();await page.locator('[data-archive-month="2026-01"]').click();
  check(await page.locator('[data-archive-detail="2026-01"]:visible').evaluate(node=>node.getBoundingClientRect().right<=innerWidth+1),name+': archive fits viewport '+width);
- if(name==='chromium'&&[390,1440].includes(width))console.log('RITM_SCREENSHOT_ARCHIVE_'+width+' '+(await page.screenshot({fullPage:true})).toString('base64'));
+ if(name==='chromium'&&[390,1440].includes(width))console.log('RITM_SCREENSHOT_ARCHIVE_'+width+' '+(await page.screenshot({fullPage:false})).toString('base64'));
  await page.locator('[data-feature-close="archive-dialog"]').click();
  await page.locator('#reminder-bell').click();await page.locator('#reminders-form').waitFor({state:'visible'});
  check(!/Telegram|Gmail|Телеграм/.test(await page.locator('#reminders-body').textContent()),name+': only Ritm and device channels '+width);
  check(await page.locator('#reminders-form').evaluate(node=>node.getBoundingClientRect().right<=innerWidth+1),name+': reminder settings fit '+width);
- if(name==='chromium'&&[390,1440].includes(width))console.log('RITM_SCREENSHOT_REMINDERS_'+width+' '+(await page.screenshot({fullPage:true})).toString('base64'));
+ if(name==='chromium'&&[390,1440].includes(width))console.log('RITM_SCREENSHOT_REMINDERS_'+width+' '+(await page.screenshot({fullPage:false})).toString('base64'));
  await page.locator('[data-feature-close="reminders-dialog"]').click();
  }
 
  if(name==='chromium'){
-  await context.grantPermissions(['notifications']);
+  // Native operating-system notification UI is unavailable in headless Chromium.
+  await context.grantPermissions(['notifications'],{origin:base});
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
   const worker=context.serviceWorkers().find(worker=>worker.url().endsWith('/sw.js'));check(!!worker,'chromium: background notification worker active');
+  await worker.evaluate(()=>{
+   self.__uiNotifications=new Map();
+   Object.defineProperty(self.registration,'showNotification',{value:async(title,options)=>{
+    const notification={title,...options,close(){self.__uiNotifications.delete(options.tag);}};
+    self.__uiNotifications.set(options.tag,notification);
+   }});
+   Object.defineProperty(self.registration,'getNotifications',{value:async()=>[...self.__uiNotifications.values()]});
+  });
   const settings=await (await page.request.get(base+'/api/reminders?timeZone=UTC',{headers})).json();
   const payload={owner:settings.owner,tag:'ui-fixture',body:'Аренда — 8500 теңге',genericBody:'Завтра запланирован платёж.'};
   await worker.evaluate(async ({owner,payload})=>{await displayPrefs({owner,hidden:true});await showReminder(payload);},{owner:settings.owner,payload});
-  let notes=await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;return (await r.getNotifications()).map(n=>({body:n.body,owner:n.data?.owner}));});
+  let notes=await worker.evaluate(async()=> (await self.registration.getNotifications()).map(n=>({body:n.body,owner:n.data?.owner})));
   check(notes.length===1&&!notes[0].body.includes('8500'),'chromium: hidden finances suppress amount in background notification');
   await worker.evaluate(async ({owner,payload})=>{await displayPrefs({owner,hidden:false});await showReminder(payload);},{owner:settings.owner,payload});
-  notes=await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;return (await r.getNotifications()).map(n=>n.body);});
+  notes=await worker.evaluate(async()=> (await self.registration.getNotifications()).map(n=>n.body));
   check(notes.length===1&&notes[0].includes('8500'),'chromium: explicitly visible financial notification shown');
+  await page.locator('#finance-privacy').click();
+  await worker.evaluate(async()=>{for(let i=0;i<40;i++){if((await self.registration.getNotifications()).length===0)return;await new Promise(r=>setTimeout(r,25));}throw Error('Eye did not close visible financial notification');});
+  check(true,'chromium: eye closes an existing financial notification');
+  await page.locator('#finance-privacy').click();
   await worker.evaluate(async payload=>{await displayPrefs({owner:null,hidden:true});for(const n of await self.registration.getNotifications())n.close();await showReminder(payload);},payload);
-  check(await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;return (await r.getNotifications()).length===0;}),'chromium: signed-out device suppresses queued account notification');
+  check(await worker.evaluate(async()=> (await self.registration.getNotifications()).length===0),'chromium: signed-out device suppresses queued account notification');
   const curve=createECDH('prime256v1');curve.generateKeys();
   const subscription={endpoint:'https://fcm.googleapis.com/fcm/send/ui-'+username,keys:{p256dh:curve.getPublicKey().toString('base64url'),auth:randomBytes(16).toString('base64url')}};
   await page.evaluate(async data=>{
