@@ -86,9 +86,11 @@ export async function verifyMonthUI(base){
       check(await amount('[data-month-opening]')==='9000',name+': opening persists after reload');
       await page.locator('[data-action="month-balance"]').click();await page.locator('#editor [name="opening"]').fill('10000');
       await page.locator('#editor button[type="submit"]').click();await page.locator('#dialog').waitFor({state:'hidden'});await saved();
+      await navigate('goals');
       await page.locator('[data-action="reserve"]').first().click();
       await page.locator('#editor [name="amount"]').fill('50');
       await page.locator('#editor button[type="submit"]').click();await page.locator('#dialog').waitFor({state:'hidden'});await saved();
+      await navigate('home');
       check(await amount('[data-month-savings]')==='100'&&await amount('[data-month-remaining]')==='12540',name+': partial actual goal contribution retains planned monthly amount');
       check((await read()).goals[0].saved===55000&&(await read()).balance===1295000,name+': goal action changes reserved money and leaves accounts untouched');
       await page.locator('#finance-privacy').click();
