@@ -279,7 +279,8 @@ async function handle(req,res){
       const file=publicFiles.get(url.pathname);
       if(url.pathname==='/sw.js')res.setHeader('Service-Worker-Allowed','/');
       res.writeHead(200,{'Content-Type':file.type,'Cache-Control':url.pathname==='/sw.js'?'no-cache':'public, max-age=0, must-revalidate'});
-      res.end(req.method==='HEAD'?undefined:file.body);return;
+      const body=url.pathname==='/sw.js'?readFileSync(new URL('./public/sw.js',import.meta.url),'utf8').replaceAll('__RITM_RELEASE__',release):file.body;
+      res.end(req.method==='HEAD'?undefined:body);return;
     }
     if(['GET','HEAD'].includes(req.method)&&appIcons.has(url.pathname)){
       const icon=appIcons.get(url.pathname);res.writeHead(200,{'Content-Type':'image/png','Content-Length':icon.length,'Cache-Control':'public, max-age=86400'});

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { chromium, webkit } from 'playwright';
 
@@ -9,6 +10,7 @@ export async function verifyUI(base) {
     const browser=await engine.launch({headless:true});
     const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,reducedMotion:'reduce'});
     const page=await context.newPage(),errors=[];
+    const workerFile=new URL('../public/sw.js',import.meta.url),originalWorker=await readFile(workerFile,'utf8');
     page.on('pageerror',error=>errors.push(error.message));
     page.on('dialog',dialog=>dialog.accept());
     const suffix=[...randomBytes(8)].map(n=>String.fromCharCode(97+n%26)).join('');
@@ -310,8 +312,9 @@ export async function verifyUI(base) {
       assert.deepEqual(afterRecovery.plan,beforeRecovery.plan);
       check(afterRecovery.revision===beforeRecovery.revision,engineName+': UI recovery preserves financial plan');
       await navigate('home');await page.locator('#toast').waitFor({state:'hidden'});
-      // A different worker URL simulates a new release without touching user data.
-      await page.evaluate(()=>navigator.serviceWorker.register('/sw.js?update-test=1',{scope:'/',updateViaCache:'none'}));
+      // Simulate a real release at the same worker URL; restore the fixture in finally.
+      await writeFile(workerFile,originalWorker.replaceAll('__RITM_RELEASE__','__RITM_RELEASE__-uitest-'+engineName));
+      await page.evaluate(async()=>{const registration=await navigator.serviceWorker.getRegistration('/');await registration.update();});
       await page.locator('#update-banner').waitFor({state:'visible'});
       check(await page.evaluate(async()=>Boolean((await navigator.serviceWorker.getRegistration('/')).waiting)),engineName+': new worker waits for explicit update');
       await navigate('settings');
@@ -326,7 +329,7 @@ export async function verifyUI(base) {
       check(await page.evaluate(async()=>Boolean((await navigator.serviceWorker.getRegistration('/')).waiting)),engineName+': update does not activate over open editing dialog');
       await page.locator('#dialog [data-action="close"]').first().click();
       const updatedPage=page.waitForEvent('load');await page.locator('#apply-update').click();await updatedPage;
-      await page.waitForFunction(()=>navigator.serviceWorker.controller?.scriptURL.includes('update-test=1'),null,{timeout:15000});
+      await page.waitForFunction(async engine=>{const registration=await navigator.serviceWorker.getRegistration('/'),keys=await caches.keys();return !registration.waiting&&keys.filter(key=>key.startsWith('ritm-shell-')).length===1&&keys.some(key=>key.endsWith('-uitest-'+engine));},engineName,{timeout:15000});
       await page.locator('#application').waitFor({state:'visible'});
       await navigate('home');await page.locator('#toast').waitFor({state:'hidden'});
 
@@ -384,7 +387,7 @@ export async function verifyUI(base) {
       await page.locator('#auth-screen').waitFor({state:'visible'});
       check((await page.request.get(base+'/api/me')).status()===401,engineName+': deleting account ends its session');
       check(errors.length===0,engineName+': no browser JavaScript errors');
-    } finally { await context.close();await browser.close(); }
+    } finally { await writeFile(workerFile,originalWorker);await context.close();await browser.close(); }
   }
   console.log('RITM_UI_PASS '+checks+' checks');
 }
