@@ -42,9 +42,12 @@ export async function verifyPersonalUI(base){
  check(await page.locator('[data-personal-section="habit"] .is-done').count()===1,name+': yesterday-style day navigation retains original completion');
  await page.locator('[data-personal-action="previous-day"]').click();check(await page.locator('[data-personal-section="habit"] [data-personal-row]').count()===0,name+': days before habit start remain empty');
  await page.locator('[data-personal-action="today"]').click();
- await row(documentId).locator('[data-personal-action="complete-task"]').first().click();await page.waitForFunction(id=>document.querySelector('[data-personal-row="'+id+'"]')?.dataset.personalComplete==='true',documentId);
+ await navigate('home');
+ await page.locator('[data-personal-next="task"] [data-personal-action="complete-task"]').click();
+ await page.waitForFunction(id=>document.querySelector('[data-personal-next-id="'+id+'"] .personal-complete')?.getAttribute('aria-pressed')==='true',documentId);
+ await navigate('personal');await page.waitForFunction(id=>document.querySelector('[data-personal-row="'+id+'"]')?.dataset.personalComplete==='true',documentId);
  check(await row(documentId).locator('.personal-check').getAttribute('aria-pressed')==='true',name+': task checkbox marks completion');
- await navigate('home');check(await page.locator('[data-personal-next="task"]').getAttribute('data-personal-next-id')===meetingId,name+': completing task advances home card');
+ await navigate('home');await page.waitForFunction(id=>document.querySelector('[data-personal-next="task"]')?.dataset.personalNextId===id,meetingId);check(await page.locator('[data-personal-next="task"]').getAttribute('data-personal-next-id')===meetingId,name+': completing task advances home card');
  await navigate('personal');await row(documentId).locator('.personal-check').click();await page.waitForFunction(id=>document.querySelector('[data-personal-row="'+id+'"]')?.dataset.personalComplete==='false',documentId);
  await row(documentId).locator('[data-personal-action="move-task"]').click();
  const later=Personal.addDays(day,30);await page.locator('#personal-editor [name="date"]').fill(later);await page.locator('#personal-editor [name="time"]').fill('11:30');await page.locator('#personal-editor [type="submit"]').click();await page.locator('#personal-dialog').waitFor({state:'hidden'});
@@ -55,10 +58,11 @@ export async function verifyPersonalUI(base){
  await row(readingId).locator('.personal-check').click();await page.waitForFunction(id=>document.querySelector('[data-personal-row="'+id+'"]')?.dataset.personalComplete==='true',readingId);
  await page.locator('[data-personal-action="next-day"]').click();check(await row(readingId).getAttribute('data-personal-complete')==='false',name+': habit returns unfinished tomorrow');
  await page.locator('[data-personal-action="today"]').click();
- await page.locator('[data-personal-action="add-task"]').click();await page.locator('#personal-editor [name="title"]').fill('Задача без времени');await page.locator('#personal-editor [type="submit"]').click();await page.locator('#personal-dialog').waitFor({state:'hidden'});
+ await navigate('home');await page.locator('[data-personal-next="task"] [data-personal-action="add-task"]').click();await page.locator('#personal-editor [name="title"]').fill('Задача без времени');await page.locator('#personal-editor [type="submit"]').click();await page.locator('#personal-dialog').waitFor({state:'hidden'});
  check((await read()).state.tasks.some(t=>t.title==='Задача без времени'&&t.time===''),name+': task accepts optional empty time');
- await page.locator('[data-personal-action="add-habit"]').click();await page.locator('#personal-editor [name="title"]').fill('Разовая привычка');await page.locator('#personal-editor label:has(input[value="once"])').click();await page.locator('#personal-editor [type="submit"]').click();await page.locator('#personal-dialog').waitFor({state:'hidden'});
+ await page.locator('[data-personal-next="habit"] [data-personal-action="add-habit"]').click();await page.locator('#personal-editor [name="title"]').fill('Разовая привычка');await page.locator('#personal-editor label:has(input[value="once"])').click();await page.locator('#personal-editor [type="submit"]').click();await page.locator('#personal-dialog').waitFor({state:'hidden'});
  check((await read()).state.habits.some(h=>h.title==='Разовая привычка'&&h.repeat==='once'),name+': habit supports one selected day');
+ await navigate('personal');
  await page.locator('.personal-savings').click();await page.waitForFunction(()=>document.getElementById('heading').textContent==='Накопить деньги');
  check((await page.locator('.goal-card').textContent()).includes('Путешествие')&&await page.locator('[data-nav="personal"][aria-current="page"]').count()>0,name+': old financial goals nested under Personal');
  await page.locator('[data-action="edit-goal"]').first().click();check(await page.locator('#editor [name="mode"]').count()>0,name+': existing savings modes remain available');await page.locator('#dialog [data-action="close"]').first().click();
