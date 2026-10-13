@@ -524,6 +524,20 @@ label,.field>label{font-size:14px;font-weight:500}
  #application .header-heading>#subtitle{grid-column:1/-1;grid-row:3;max-width:none}
  #application .header-heading>.save-state{grid-column:1/-1;grid-row:4;margin-top:1px}
 }
+
+
+.month-result{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;margin:24px 0 18px;padding:20px 22px;border:1px solid var(--line);border-radius:18px;background:var(--mint)}
+.month-result>div{min-width:0}
+.month-result strong,.month-result b{display:block;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--green)}
+.month-result strong{font-size:30px;font-weight:600;margin-top:8px;letter-spacing:-.025em}
+.month-result b{font-size:22px;font-weight:550;margin-top:12px}
+.past-events summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;font-size:15px;font-weight:500;list-style:none}
+.past-events summary::after{content:"+";font-size:22px;font-weight:400;color:var(--muted)}
+.past-events[open] summary::after{content:"−"}
+.past-events summary::-webkit-details-marker{display:none}
+.past-events summary .pill{margin-left:auto}
+.past-events>p{margin:14px 0 20px}
+@media(max-width:650px){.month-result{grid-template-columns:1fr;gap:16px;padding:18px;margin-top:20px}.month-result strong{font-size:29px}.month-result b{font-size:22px;margin-top:6px}.past-events summary{font-size:14px}}
 </style></head><body>
 <div id="connection-status" class="connection-status" role="status" aria-live="polite" hidden></div>
 <div id="update-banner" class="update-banner" role="status" hidden><div><b>Доступно обновление Ритма</b><p>Установим его после сохранения вашего плана.</p></div><button class="btn soft" id="apply-update" type="button">Обновить</button></div>
@@ -541,6 +555,15 @@ const Core = (() => {
     const last=new Date(Date.UTC(y,m+1,0,12)).getUTCDate();
     return iso(new Date(Date.UTC(y,m,Math.min(d.getUTCDate(),last),12)));
   };
+  const monthStart = date => date.slice(0,7)+'-01';
+  const monthEnd = date => addDays(month(monthStart(date),1),-1);
+  const forecastEnd = date => monthEnd(month(date,1));
+  const cyclePeriod = (item,now) => {
+    if(item.repeat==='monthly')return {start:monthStart(now),end:monthEnd(now)};
+    if(item.repeat==='yearly')return {start:now.slice(0,4)+'-01-01',end:now.slice(0,4)+'-12-31'};
+    if(item.repeat==='weekly'){const start=addDays(now,-((parse(now).getUTCDay()+6)%7));return {start,end:addDays(start,6)};}
+    return {start:item.date,end:item.date};
+  };
   const validDate = s => typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(parse(s)) && iso(parse(s))===s;
   const id = () => typeof crypto!=='undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2);
   const fresh = () => ({version:1,balance:0,daily:0,currency:'KZT',items:[],goals:[],done:{},ledger:[]});
@@ -556,14 +579,36 @@ const Core = (() => {
     }
     return out;
   };
-  const scheduled = (s,from,to,overdue=false) => {
+  const pendingEvent = (s,item,now=today()) => {
+    const period=cyclePeriod(item,now);
+    const date=item.date>period.end?item.date:dates(item,period.start,period.end).find(date=>!s.done[item.id+'@'+date]);
+    if(!date||s.done[item.id+'@'+date])return null;
+    return {...item,date,originalDate:date,key:item.id+'@'+date,overdue:date<now};
+  };
+  const currentEvents = (s,type,now=today()) => s.items.filter(item=>item.type===type).map(item=>pendingEvent(s,item,now)).filter(Boolean);
+  const pastEvents = (s,type,now=today()) => {
+    const events=[];
+    for(const item of s.items.filter(item=>item.type===type&&['weekly','yearly'].includes(item.repeat))){
+      const period=cyclePeriod(item,now);
+      for(const date of dates(item,item.date,addDays(period.start,-1))){
+        const key=item.id+'@'+date;
+        if(!s.done[key])events.push({...item,date,originalDate:date,key,overdue:true});
+      }
+    }
+    return events.sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title));
+  };
+  const scheduled = (s,from,to,overdue=false,cycleDate=from) => {
     const out=[];
-    s.items.forEach(item=>dates(item,overdue?item.date:from,to).forEach(date=>{
+    s.items.forEach(item=>{
+      const start=overdue?item.date:from,cycleStart=monthStart(cycleDate);
+      const first=item.repeat==='monthly'&&start<cycleStart?cycleStart:start;
+      dates(item,first,to).forEach(date=>{
       const key=item.id+'@'+date;
       if(s.done[key]) return;
       if(date<from && (!overdue || item.type==='income')) return;
       out.push({...item,date:date<from?from:date,originalDate:date,key,overdue:date<from});
-    }));
+      });
+    });
     return out.sort((a,b)=>a.date.localeCompare(b.date)||a.type.localeCompare(b.type));
   };
   const goalPlan = (g,now=today()) => {
@@ -592,7 +637,7 @@ const Core = (() => {
     });
     return out;
   };
-  const forecast = (s,now=today(),until=addDays(now,89),withGoals=true) => {
+  const forecast = (s,now=today(),until=forecastEnd(now),withGoals=true) => {
     if(until<now) return {rows:[],events:[],firstGap:null,min:available(s)};
     const events=[...scheduled(s,now,until,true),...(withGoals?savings(s,now,until):[])];
     const grouped=new Map();
@@ -610,10 +655,15 @@ const Core = (() => {
     }
     return {rows,events,firstGap,min};
   };
+  const monthlyForecast = (s,now=today()) => {
+    const end=monthEnd(now),result=forecast(s,now,end),availableEnd=result.rows.at(-1).balance;
+    const plannedSaving=result.rows.reduce((sum,row)=>sum+row.saving,0);
+    return {...result,end,availableEnd,accountEnd:availableEnd+reserved(s)+plannedSaving};
+  };
   const allowance = (s,now=today()) => {
     const es=scheduled(s,now,addDays(now,365),true);
     const next=es.find(e=>e.type==='income');
-    const count=next?Math.max(1,days(now,next.date)):30;
+    const count=next?Math.max(1,days(now,next.date)):days(now,monthEnd(now))+1;
     const last=addDays(now,count-1);
     const obligations=scheduled(s,now,last,true).filter(e=>e.type==='payment').reduce((a,e)=>a+e.amount,0);
     const goals=savings(s,now,last).reduce((a,e)=>a+e.amount,0);
@@ -644,7 +694,7 @@ const Core = (() => {
     if(marks.size!==s.ledger.length||Object.keys(s.done).some(k=>!marks.has(k)||s.done[k]!==true)||s.ledger.some(e=>!s.done[e.key]))throw Error('Некорректные отметки платежей.');
     return s;
   };
-  return {iso,parse,today,addDays,days,month,validDate,id,fresh,reserved,available,dates,scheduled,goalPlan,savings,forecast,allowance,record,validate};
+  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,allowance,record,validate};
 })();
 
 const C=Core, $=id=>document.getElementById(id), KEY='ritm-finance-v1';
@@ -657,6 +707,7 @@ const I=n=>'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentCol
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let S,storageError='',route='',calMonth=C.today().slice(0,7)+'-01',calDay=C.today(),calView='grid',active=null,toastTimer;
 S=C.fresh();
+let planningDay=C.today(),planningTimer;
 let amountsHidden=false;
 const money=v=>{
   if(amountsHidden)return '•••• '+(S.currency==='KZT'?'теңге':'$');
@@ -680,9 +731,7 @@ function demo(){
   d.goals=[{id:C.id(),title:'Путешествие',target:12000000,saved:2500000,mode:'monthly',monthly:1000000,start:C.addDays(n,10),deadline:C.month(n,12),done:[]}];
   change(x=>Object.assign(x,d),'Пример загружен');location.hash='home';
 }
-function nextFor(item){
-  return C.dates(item,item.date,item.date>C.addDays(C.today(),366)?item.date:C.addDays(C.today(),366)).filter(date=>!S.done[item.id+'@'+date]).map(date=>({...item,date,originalDate:date,key:item.id+'@'+date,overdue:date<C.today()}))[0];
-}
+function nextFor(item){return C.pendingEvent(S,item);}
 function chart(rows){
   if(!rows.length)return '';
   if(amountsHidden)return '<div class="chart chart-private" role="img" aria-label="Финансовый график скрыт"><span>'+I('eyeOff')+'График скрыт</span></div>';
@@ -705,44 +754,52 @@ function dailyWishCard(){
 
 const quickAction=(label,icon,action,tone='')=>btn('<span class="quick-action-mark '+tone+'" aria-hidden="true">'+I(icon)+'</span><span class="quick-action-label">'+label+'</span>',action,'','quick-action');
 function home(){
-  const now=C.today(),a=C.allowance(S),events=C.scheduled(S,now,C.addDays(now,365),true),payment=events.find(e=>e.type==='payment'),f=C.forecast(S,now,C.addDays(now,29)),g=S.goals.find(g=>g.saved<g.target)||S.goals[0],blank=!S.balance&&!S.items.length&&!S.goals.length;
+  const now=C.today(),a=C.allowance(S),events=C.scheduled(S,now,C.addDays(now,365),true),payment=events.find(e=>e.type==='payment'),f=C.monthlyForecast(S,now),g=S.goals.find(g=>g.saved<g.target)||S.goals[0],blank=!S.balance&&!S.items.length&&!S.goals.length;
   const nextCard=(type,event,title)=>'<a class="card next-card" href="#'+type+'"><div class="tile '+(type==='payment'?'orange':'')+'">'+I(type)+'</div><div class="grow"><div class="next-title">'+title+'</div><div class="value">'+(event?money(event.amount):'Добавить')+'</div><div class="hint wrap">'+(event?esc(event.title)+' · '+(event.overdue?'просрочен, ':'')+dateLabel(event.originalDate):type==='income'?'Зарплата или аванс':'Платёж или подписку')+'</div></div><span class="chevron">'+I('arrow')+'</span></a>';
   return dailyWishCard()+(blank?'<div class="help-line"><b>Начните со своего баланса.</b> Затем добавьте даты доходов, платежи и цель — план пересчитается автоматически. '+btn('Ввести баланс','balance','','small soft')+' '+btn('Посмотреть пример','demo','','small line')+'</div>':'')+
   '<div class="hero home-hero"><section class="card balance balance-overview" aria-label="Баланс"><div class="balance-heading"><span class="eyebrow">Баланс сейчас</span>'+btn(I('edit'),'balance','aria-label="Изменить баланс"','balance-edit')+'</div><div class="big">'+money(S.balance)+'</div><div class="balance-breakdown"><div class="balance-mini"><span class="hint">Доступно для трат</span><strong>'+money(C.available(S))+'</strong></div><div class="balance-mini"><span class="hint">Выделено на цели</span><strong>'+money(C.reserved(S))+'</strong></div></div></section><div class="home-actions" role="group" aria-label="Быстрые действия">'+quickAction('Доход','income','add-income')+quickAction('Платёж','payment','add-payment','orange')+quickAction('Расход','minus','expense','blue')+quickAction('Цель','goals','edit-goal')+'</div><div class="stack upcoming-stack">'+nextCard('income',a.next,'Ближайшее поступление')+nextCard('payment',payment,'Ближайший платёж')+'</div></div>'+
-  (f.firstGap?'<div class="notice">'+I('alert')+'<div><b>В плане появляется нехватка денег</b><div>'+dateLabel(f.firstGap.date,true)+' доступный остаток составит '+money(f.firstGap.balance)+'. '+link('Открыть прогноз →','calendar')+'</div></div></div>':S.items.length?'<div class="notice ok">'+I('check')+'<div><b>План на 30 дней сходится</b><div>По указанным доходам, платежам, взносам и повседневному бюджету.</div></div></div>':'')+
-  '<div class="grid2"><div class="card"><div class="card-head"><div><h2>До следующего поступления</h2><div class="hint">'+(a.next?'До '+dateLabel(a.next.date,true)+' · '+a.count+' дн.': 'Доходы ещё не указаны · ориентир на 30 дней')+'</div></div><div class="tile">'+I('wallet')+'</div></div><div class="value" style="font-size:34px">'+money(a.perDay)+' <span class="muted" style="font-size:14px;font-weight:400">в день</span></div><p class="hint">Ориентир на повседневные расходы после платежей и плановых взносов до поступления. Ожидаемый доход ещё не включён в текущий баланс.</p><div class="metric-row"><span class="muted">Будущие платежи до поступления</span><b>'+money(a.obligations)+'</b></div><div class="metric-row"><span class="muted">Запланировано на цели</span><b>'+money(a.goals)+'</b></div><div class="metric-row"><span class="muted">Ваш повседневный бюджет</span>'+btn(money(S.daily)+'/день','balance','','small soft')+'</div>'+(a.need?'<p class="negative hint">Для указанного повседневного бюджета не хватает '+money(a.need)+'.</p>':'')+'</div><div class="card">'+(g?goalCard(g,true):empty('На что будем копить?','Добавьте стоимость и срок — приложение рассчитает взносы.','edit-goal','Добавить цель','goals'))+'</div></div>'+
-  '<div class="card"><div class="card-head"><div><h2>Ваш план на 30 дней</h2><div class="hint">Прогноз остатка, доступного для трат</div></div>'+link('Весь календарь →','calendar')+'</div><div class="stats"><div class="stat"><div class="hint">Поступления</div><div class="value positive">'+money(f.rows.reduce((a,r)=>a+r.income,0))+'</div></div><div class="stat"><div class="hint">Платежи</div><div class="value">'+money(f.rows.reduce((a,r)=>a+r.payments,0))+'</div></div><div class="stat"><div class="hint">Взносы на цели</div><div class="value">'+money(f.rows.reduce((a,r)=>a+r.saving,0))+'</div></div></div>'+chart(f.rows)+'<div class="chart-labels"><span>'+dateLabel(now)+'</span><span>В конце периода: '+money(f.rows.at(-1).balance)+'</span><span>'+dateLabel(C.addDays(now,29))+'</span></div>'+(!S.daily?'<p class="smallprint">Повседневный бюджет пока равен нулю. Добавьте еду, транспорт и другие ежедневные расходы для полного прогноза.</p>':'')+'</div>';
+  (f.firstGap?'<div class="notice">'+I('alert')+'<div><b>В плане появляется нехватка денег</b><div>'+dateLabel(f.firstGap.date,true)+' доступный остаток составит '+money(f.firstGap.balance)+'. '+link('Открыть прогноз →','calendar')+'</div></div></div>':S.items.length?'<div class="notice ok">'+I('check')+'<div><b>План до конца месяца сходится</b><div>По указанным доходам, платежам, взносам и повседневному бюджету.</div></div></div>':'')+
+  '<div class="grid2"><div class="card"><div class="card-head"><div><h2>До следующего поступления</h2><div class="hint">'+(a.next?'До '+dateLabel(a.next.date,true)+' · '+a.count+' дн.': 'Доходы ещё не указаны · ориентир до конца месяца')+'</div></div><div class="tile">'+I('wallet')+'</div></div><div class="value" style="font-size:34px">'+money(a.perDay)+' <span class="muted" style="font-size:14px;font-weight:400">в день</span></div><p class="hint">Ориентир на повседневные расходы после платежей и плановых взносов до поступления. Ожидаемый доход ещё не включён в текущий баланс.</p><div class="metric-row"><span class="muted">Будущие платежи до поступления</span><b>'+money(a.obligations)+'</b></div><div class="metric-row"><span class="muted">Запланировано на цели</span><b>'+money(a.goals)+'</b></div><div class="metric-row"><span class="muted">Ваш повседневный бюджет</span>'+btn(money(S.daily)+'/день','balance','','small soft')+'</div>'+(a.need?'<p class="negative hint">Для указанного повседневного бюджета не хватает '+money(a.need)+'.</p>':'')+'</div><div class="card">'+(g?goalCard(g,true):empty('На что будем копить?','Добавьте стоимость и срок — приложение рассчитает взносы.','edit-goal','Добавить цель','goals'))+'</div></div>'+
+  '<div class="card" data-month-forecast data-start-date="'+now+'" data-end-date="'+f.end+'"><div class="card-head"><div><h2>Ваш план на этот месяц</h2><div class="hint">Прогноз остатка, доступного для трат</div></div>'+link('Весь календарь →','calendar')+'</div><div class="stats"><div class="stat"><div class="hint">Поступления</div><div class="value positive">'+money(f.rows.reduce((a,r)=>a+r.income,0))+'</div></div><div class="stat"><div class="hint">Платежи</div><div class="value">'+money(f.rows.reduce((a,r)=>a+r.payments,0))+'</div></div><div class="stat"><div class="hint">Взносы на цели</div><div class="value">'+money(f.rows.reduce((a,r)=>a+r.saving,0))+'</div></div></div>'+'<div class="month-result"><div><span class="hint">На счетах в конце месяца</span><strong data-month-account-end>'+money(f.accountEnd)+'</strong></div><div><span class="hint">Доступно для трат</span><b data-month-available-end>'+money(f.availableEnd)+'</b></div></div>'+chart(f.rows)+'<div class="chart-labels"><span>'+dateLabel(now)+'</span><span>Прогноз доступного остатка</span><span>'+dateLabel(f.end)+'</span></div>'+(!S.daily?'<p class="smallprint">Повседневный бюджет пока равен нулю. Добавьте еду, транспорт и другие ежедневные расходы для полного прогноза.</p>':'')+'</div>';
 }
 function history(type){
   const entries=S.ledger.filter(e=>e.type===type);
   if(!entries.length)return '<div class="hint">Подтверждённых операций пока нет.</div>';
-  return '<div class="table-wrap"><table><thead><tr><th>Операция</th><th>Фактическая дата</th><th class="number">Сумма</th><th></th></tr></thead><tbody>'+entries.map(e=>'<tr><td class="wrap"><b>'+esc(e.title)+'</b></td><td>'+dateLabel(e.date,true)+'</td><td class="number '+(type==='income'?'positive':'')+'">'+money(e.amount)+'</td><td class="number">'+btn('Отменить отметку','undo','data-id="'+e.id+'"','small ghost')+'</td></tr>').join('')+'</tbody></table></div>';
+  return '<div class="table-wrap"><table><thead><tr><th>Операция</th><th>Фактическая дата</th><th class="number">Сумма</th><th></th></tr></thead><tbody>'+entries.map(e=>{
+    const item=S.items.find(item=>item.id===e.itemId);
+    return '<tr data-history-key="'+esc(e.key)+'"><td class="wrap"><b>'+esc(e.title)+'</b><div class="hint">По плану: '+dateLabel(e.plannedDate,true)+'</div></td><td>'+dateLabel(e.date,true)+'</td><td class="number '+(type==='income'?'positive':'')+'">'+money(e.amount)+'</td><td class="number"><div class="actions">'+btn('Отменить отметку','undo','data-id="'+e.id+'"','small ghost')+(item?btn('Настроить повторение','edit-item','data-id="'+item.id+'" data-type="'+item.type+'"','small line'):'')+'</div></td></tr>';
+  }).join('')+'</tbody></table></div>';
+}
+function scheduleTable(events,type){
+  const income=type==='income';
+  return '<div class="table-wrap"><table class="schedule-table"><thead><tr><th>Название</th><th>Дата по плану</th><th>Повторение</th><th class="number">Плановая сумма</th><th class="number">Действия</th></tr></thead><tbody>'+events.map(e=>'<tr data-event-key="'+esc(e.key)+'"><td><div class="row-name"><div class="wrap grow"><div class="list-label">'+esc(e.title)+'</div>'+(e.overdue?'<span class="pill warn">'+(income?'Не подтверждено':'Просрочено')+'</span>':'')+'</div></div></td><td>'+dateLabel(e.originalDate,true)+'</td><td class="hint">'+repeats[e.repeat]+'</td><td class="number"><b>'+money(e.amount)+'</b></td><td><div class="actions" style="justify-content:flex-end">'+btn(income?'Получено':'Оплачено','record','data-key="'+esc(e.key)+'"','small soft')+btn('Изменить','edit-item','data-id="'+e.id+'" data-type="'+type+'"','small line')+btn('Удалить','delete-item','data-id="'+e.id+'"','small ghost')+'</div></td></tr>').join('')+'</tbody></table></div>';
 }
 function itemPage(type){
-  const items=S.items.filter(i=>i.type===type),income=type==='income',total=items.reduce((sum,item)=>sum+BigInt(item.amount),0n);
-  const count=items.length,words=income?['поступление','поступления','поступлений']:['платёж','платежа','платежей'];
+  const now=C.today(),events=C.currentEvents(S,type,now),past=C.pastEvents(S,type,now),income=type==='income',total=events.reduce((sum,event)=>sum+BigInt(event.amount),0n);
+  const count=events.length,words=income?['поступление','поступления','поступлений']:['платёж','платежа','платежей'];
   const countLabel=count+' '+words[count%100>=11&&count%100<=14?2:count%10===1?0:count%10>=2&&count%10<=4?1:2];
-  const summary='<section class="card plan-summary" aria-label="Итоговая плановая сумма"><div class="plan-summary-top"><span class="hint">Итоговая плановая сумма</span><span class="pill">'+countLabel+'</span></div><div class="plan-total-value" data-planned-total="'+type+'" data-total-cents="'+(amountsHidden?'':total.toString())+'">'+money(total)+'</div><p class="hint">'+(income?'Сумма всех поступлений из списка':'Сумма всех платежей и подписок из списка')+'</p></section>';
-  return summary+'<div class="card schedule-card"><div class="card-head"><div><h2>'+ (income?'Запланированные поступления':'Платежи и подписки')+'</h2><div class="hint">Разовые и повторяющиеся события</div></div>'+btn(I('plus')+'Добавить','edit-item','data-type="'+type+'"','small')+'</div>'+
-  (!items.length?empty(income?'Когда придут деньги?':'Что нужно оплатить?',income?'Добавьте каждую дату зарплаты, аванса или другого дохода.':'Добавьте кредит, аренду, счета и подписки.','add-'+type,income?'Добавить поступление':'Добавить платёж',type):'<div class="table-wrap"><table class="schedule-table"><thead><tr><th>Название</th><th>Ближайшая дата</th><th>Повторение</th><th class="number">Плановая сумма</th><th class="number">Действия</th></tr></thead><tbody>'+items.map(i=>{const e=nextFor(i);return '<tr><td><div class="row-name"><div class="wrap grow"><div class="list-label">'+esc(i.title)+'</div>'+(e&&e.overdue?'<span class="pill warn">'+(income?'Не подтверждено':'Просрочено')+'</span>':'')+'</div></div></td><td>'+(e?dateLabel(e.date,true):'<span class="pill">Подтверждено</span>')+'</td><td class="hint">'+repeats[i.repeat]+'</td><td class="number"><b>'+money(i.amount)+'</b></td><td><div class="actions" style="justify-content:flex-end">'+(e?btn(income?'Получено':'Оплачено','record','data-key="'+esc(e.key)+'"','small soft'):'')+btn('Изменить','edit-item','data-id="'+i.id+'" data-type="'+type+'"','small line')+btn('Удалить','delete-item','data-id="'+i.id+'"','small ghost')+'</div></td></tr>';}).join('')+'</tbody></table></div>')+
-  '<p class="smallprint">'+(income?'Отметьте «Получено», когда деньги действительно пришли. Просроченные неподтверждённые доходы не учитываются в прогнозе.':'«Оплачено» уменьшает текущий баланс и исключает этот платёж из будущих списаний. Просроченные платежи учитываются в прогнозе сегодня.')+'</p></div><div class="card section-gap"><h2 style="margin-bottom:16px">История '+(income?'поступлений':'расходов')+'</h2>'+history(type)+'</div>';
+  const summary='<section class="card plan-summary" aria-label="Итоговая плановая сумма"><div class="plan-summary-top"><span class="hint">Итоговая плановая сумма</span><span class="pill">'+countLabel+'</span></div><div class="plan-total-value" data-planned-total="'+type+'" data-total-cents="'+(amountsHidden?'':total.toString())+'">'+money(total)+'</div><p class="hint">'+(income?'Сумма оставшихся поступлений из основного списка':'Сумма оставшихся платежей из основного списка')+'</p></section>';
+  const hasItems=S.items.some(item=>item.type===type);
+  const list=events.length?scheduleTable(events,type):empty(hasItems?(income?'Все поступления отмечены':'Всё оплачено'):(income?'Добавьте поступления':'Добавьте платежи'),hasItems?(income?'Полученные деньги находятся в истории. Ежемесячные поступления вернутся первого числа.':'Оплаченные записи находятся в истории. Ежемесячные платежи вернутся первого числа.'):(income?'Запланируйте зарплату, аванс или другой доход.':'Запланируйте аренду, кредит или подписку.'),'add-'+type,income?'Добавить поступление':'Добавить платёж',type);
+  const overdue=past.length?'<details class="card section-gap past-events" data-past-list="'+type+'"><summary>Прошлые неподтверждённые даты <span class="pill">'+past.length+'</span></summary><p class="hint">'+(income?'Эти поступления не подтверждены и не входят в ожидаемый доход прогноза.':'Эти платежи ещё не подтверждены и учитываются в прогнозе как просроченные.')+'</p><div class="schedule-card">'+scheduleTable(past,type)+'</div></details>':'';
+  return summary+'<div class="card schedule-card" data-active-list="'+type+'"><div class="card-head"><div><h2>'+(income?'Запланированные поступления':'Платежи и подписки')+'</h2><div class="hint">Новый ежемесячный цикл начинается первого числа</div></div>'+btn(I('plus')+'Добавить','edit-item','data-type="'+type+'"','small')+'</div>'+list+'<p class="smallprint">'+(income?'Нажмите «Получено», когда деньги пришли: запись перейдёт в историю.':'Нажмите «Оплачено», когда платёж выполнен: запись перейдёт в историю.')+' Для возвращения каждый месяц выберите повторение «Каждый месяц». Неотмеченные записи прошлого месяца не переносятся в новый цикл.</p></div>'+overdue+'<div class="card section-gap" data-history-list="'+type+'"><h2 style="margin-bottom:16px">История '+(income?'поступлений':'расходов')+'</h2>'+history(type)+'</div>';
 }
 function goals(){
-  const f=C.forecast(S),without=C.forecast(S,C.today(),C.addDays(C.today(),89),false);
+  const f=C.forecast(S),without=C.forecast(S,C.today(),C.forecastEnd(C.today()),false);
   return '<div class="card-head"><div><h2>Ваши цели</h2><div class="hint">Выделено '+money(C.reserved(S))+' · осталось накопить '+money(S.goals.reduce((a,g)=>a+Math.max(0,g.target-g.saved),0))+'</div></div>'+btn(I('plus')+'Новая цель','edit-goal','','small')+'</div>'+
-  (S.goals.length&&f.firstGap?'<div class="notice">'+I('alert')+'<div><b>'+(without.firstGap?'Платежи и повседневные расходы требуют пересмотра':'Плановые взносы не помещаются в бюджет')+'</b><div>В общем плане на 90 дней возникает нехватка '+dateLabel(f.firstGap.date,true)+'. '+link('Посмотреть даты →','calendar')+'</div></div></div>':'')+
+  (S.goals.length&&f.firstGap?'<div class="notice">'+I('alert')+'<div><b>'+(without.firstGap?'Платежи и повседневные расходы требуют пересмотра':'Плановые взносы не помещаются в бюджет')+'</b><div>В общем плане на два месяца возникает нехватка '+dateLabel(f.firstGap.date,true)+'. '+link('Посмотреть даты →','calendar')+'</div></div></div>':'')+
   (S.goals.length?'<div class="goal-grid">'+S.goals.map(g=>goalCard(g)).join('')+'</div>':'<div class="card">'+empty('Дайте накоплениям цель','Выберите сумму и срок либо комфортный ежемесячный взнос.','edit-goal','Создать первую цель','goals')+'</div>')+
   '<p class="smallprint">«Отложить» выделяет часть денег на ваших счетах для цели и исключает её из доступного для трат. Сумма на счетах не меняется. Приложение не переводит деньги.</p>';
 }
 function calendar(){
   const now=C.today(),end=C.addDays(C.month(calMonth,1),-1),until=end>now?end:now,f=C.forecast(S,now,until),forecastMap=new Map(f.rows.map(r=>[r.date,r])),start=C.addDays(calMonth,-((C.parse(calMonth).getUTCDay()+6)%7)),gridEnd=C.addDays(start,41);
-  const events=[...C.scheduled(S,start,gridEnd),...C.savings(S,now,gridEnd).filter(e=>e.date>=start),...S.ledger.filter(e=>e.date>=start&&e.date<=gridEnd).map(e=>({...e,done:true}))];
+  const events=[...C.scheduled(S,start,gridEnd,false,now),...C.savings(S,now,gridEnd).filter(e=>e.date>=start),...S.ledger.filter(e=>e.date>=start&&e.date<=gridEnd).map(e=>({...e,done:true}))];
   C.scheduled(S,now,gridEnd,true).filter(e=>e.overdue&&e.date>=start).forEach(e=>{if(!events.some(x=>x.key===e.key))events.push(e);});
   const title=C.parse(calMonth).toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
-  const tabs='<div class="tabs"><button data-action="cal-view" data-view="grid" class="'+(calView==='grid'?'selected':'')+'">Календарь</button><button data-action="cal-view" data-view="forecast" class="'+(calView==='forecast'?'selected':'')+'">Прогноз на 90 дней</button></div>';
+  const tabs='<div class="tabs"><button data-action="cal-view" data-view="grid" class="'+(calView==='grid'?'selected':'')+'">Календарь</button><button data-action="cal-view" data-view="forecast" class="'+(calView==='forecast'?'selected':'')+'">Прогноз на два месяца</button></div>';
   if(calView==='forecast'){
-    const full=C.forecast(S);
-    return tabs+'<div class="help-line">Прогноз начинается с денег, доступных сейчас. Повседневный бюджет '+money(S.daily)+' списывается каждый день; накопления показываются отдельно. События одного дня объединяются.</div><div class="card">'+(full.firstGap?'<div class="notice">'+I('alert')+'<div>Первая нехватка: '+dateLabel(full.firstGap.date,true)+' — '+money(Math.abs(full.firstGap.balance))+'. Минимальный доступный остаток за период: '+money(full.min)+'.</div></div>':'')+'<div class="table-wrap" style="max-height:620px"><table><thead><tr><th>Дата</th><th class="number">Поступления</th><th class="number">Платежи</th><th class="number">Повседневные</th><th class="number">На цели</th><th class="number">Остаток для трат</th></tr></thead><tbody>'+full.rows.map(r=>'<tr><td>'+dateLabel(r.date,true)+'</td><td class="number positive">'+(r.income?money(r.income):'—')+'</td><td class="number">'+(r.payments?money(r.payments):'—')+'</td><td class="number muted">'+money(r.daily)+'</td><td class="number">'+(r.saving?money(r.saving):'—')+'</td><td class="number '+(r.balance<0?'negative':'')+'"><b>'+money(r.balance)+'</b></td></tr>').join('')+'</tbody></table></div></div>';
+    const end=C.forecastEnd(now),full=C.forecast(S,now,end);
+    return tabs+'<div class="help-line" data-two-month-forecast data-start-date="'+now+'" data-end-date="'+end+'">Период: '+dateLabel(now,true)+' — '+dateLabel(end,true)+'. Текущий и следующий календарный месяц. Прогноз начинается с денег, доступных сейчас. Повседневный бюджет '+money(S.daily)+' списывается каждый день; накопления показываются отдельно. События одного дня объединяются.</div><div class="card">'+(full.firstGap?'<div class="notice">'+I('alert')+'<div>Первая нехватка: '+dateLabel(full.firstGap.date,true)+' — '+money(Math.abs(full.firstGap.balance))+'. Минимальный доступный остаток за период: '+money(full.min)+'.</div></div>':'')+'<div class="table-wrap" style="max-height:620px"><table><thead><tr><th>Дата</th><th class="number">Поступления</th><th class="number">Платежи</th><th class="number">Повседневные</th><th class="number">На цели</th><th class="number">Остаток для трат</th></tr></thead><tbody>'+full.rows.map(r=>'<tr data-forecast-date="'+r.date+'"><td>'+dateLabel(r.date,true)+'</td><td class="number positive">'+(r.income?money(r.income):'—')+'</td><td class="number">'+(r.payments?money(r.payments):'—')+'</td><td class="number muted">'+money(r.daily)+'</td><td class="number">'+(r.saving?money(r.saving):'—')+'</td><td class="number '+(r.balance<0?'negative':'')+'"><b>'+money(r.balance)+'</b></td></tr>').join('')+'</tbody></table></div></div>';
   }
   const dayEvents=events.filter(e=>e.date===calDay),r=forecastMap.get(calDay);
   return tabs+'<div class="calendar-layout"><div class="card calendar-card"><div class="card-head"><h2 style="text-transform:capitalize">'+title+'</h2><div class="actions">'+btn(I('back'),'cal-prev','aria-label="Предыдущий месяц"','small line')+btn('Сегодня','cal-today','','small soft')+btn(I('arrow'),'cal-next','aria-label="Следующий месяц"','small line')+'</div></div><div class="week">'+['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>'<span>'+d+'</span>').join('')+'</div><div class="calendar">'+Array.from({length:42},(_,i)=>{const date=C.addDays(start,i),es=events.filter(e=>e.date===date),row=forecastMap.get(date);return '<button class="day '+(date.slice(0,7)!==calMonth.slice(0,7)?'out ':'')+(date===now?'today ':'')+(date===calDay?'selected':'')+'" data-action="cal-day" data-date="'+date+'" aria-label="'+fullDate(date)+'"><span class="day-num">'+C.parse(date).getUTCDate()+'</span><div class="dots">'+es.slice(0,5).map(e=>'<span class="dot '+(e.done?'done':e.type)+'"></span>').join('')+'</div>'+(row?'<div class="day-amount '+(row.balance<0?'negative':'')+'">'+money(row.balance)+'</div>':'')+(es[0]?'<div class="day-line">'+esc(es[0].title)+'</div>':'')+'</button>';}).join('')+'</div><p class="smallprint">Суммы в календаре — доступный остаток по прогнозу на конец дня. Прошлые остатки не восстанавливаются.</p></div><div class="card"><h2>'+dateLabel(calDay,true)+'</h2>'+(r?'<p class="hint">Доступно к концу дня</p><div class="value '+(r.balance<0?'negative':'')+'">'+money(r.balance)+'</div>':'<p class="hint">Подтверждённые операции и запланированные события</p>')+'<div style="margin-top:20px">'+(dayEvents.length?dayEvents.map(e=>'<div class="metric-row"><div class="grow"><b class="wrap">'+esc(e.title)+'</b><div class="hint">'+(e.done?'Подтверждено':e.type==='saving'?'Взнос на цель':e.type==='income'?'Плановое поступление':e.overdue?'Просроченный платёж':'Плановый платёж')+'</div><div class="actions" style="margin-top:6px">'+(!e.done?(e.type==='saving'?btn('Отложить','reserve','data-id="'+e.id+'" data-date="'+e.date+'"','small soft'):btn(e.type==='income'?'Получено':'Оплачено','record','data-key="'+esc(e.key)+'"','small soft')):'')+'</div></div><b class="'+(e.type==='income'?'positive':'')+'">'+(e.type==='income'?'+':'−')+money(e.amount)+'</b></div>').join(''):'<p class="muted">На эту дату нет событий.</p>')+'</div>'+btn(I('plus')+'Добавить событие','quick','data-date="'+calDay+'"','line')+'</div></div>';
@@ -788,7 +845,23 @@ function toggleFinancePrivacy(){
   for(const input of document.querySelectorAll('#editor [data-finance-input]'))input.type=amountsHidden?'password':'text';
   if(active?.kind==='goal')updateGoalPreview();
 }
+function syncPlanningDate(){
+  const now=C.today();if(now===planningDay)return false;
+  if(calMonth===planningDay.slice(0,7)+'-01')calMonth=now.slice(0,7)+'-01';
+  if(calDay===planningDay)calDay=now;
+  planningDay=now;return true;
+}
+function schedulePlanningRefresh(){
+  clearTimeout(planningTimer);planningTimer=null;if(!currentUser)return;
+  const midnight=new Date();midnight.setHours(24,0,0,100);
+  planningTimer=setTimeout(refreshPlanningDate,Math.max(100,midnight.getTime()-Date.now()));
+}
+function refreshPlanningDate(){
+  if(!currentUser)return;
+  if(syncPlanningDate())render();else schedulePlanningRefresh();
+}
 function render(){
+  syncPlanningDate();schedulePlanningRefresh();
   const drafts=captureProfileDrafts();
   route=location.hash.slice(1)||'home';if(!pages[route])route='home';
   document.querySelectorAll('[data-nav]').forEach(a=>{a.classList.toggle('active',a.dataset.nav===route);if(a.dataset.nav===route)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -809,7 +882,7 @@ function open(kind,options={}){
   if(kind==='balance'){title='Баланс и повседневный бюджет';body=amountField('Сколько всего сейчас на счетах','balance',S.balance,'Включая деньги, уже выделенные на цели. Это текущий остаток, а не доход за месяц.')+amountField('Повседневные расходы в день','daily',S.daily,'Еда, транспорт и обычные покупки. Кредит, аренду и подписки добавьте отдельно в платежи.')+select('Валюта плана','currency',S.currency,{KZT:'Теңге · ₸',USD:'Доллар · $'})+'<p class="hint">Смена валюты меняет обозначение сумм без пересчёта по курсу.</p>';}
   if(kind==='item'){
     const i=S.items.find(x=>x.id===options.id),type=i?.type||options.type;active.type=type;title=i?'Изменить '+(type==='income'?'поступление':'платёж'):type==='income'?'Новое поступление':'Новый платёж';
-    body=field('Название','title',i?.title||'','text','', 'required maxlength="120" placeholder="'+(type==='income'?'Например, аванс':'Например, платёж по кредиту')+'"')+amountField('Сумма','amount',i?.amount||0)+'<div class="form-grid">'+field('Первая дата','date',i?.date||options.date||now,'date','','required')+select('Повторение','repeat',i?.repeat||'none',repeats)+'</div><p class="hint">Повторение сохраняет исходный день месяца. Если такого дня нет, используется последний день месяца.</p>';
+    body=field('Название','title',i?.title||'','text','', 'required maxlength="120" placeholder="'+(type==='income'?'Например, аванс':'Например, платёж по кредиту')+'"')+amountField('Сумма','amount',i?.amount||0)+'<div class="form-grid">'+field('Первая дата','date',i?.date||options.date||now,'date','','required')+select('Повторение','repeat',i?.repeat||'none',repeats)+'</div><p class="hint">«Каждый месяц» возвращает запись в список первого числа и начинает новый цикл без переноса неоплаченных прошлых месяцев. После подтверждения она остаётся в истории. День платежа сохраняется; если такого дня в месяце нет, используется последний день месяца.</p>';
   }
   if(kind==='goal'){
     const g=S.goals.find(x=>x.id===options.id);title=g?'Изменить цель':'Новая цель';
@@ -999,6 +1072,7 @@ function setAuthMode(mode){
   $('auth-error').textContent='';
 }
 function showAuth(){
+  clearTimeout(planningTimer);planningTimer=null;
   clearProfileSecrets();profileBusy=false;recoveryBusy=false;recoveryEnabled=false;amountsHidden=false;syncFinancePrivacy();
   if($('recovery-dialog').open)closeRecoveryCode();
   clearDailyWish();sessionGeneration++;currentUser=null;S=C.fresh();queuedPlan=null;saving=false;saveConflict=false;remoteRevision=0;storageError='';
@@ -1174,8 +1248,8 @@ async function checkSession(){
   try{await requestAPI('me');}catch(error){if(error.status===401){showAuth();void startAuth();}}
   finally{checkingSession=false;}
 }
-window.addEventListener('focus',()=>{void checkSession();if(currentUser)void loadDailyWish();});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){void checkSession();if(currentUser)void loadDailyWish();}});
+window.addEventListener('focus',()=>{refreshPlanningDate();void checkSession();if(currentUser)void loadDailyWish();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshPlanningDate();void checkSession();if(currentUser)void loadDailyWish();}});
 
 
 Object.assign(icons,{

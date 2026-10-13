@@ -24,6 +24,15 @@ const Core = (() => {
     const last=new Date(Date.UTC(y,m+1,0,12)).getUTCDate();
     return iso(new Date(Date.UTC(y,m,Math.min(d.getUTCDate(),last),12)));
   };
+  const monthStart = date => date.slice(0,7)+'-01';
+  const monthEnd = date => addDays(month(monthStart(date),1),-1);
+  const forecastEnd = date => monthEnd(month(date,1));
+  const cyclePeriod = (item,now) => {
+    if(item.repeat==='monthly')return {start:monthStart(now),end:monthEnd(now)};
+    if(item.repeat==='yearly')return {start:now.slice(0,4)+'-01-01',end:now.slice(0,4)+'-12-31'};
+    if(item.repeat==='weekly'){const start=addDays(now,-((parse(now).getUTCDay()+6)%7));return {start,end:addDays(start,6)};}
+    return {start:item.date,end:item.date};
+  };
   const validDate = s => typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(parse(s)) && iso(parse(s))===s;
   const id = () => typeof crypto!=='undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2);
   const fresh = () => ({version:1,balance:0,daily:0,currency:'KZT',items:[],goals:[],done:{},ledger:[]});
@@ -39,14 +48,36 @@ const Core = (() => {
     }
     return out;
   };
-  const scheduled = (s,from,to,overdue=false) => {
+  const pendingEvent = (s,item,now=today()) => {
+    const period=cyclePeriod(item,now);
+    const date=item.date>period.end?item.date:dates(item,period.start,period.end).find(date=>!s.done[item.id+'@'+date]);
+    if(!date||s.done[item.id+'@'+date])return null;
+    return {...item,date,originalDate:date,key:item.id+'@'+date,overdue:date<now};
+  };
+  const currentEvents = (s,type,now=today()) => s.items.filter(item=>item.type===type).map(item=>pendingEvent(s,item,now)).filter(Boolean);
+  const pastEvents = (s,type,now=today()) => {
+    const events=[];
+    for(const item of s.items.filter(item=>item.type===type&&['weekly','yearly'].includes(item.repeat))){
+      const period=cyclePeriod(item,now);
+      for(const date of dates(item,item.date,addDays(period.start,-1))){
+        const key=item.id+'@'+date;
+        if(!s.done[key])events.push({...item,date,originalDate:date,key,overdue:true});
+      }
+    }
+    return events.sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title));
+  };
+  const scheduled = (s,from,to,overdue=false,cycleDate=from) => {
     const out=[];
-    s.items.forEach(item=>dates(item,overdue?item.date:from,to).forEach(date=>{
+    s.items.forEach(item=>{
+      const start=overdue?item.date:from,cycleStart=monthStart(cycleDate);
+      const first=item.repeat==='monthly'&&start<cycleStart?cycleStart:start;
+      dates(item,first,to).forEach(date=>{
       const key=item.id+'@'+date;
       if(s.done[key]) return;
       if(date<from && (!overdue || item.type==='income')) return;
       out.push({...item,date:date<from?from:date,originalDate:date,key,overdue:date<from});
-    }));
+      });
+    });
     return out.sort((a,b)=>a.date.localeCompare(b.date)||a.type.localeCompare(b.type));
   };
   const goalPlan = (g,now=today()) => {
@@ -75,7 +106,7 @@ const Core = (() => {
     });
     return out;
   };
-  const forecast = (s,now=today(),until=addDays(now,89),withGoals=true) => {
+  const forecast = (s,now=today(),until=forecastEnd(now),withGoals=true) => {
     if(until<now) return {rows:[],events:[],firstGap:null,min:available(s)};
     const events=[...scheduled(s,now,until,true),...(withGoals?savings(s,now,until):[])];
     const grouped=new Map();
@@ -93,10 +124,15 @@ const Core = (() => {
     }
     return {rows,events,firstGap,min};
   };
+  const monthlyForecast = (s,now=today()) => {
+    const end=monthEnd(now),result=forecast(s,now,end),availableEnd=result.rows.at(-1).balance;
+    const plannedSaving=result.rows.reduce((sum,row)=>sum+row.saving,0);
+    return {...result,end,availableEnd,accountEnd:availableEnd+reserved(s)+plannedSaving};
+  };
   const allowance = (s,now=today()) => {
     const es=scheduled(s,now,addDays(now,365),true);
     const next=es.find(e=>e.type==='income');
-    const count=next?Math.max(1,days(now,next.date)):30;
+    const count=next?Math.max(1,days(now,next.date)):days(now,monthEnd(now))+1;
     const last=addDays(now,count-1);
     const obligations=scheduled(s,now,last,true).filter(e=>e.type==='payment').reduce((a,e)=>a+e.amount,0);
     const goals=savings(s,now,last).reduce((a,e)=>a+e.amount,0);
@@ -127,7 +163,7 @@ const Core = (() => {
     if(marks.size!==s.ledger.length||Object.keys(s.done).some(k=>!marks.has(k)||s.done[k]!==true)||s.ledger.some(e=>!s.done[e.key]))throw Error('Некорректные отметки платежей.');
     return s;
   };
-  return {iso,parse,today,addDays,days,month,validDate,id,fresh,reserved,available,dates,scheduled,goalPlan,savings,forecast,allowance,record,validate};
+  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,allowance,record,validate};
 })();
 const validUsername = value => typeof value==='string' && /^[a-z]{1,32}$/.test(value);
 const validPassword = value => typeof value==='string' && /^[A-Za-z0-9]{8,128}$/.test(value);
