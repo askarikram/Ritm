@@ -56,13 +56,13 @@ export function createSubscriptionService({pool,memberships}){
   });
  }
  async function create(userId,data){
-  const plan=subscriptionPlans[data.period];
+  const plan=typeof data.period==='string'&&Object.hasOwn(subscriptionPlans,data.period)?subscriptionPlans[data.period]:null;
   if(!plan)throw bad('Выберите месяц или год.');
   if(!clean(data.senderName,100))throw bad('Укажите имя отправителя перевода.');
   if(!Number.isInteger(data.merchantRevision)||data.merchantRevision<1)throw bad('Обновите реквизиты.',409,'merchant_changed');
   return transaction(async client=>{
    await client.query('SELECT id FROM ritm_users WHERE id=$1 FOR UPDATE',[userId]);
-   const membership=await memberships.forUser(userId);
+   const membership=await memberships.forUser(userId,Date.now(),client);
    if(membership.lifetime)throw bad('У вас уже пожизненный Premium.',409,'lifetime_premium');
    const pending=(await client.query("SELECT * FROM ritm_subscription_orders WHERE user_id=$1 AND status='pending'",[userId])).rows[0];
    if(pending)return {order:orderJSON(pending)};

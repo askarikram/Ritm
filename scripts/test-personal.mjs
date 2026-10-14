@@ -1,3 +1,4 @@
+import { grantFixturePremium } from './premium-fixture.mjs';
 import assert from 'node:assert/strict';
 import { randomBytes,createECDH } from 'node:crypto';
 import pg from 'pg';
@@ -41,7 +42,7 @@ export async function verifyPersonal(base){
  return {status:response.status,body:await response.json()};
  };
  try{
-  for(const account of [a,b]){const signup=await request(account,'/api/signup','POST',{username:account.username,password,confirmPassword:password,name:'Проверка личного'});check(signup.status===200,'disposable personal account created');created.push(account.username);}
+  for(const account of [a,b]){const signup=await request(account,'/api/signup','POST',{username:account.username,password,confirmPassword:password,name:'Проверка личного'});check(signup.status===200,'disposable personal account created');created.push(account.username);await grantFixturePremium(base,account.username);}
   check((await request(null,'/api/personal')).status===401,'anonymous personal read denied');
   const before=(await request(a,'/api/me')).body,pa=await request(a,'/api/personal?timeZone=UTC'),pb=await request(b,'/api/personal?timeZone=Asia%2FAlmaty');
   check(pa.body.revision===0&&pa.body.state.tasks.length===0&&pb.body.state.timeZone==='Asia/Almaty','personal data initialized independently per owner');
@@ -73,6 +74,8 @@ export async function verifyPersonal(base){
   check((await reminders.dispatch(deliveryTime)).sent===0,'moved task and completed habit excluded from current reminder delivery');
   const nextDay=new Date(Personal.addDays(date,1)+'T09:00:00Z');
   check((await reminders.dispatch(nextDay)).sent===1&&received.length===3,'daily habit returns with a new reminder tomorrow');
+  await pool.query('UPDATE ritm_memberships SET lifetime=FALSE,expires_at=$2 WHERE user_id=$1',[own,Date.now()-1000]);
+  check((await reminders.dispatch(new Date(Personal.addDays(date,2)+'T09:00:00Z'))).sent===0&&received.length===3,'expired Premium suppresses future personal push while preserving data');
   const persisted=await service.get(own);
   check(persisted.state.checks[habitId+'@'+date]===true&&!persisted.state.checks[habitId+'@'+Personal.addDays(date,1)],'yesterday completion preserved after tomorrow delivery');
   check((await request(a,'/api/account','DELETE',{currentPassword:password,confirmation:'УДАЛИТЬ'})).status===200,'account deletion succeeds with personal data');

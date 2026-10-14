@@ -11,8 +11,8 @@ export function createMembershipService({pool}){
   const granted=await client.query("INSERT INTO ritm_memberships(user_id,lifetime,expires_at,developer) SELECT id,TRUE,NULL,TRUE FROM ritm_users WHERE username=$1 ON CONFLICT(user_id) DO UPDATE SET lifetime=TRUE,expires_at=NULL,developer=TRUE",[developerUsername]);
   return granted.rowCount>0;
  }
- async function forUser(userId,now=Date.now()){
-  const row=(await pool.query('SELECT lifetime,expires_at,developer FROM ritm_memberships WHERE user_id=$1',[userId])).rows[0];
+ async function forUser(userId,now=Date.now(),client=pool){
+  const row=(await client.query('SELECT lifetime,expires_at,developer FROM ritm_memberships WHERE user_id=$1',[userId])).rows[0];
   return membershipStatus(row,now);
  }
  return {initialize,forUser};

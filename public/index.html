@@ -827,11 +827,31 @@ label,.field>label{font-size:14px;font-weight:500}
  .personal-next-top .personal-next-time{font-size:11px;padding:5px 7px}
 }
 
+
+/* Subscription surfaces use the same Rhythm palette and spacing. */
+.premium-entry{display:inline-flex;align-items:center;gap:6px;margin-top:9px;padding:5px 10px;border-radius:100px;background:#e7f0e9;color:#24694e;font-size:12px;font-weight:650;text-decoration:none;line-height:1.4}
+.premium-entry svg{width:14px;height:14px}.premium-entry.active{background:#24694e;color:white}
+.subscription-wrap{max-width:1050px;margin:auto}.subscription-hero{padding:30px;border-radius:24px;background:linear-gradient(120deg,#1d513d,#2f7558);color:#fff;position:relative;overflow:hidden}
+.subscription-hero .eyebrow,.subscription-hero p{color:#e2eee6}.subscription-hero h2{font-size:clamp(24px,4vw,36px);line-height:1.2;margin:14px 0 12px;letter-spacing:-.6px}.subscription-hero p{max-width:620px;line-height:1.65;margin:0}
+.subscription-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:100px;font-size:12px;font-weight:650;background:rgba(255,255,255,.14);color:#fff}.subscription-badge svg{width:15px;height:15px}
+.subscription-section{margin-top:24px}.subscription-section h2{margin:0 0 14px;font-size:20px}.subscription-benefits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.subscription-benefit{display:flex;gap:13px;padding:19px;border-radius:20px;background:#fff;border:1px solid #e7ece7;min-width:0}.subscription-benefit .tile{flex-shrink:0}.subscription-benefit h3{font-size:15px;margin:1px 0 7px}.subscription-benefit p{font-size:13px;line-height:1.6;color:var(--muted);margin:0}
+.subscription-plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}.subscription-plan{font:inherit;color:var(--ink);background:#fff;border:1px solid #dde7df;border-radius:20px;text-align:left;padding:22px;cursor:pointer;min-width:0;transition:background .15s,border-color .15s}
+.subscription-plan[aria-pressed=true]{background:#edf5ef;border-color:#24694e;box-shadow:inset 0 0 0 1px #24694e}.subscription-plan:focus-visible{outline:3px solid #9dbfaa;outline-offset:3px}
+.subscription-plan-title{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:16px;font-weight:650}.subscription-plan-title small{background:#e1ede4;border-radius:20px;padding:4px 7px;font-size:11px;color:#24694e}.subscription-price{font-size:30px;letter-spacing:-1px;font-weight:700;margin:13px 0 8px}.subscription-price small{font-size:14px;letter-spacing:0;font-weight:500}.subscription-plan p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+.subscription-compare{border:1px solid #e4eae4;border-radius:20px;overflow:hidden;background:white}.subscription-compare table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}.subscription-compare th,.subscription-compare td{padding:14px 18px;border-bottom:1px solid #edf0ed;text-align:center}.subscription-compare th:first-child,.subscription-compare td:first-child{text-align:left;width:55%}.subscription-compare thead{background:#edf5ef}.subscription-compare tr:last-child td{border-bottom:0}.subscription-check{color:#24694e;font-weight:700}.subscription-compare caption{text-align:left;padding:18px;font-size:18px;font-weight:650}
+.subscription-checkout{padding:25px;border:1px solid #e1e9e2;background:white;border-radius:22px}.subscription-step{display:flex;gap:12px;margin:19px 0;align-items:flex-start}.subscription-step-number{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#edf5ef;color:#24694e;font-size:13px;font-weight:650}.subscription-step-content{min-width:0;flex:1}.subscription-step-content p{color:var(--muted);font-size:13px;line-height:1.6;margin:6px 0}.subscription-recipient{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 15px;border-radius:14px;background:#f5f7f5;margin-top:12px}.subscription-recipient strong{display:block;font-size:18px;letter-spacing:.2px;overflow-wrap:anywhere}.subscription-recipient small{display:block;color:var(--muted);margin-top:6px}.subscription-recipient button{flex-shrink:0}.subscription-transfer-amount{font-size:23px;font-weight:700;color:#24694e;display:block;margin-top:8px}
+.subscription-form label{display:grid;gap:8px;margin-top:15px;font-size:14px;font-weight:550}.subscription-form input{width:100%;min-width:0;box-sizing:border-box}.subscription-form .subscription-confirm{display:flex;align-items:flex-start;gap:9px;font-weight:400;line-height:1.6}.subscription-confirm input{width:18px;flex-shrink:0;margin-top:3px;accent-color:#24694e}.subscription-form .btn{margin-top:18px}.subscription-form .feature-error:empty{display:none}
+.subscription-status{background:#edf5ef;border:1px solid #d4e4d8;border-radius:20px;padding:22px;margin-top:18px}.subscription-status h3{font-size:17px;margin:0 0 9px}.subscription-status p{margin:6px 0;line-height:1.6;font-size:14px;color:var(--muted)}.subscription-status.pending{background:#fff9eb;border-color:#efe3bf}.subscription-status.rejected{background:#faf3f0;border-color:#eadcd5}
+.subscription-settings-card{display:flex;align-items:center;gap:18px;padding:23px;border-radius:22px;background:#edf5ef;border:1px solid #dce8df;margin-bottom:24px}.subscription-settings-copy{flex:1;min-width:0}.subscription-settings-card h2{font-size:19px;margin:0 0 7px}.subscription-settings-card p{font-size:14px;line-height:1.6;color:var(--muted);margin:0}.subscription-settings-card .btn{flex-shrink:0;text-decoration:none}
+.subscription-admin{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1.2fr);gap:20px}.subscription-admin .card{min-width:0}.subscription-admin h2{font-size:20px}.subscription-admin-order{border:1px solid #e1e8e2;border-radius:16px;padding:18px;margin:12px 0;background:white}.subscription-admin-order h3{font-size:16px;overflow-wrap:anywhere;margin:0 0 8px}.subscription-admin-order p{font-size:13px;color:var(--muted);line-height:1.6;margin:6px 0;overflow-wrap:anywhere}.subscription-admin-order .actions{margin-top:12px;flex-wrap:wrap}.subscription-admin-order .btn{font-size:13px;padding:10px 12px}.subscription-order-tag{display:inline-block;color:#24694e;background:#edf5ef;padding:4px 8px;font-size:11px;border-radius:9px;margin-bottom:10px}.subscription-preview{margin-top:16px;padding:16px;border-radius:15px;background:#f4f7f4}.subscription-preview p{font-size:13px;line-height:1.5;color:var(--muted)}
+@media(max-width:600px){.subscription-hero{padding:23px;border-radius:20px}.subscription-section{margin-top:20px}.subscription-benefits{grid-template-columns:1fr}.subscription-benefit{padding:17px}.subscription-plans{gap:9px}.subscription-plan{padding:17px 13px}.subscription-price{font-size:26px}.subscription-plan-title{font-size:14px;align-items:flex-start;flex-direction:column;gap:7px}.subscription-plan-title small{font-size:10px}.subscription-checkout{padding:18px}.subscription-compare th,.subscription-compare td{padding:12px 8px;font-size:12px}.subscription-compare th:first-child,.subscription-compare td:first-child{width:52%}.subscription-settings-card{padding:18px;gap:12px;flex-wrap:wrap}.subscription-settings-card .tile{width:40px;height:40px}.subscription-settings-card>.btn{width:100%;justify-content:center}.subscription-admin{grid-template-columns:1fr}.subscription-recipient{padding:12px}.subscription-recipient strong{font-size:16px}.subscription-recipient .btn{padding:8px}.premium-entry{font-size:11px;margin-top:8px}.subscription-step{gap:9px}}
+
 </style></head><body>
 <div id="connection-status" class="connection-status" role="status" aria-live="polite" hidden></div>
 <div id="update-banner" class="update-banner" role="status" hidden><div><b>Доступно обновление Ритма</b><p>Установим его после сохранения вашего плана.</p></div><button class="btn soft" id="apply-update" type="button">Обновить</button></div>
 <section id="auth-screen" class="auth-screen"><div class="auth-wrap"><div class="landing-header"><a class="brand" href="/"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="landing-header-links"><a href="/help">Помощь</a><button class="btn line" type="button" data-install-app>На телефон</button></div></div><section class="landing-story" aria-label="Что умеет Ритм"><div class="eyebrow">Личный финансовый план</div><h2 class="landing-title">Деньги —<br> <span>в вашем ритме.</span></h2><p class="landing-lead">Планируйте платежи, замечайте возможности и двигайтесь к своим целям. Всё важное — в одном месте.</p><div class="landing-tags"><span>Доходы и платежи</span><span>Накопления</span><span>Календарь</span></div><div class="landing-preview" aria-label="Иллюстрация финансового плана"><div class="landing-preview-top"><span>Понятный план на месяц</span><span>Пример</span></div><strong>Больше ясности.<br>Меньше тревоги.</strong><svg viewBox="0 0 360 68" fill="none" aria-hidden="true"><path d="M0 57 50 44 90 49 136 28 178 34 220 14 268 23 315 9 360 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 67h360" stroke="currentColor" stroke-opacity=".2"/></svg><div class="landing-preview-bottom"><span>Сегодня — первый шаг</span><span>Дальше — ваша цель</span></div></div></section><div class="card auth-card"><div class="eyebrow">Ваш личный финансовый план</div><h1 id="auth-heading">Войти в Ритм</h1><p class="muted" id="auth-description">Ваши цели, платежи и поступления — в одном месте.</p><div class="tabs" role="tablist" aria-label="Вход или регистрация"><button type="button" role="tab" aria-selected="true" data-auth-mode="login" class="selected" id="auth-login-tab">Вход</button><button type="button" role="tab" aria-selected="false" data-auth-mode="signup" id="auth-signup-tab">Регистрация</button></div><form id="auth-form"><label for="auth-username"><span>Логин</span><input id="auth-username" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" pattern="[a-z]+" minlength="1" maxlength="32" required placeholder="Например, arman"><small class="hint">Маленькие латинские буквы, без цифр и пробелов.</small></label><label id="auth-name-field" for="auth-name" hidden><span>Имя</span><input id="auth-name" name="name" autocomplete="given-name" maxlength="80" placeholder="Как к вам обращаться"></label><div class="field"><label for="auth-password">Пароль</label><div class="password-control"><input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" required aria-describedby="auth-password-hint"><button type="button" class="password-toggle" data-password-target="auth-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="hint" id="auth-password-hint">От 12 символов. Можно использовать пробелы и специальные знаки.</small></div><div id="auth-confirm-field" hidden><div class="field"><label for="auth-confirm-password">Повторите пароль</label><div class="password-control"><input id="auth-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required aria-describedby="auth-confirm-password-hint"><button type="button" class="password-toggle" data-password-target="auth-confirm-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="hint" id="auth-confirm-password-hint">Введите пароль ещё раз.</small></div><span class="field-message" id="auth-password-match" role="status" aria-live="polite"></span></div><label class="remember-row"><input type="checkbox" name="remember" checked><span>Оставаться в системе на этом устройстве</span></label><div id="auth-error" class="form-error" role="alert"></div><button type="submit" class="btn auth-submit" id="auth-submit">Войти</button></form><button class="btn ghost auth-forgot" type="button" id="auth-forgot" data-auth-mode="recover">Забыли пароль?</button><form id="recovery-form" hidden><label for="recover-username"><span>Логин</span><input id="recover-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z]+" maxlength="32" required></label><label for="recover-code"><span>Резервный код</span><input id="recover-code" name="recoveryCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="80" required placeholder="XXXX-XXXX-XXXX-XXXX-…"><small class="hint">Код, который вы сохранили при регистрации или в настройках.</small></label><div class="field"><label for="recover-password">Новый пароль</label><div class="password-control"><input id="recover-password" name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required><button type="button" class="password-toggle" data-password-target="recover-password" aria-label="Показать пароль" aria-pressed="false"></button></div><small class="hint">От 12 символов. Можно использовать пробелы и специальные знаки.</small></div><div class="field"><label for="recover-confirm">Повторите новый пароль</label><div class="password-control"><input id="recover-confirm" name="confirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required><button type="button" class="password-toggle" data-password-target="recover-confirm" aria-label="Показать пароль" aria-pressed="false"></button></div><span class="field-message" id="recover-match" role="status" aria-live="polite"></span></div><div class="form-error" id="recover-error" role="alert"></div><button class="btn auth-submit" id="recover-submit" type="submit">Восстановить доступ</button><button class="btn ghost auth-forgot" data-auth-mode="login" type="button">Вернуться ко входу</button></form><p class="smallprint auth-foot">Создавая аккаунт, вы принимаете <a href="/privacy">условия хранения данных</a>.</p></div><footer class="landing-footer"><span>Небольшие шаги. Понятные цели.</span><a href="/privacy">Ваши данные</a><span>Ритм · 2026</span></footer></div></section>
-<div id="application" hidden><aside><a class="brand" href="#home"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="tagline">Деньги в вашем ритме</div><nav aria-label="Разделы"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#personal" data-nav="personal"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Личное</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a><a href="#settings" data-nav="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--card)"/><circle cx="15" cy="17" r="3" fill="var(--card)"/></svg><span>Настройки</span></a></nav><div class="sidebar-foot"><b>Ваш план — у вас</b>План сохраняется в вашем аккаунте.</div></aside><main><header><div class="header-heading"><div class="eyebrow">Личный финансовый план</div><h1 id="heading" tabindex="-1">Главная</h1><div class="hint" id="subtitle"></div><span class="save-state" id="save-state"></span></div><div class="header-tools"><button type="button" class="btn line icon-button reminder-bell" id="reminder-bell" data-action="reminders" aria-label="Напоминания"></button><a class="account-pill" href="#settings" data-nav="settings" aria-label="Открыть профиль и настройки"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span class="session-name" id="session-name"></span></a><button type="button" class="btn line icon-button finance-privacy" id="finance-privacy" data-action="toggle-finances" aria-label="Скрыть суммы" aria-pressed="false" title="Скрыть суммы"></button><button type="button" class="btn line icon-button logout-btn" data-action="account-logout" aria-label="Выйти из аккаунта"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4m6-12 4 4-4 4M8 12h11"/></svg></button><span class="hint header-date" id="header-date"></span><button class="btn head-add" data-action="quick" type="button" aria-label="Добавить событие"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button></div></header><div id="storage-notice"></div><div id="content"></div></main><nav class="mobile-nav" aria-label="Разделы приложения"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#personal" data-nav="personal"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Личное</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a></nav><dialog id="personal-dialog" class="feature-dialog personal-dialog" aria-labelledby="personal-dialog-title"><div class="dialog-head"><h2 id="personal-dialog-title"></h2><button class="btn ghost" type="button" data-personal-action="close-dialog" aria-label="Закрыть личный редактор"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><form id="personal-editor"><div id="personal-fields"></div><div id="personal-form-error" class="feature-error" role="alert"></div><div class="form-footer" id="personal-footer"><button class="btn line" type="button" data-personal-action="close-dialog">Отмена</button><button class="btn" type="submit">Сохранить</button></div></form></dialog><dialog id="archive-dialog" class="feature-dialog" aria-labelledby="archive-title"><div class="dialog-head"><h2 id="archive-title">Архив</h2><button class="btn ghost" type="button" data-feature-close="archive-dialog" aria-label="Закрыть архив"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><div id="archive-body" class="feature-dialog-body"></div></dialog>
+<div id="application" hidden><aside><a class="brand" href="#home"><span class="logo"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 18V11m5 10V6m6 14V9m5 8v-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>ритм</a><div class="tagline">Деньги в вашем ритме</div><nav aria-label="Разделы"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#personal" data-nav="personal" data-plan-nav><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Личное</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a><a href="#settings" data-nav="settings"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--card)"/><circle cx="15" cy="17" r="3" fill="var(--card)"/></svg><span>Настройки</span></a></nav><div class="sidebar-foot"><b>Ваш план — у вас</b>План сохраняется в вашем аккаунте.</div></aside><main><header><div class="header-heading"><div class="eyebrow">Личный финансовый план</div><h1 id="heading" tabindex="-1">Главная</h1><div class="hint" id="subtitle"></div><span class="save-state" id="save-state"></span><br><a class="premium-entry" id="premium-entry" href="#premium" aria-label="Подписка Premium">Premium</a></div><div class="header-tools"><button type="button" class="btn line icon-button reminder-bell" id="reminder-bell" data-action="reminders" aria-label="Напоминания"></button><a class="account-pill" href="#settings" data-nav="settings" aria-label="Открыть профиль и настройки"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span class="session-name" id="session-name"></span></a><button type="button" class="btn line icon-button finance-privacy" id="finance-privacy" data-action="toggle-finances" aria-label="Скрыть суммы" aria-pressed="false" title="Скрыть суммы"></button><button type="button" class="btn line icon-button logout-btn" data-action="account-logout" aria-label="Выйти из аккаунта"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4m6-12 4 4-4 4M8 12h11"/></svg></button><span class="hint header-date" id="header-date"></span><button class="btn head-add" data-action="quick" type="button" aria-label="Добавить событие"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button></div></header><div id="storage-notice"></div><div id="content"></div></main><nav class="mobile-nav" aria-label="Разделы приложения"><a href="#home" data-nav="home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-6h6v6"/></svg><span>Главная</span></a><a href="#income" data-nav="income"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13m-5-5 5 5 5-5M4 20h16"/></svg><span>Доходы</span></a><a href="#payment" data-nav="payment"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V4m-5 5 5-5 5 5M4 20h16"/></svg><span>Платежи</span></a><a href="#personal" data-nav="personal" data-plan-nav><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/></svg><span>Личное</span></a><a href="#calendar" data-nav="calendar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg><span>Календарь</span></a></nav><dialog id="personal-dialog" class="feature-dialog personal-dialog" aria-labelledby="personal-dialog-title"><div class="dialog-head"><h2 id="personal-dialog-title"></h2><button class="btn ghost" type="button" data-personal-action="close-dialog" aria-label="Закрыть личный редактор"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><form id="personal-editor"><div id="personal-fields"></div><div id="personal-form-error" class="feature-error" role="alert"></div><div class="form-footer" id="personal-footer"><button class="btn line" type="button" data-personal-action="close-dialog">Отмена</button><button class="btn" type="submit">Сохранить</button></div></form></dialog><dialog id="archive-dialog" class="feature-dialog" aria-labelledby="archive-title"><div class="dialog-head"><h2 id="archive-title">Архив</h2><button class="btn ghost" type="button" data-feature-close="archive-dialog" aria-label="Закрыть архив"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><div id="archive-body" class="feature-dialog-body"></div></dialog>
 <dialog id="archive-edit-dialog" class="feature-dialog archive-editor" aria-labelledby="archive-edit-title"><div class="dialog-head"><h2 id="archive-edit-title">Заполнить месяц</h2><button class="btn ghost" type="button" data-feature-close="archive-edit-dialog" aria-label="Закрыть редактор"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><form id="archive-editor"><div id="archive-fields"></div><div class="archive-preview"><span>Остаток</span><strong id="archive-preview"></strong></div><div id="archive-edit-error" class="feature-error" role="alert"></div><div class="form-footer"><button class="btn line" type="button" data-feature-close="archive-edit-dialog">Отмена</button><button class="btn" type="submit">Сохранить</button></div></form></dialog>
 <dialog id="reminders-dialog" class="feature-dialog reminder-dialog" aria-labelledby="reminders-title"><div class="dialog-head"><h2 id="reminders-title">Напоминания</h2><button class="btn ghost" type="button" data-feature-close="reminders-dialog" aria-label="Закрыть напоминания"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><div id="reminders-body" class="feature-dialog-body"></div></dialog><dialog id="dialog" aria-labelledby="dialog-title"><div class="dialog-head"><h2 id="dialog-title"></h2><button class="btn ghost" data-action="close" type="button" aria-label="Закрыть"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><form id="editor" class="dialog-body"><div id="form-body"></div><div id="form-error" class="form-error" role="alert"></div><div class="form-footer" id="form-footer"><button type="button" class="btn line" data-action="close">Отмена</button><button type="submit" class="btn">Сохранить</button></div></form></dialog><dialog id="recovery-dialog" aria-labelledby="recovery-title"><div class="recovery-dialog-body"><h2 id="recovery-title">Сохраните резервный код</h2><p>Он поможет вернуть доступ, если вы забудете пароль. Код показывается только сейчас.</p><output id="recovery-code" class="recovery-code"></output><p>Сохраните его отдельно от пароля и не передавайте другим людям.</p><div class="actions"><button class="btn" type="button" id="download-recovery">Скачать код</button><button class="btn line" type="button" id="close-recovery">Я сохранил код</button></div></div></dialog><dialog id="install-dialog" aria-labelledby="install-title"><div class="recovery-dialog-body"><h2 id="install-title">Ритм на вашем телефоне</h2><p id="install-instructions"></p><p class="smallprint">Вход и синхронизация плана требуют интернета.</p><button class="btn" id="close-install" type="button">Понятно</button></div></dialog><input id="import-file" type="file" accept="application/json,.json" hidden><div id="toast" role="status" aria-live="polite"></div><noscript>Для работы приложения включите JavaScript в браузере.</noscript></div><script>
 
@@ -1057,7 +1077,7 @@ const inputMoney=v=>String(Math.round(v/100));
 const dateLabel=(s,long=false)=>s?C.parse(s).toLocaleDateString('ru-RU',{day:'numeric',month:long?'long':'short',...(s.slice(0,4)!==C.today().slice(0,4)?{year:'numeric'}:{})}):'—';
 const fullDate=s=>C.parse(s).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 const repeats={none:'Один раз',monthly:'Каждый месяц',weekly:'Каждую неделю',yearly:'Каждый год'};
-const pages={home:['Главная','Ваши деньги, дела и привычки'],income:['Поступления','Зарплата, аванс и другие доходы'],payment:['Платежи','Все обязательства и подписки по датам'],personal:['Личное','Ваши дела, привычки и накопления'],goals:['Накопить деньги','Суммы, взносы и сроки ваших денежных целей'],calendar:['Календарь','Что произойдёт с деньгами дальше'],settings:['Настройки','Профиль, безопасность и параметры вашего плана']};
+const pages={premium:['Premium','Больше возможностей для вашего ритма'],developer:['Кабинет разработчика','Реквизиты и подтверждение подписок'],home:['Главная','Ваши деньги, дела и привычки'],income:['Поступления','Зарплата, аванс и другие доходы'],payment:['Платежи','Все обязательства и подписки по датам'],personal:['Личное','Ваши дела, привычки и накопления'],goals:['Накопить деньги','Суммы, взносы и сроки ваших денежных целей'],calendar:['Календарь','Что произойдёт с деньгами дальше'],settings:['Настройки','Профиль, безопасность и параметры вашего плана']};
 const btn=(text,action,extra='',cls='')=>'<button type="button" class="btn '+cls+'" data-action="'+action+'" '+extra+'>'+text+'</button>';
 const link=(text,to)=>'<a class="inline-link" href="#'+to+'">'+text.replace(/\s*→$/,'')+(text.endsWith('→')?I('arrow'):'')+'</a>';
 const empty=(title,text,action,button,icon='wallet')=>'<div class="empty"><div class="tile">'+I(icon)+'</div><h3>'+title+'</h3><p class="muted">'+text+'</p>'+btn(button,action)+'</div>';
@@ -1087,7 +1107,7 @@ const quickAction=(label,icon,action,tone='')=>btn('<span class="quick-action-ma
 function home(){
   const now=C.today(),a=C.allowance(S),events=C.scheduled(S,now,C.addDays(now,365),true),payment=events.find(e=>e.type==='payment'),f=C.monthlyForecast(S,now),g=S.goals.find(g=>g.saved<g.target)||S.goals[0],blank=!S.balance&&!S.items.length&&!S.goals.length;
   const nextCard=(type,event,title)=>'<a class="card next-card" href="#'+type+'"><div class="tile '+(type==='payment'?'orange':'')+'">'+I(type)+'</div><div class="grow"><div class="next-title">'+title+'</div><div class="value">'+(event?money(event.amount):'Добавить')+'</div><div class="hint wrap">'+(event?esc(event.title)+' · '+(event.overdue?'просрочен, ':'')+dateLabel(event.originalDate):type==='income'?'Зарплата или аванс':'Платёж или подписку')+'</div></div><span class="chevron">'+I('arrow')+'</span></a>';
-  return dailyWishCard()+personalHome()+(blank?'<div class="help-line"><b>Начните со своего баланса.</b> Затем добавьте даты доходов, платежи и цель — план пересчитается автоматически. '+btn('Ввести баланс','balance','','small soft')+' '+btn('Посмотреть пример','demo','','small line')+'</div>':'')+
+  return (premiumActive()?dailyWishCard()+personalHome():'')+(blank?'<div class="help-line"><b>Начните со своего баланса.</b> Затем добавьте даты доходов, платежи и цель — план пересчитается автоматически. '+btn('Ввести баланс','balance','','small soft')+' '+btn('Посмотреть пример','demo','','small line')+'</div>':'')+
   '<div class="hero home-hero"><section class="card balance balance-overview" aria-label="Баланс"><div class="balance-heading"><span class="eyebrow">Баланс сейчас</span>'+btn(I('edit'),'balance','aria-label="Изменить баланс"','balance-edit')+'</div><div class="big">'+money(S.balance)+'</div><div class="balance-breakdown"><div class="balance-mini"><span class="hint">Доступно для трат</span><strong>'+money(C.available(S))+'</strong></div><div class="balance-mini"><span class="hint">Выделено на цели</span><strong>'+money(C.reserved(S))+'</strong></div></div></section><div class="home-actions" role="group" aria-label="Быстрые действия">'+quickAction('Доход','income','add-income')+quickAction('Платёж','payment','add-payment','orange')+quickAction('Расход','minus','expense','blue')+quickAction('Цель','goals','edit-goal')+'</div><div class="stack upcoming-stack">'+nextCard('income',a.next,'Ближайшее поступление')+nextCard('payment',payment,'Ближайший платёж')+'</div></div>'+
   (f.firstGap?'<div class="notice">'+I('alert')+'<div><b>В плане появляется нехватка денег</b><div>'+dateLabel(f.firstGap.date,true)+' доступный остаток составит '+money(f.firstGap.balance)+'. '+link('Открыть прогноз →','calendar')+'</div></div></div>':S.items.length?'<div class="notice ok">'+I('check')+'<div><b>План до конца месяца сходится</b><div>По указанным доходам, платежам, взносам и повседневным расходам.</div></div></div>':'')+
   '<div class="grid2"><div class="card"><div class="card-head"><div><h2>До следующего поступления</h2><div class="hint">'+(a.next?'До '+dateLabel(a.next.date,true)+' · '+a.count+' дн.': 'Доходы ещё не указаны · ориентир до конца месяца')+'</div></div><div class="tile">'+I('wallet')+'</div></div><div class="value" style="font-size:34px">'+money(a.perDay)+' <span class="muted" style="font-size:14px;font-weight:400">в день</span></div><p class="hint">Ориентир на повседневные расходы после платежей и плановых взносов до поступления. Ожидаемый доход ещё не включён в текущий баланс.</p><div class="metric-row"><span class="muted">Будущие платежи до поступления</span><b>'+money(a.obligations)+'</b></div><div class="metric-row"><span class="muted">Запланировано на цели</span><b>'+money(a.goals)+'</b></div><div class="metric-row"><span class="muted">Ваши повседневные расходы</span>'+btn(money(S.daily)+'/день','balance','','small soft')+'</div>'+(a.need?'<p class="negative hint">Для указанных повседневных расходов не хватает '+money(a.need)+'.</p>':'')+'</div><div class="card">'+(g?goalCard(g,true):empty('На что будем копить?','Добавьте стоимость и срок — приложение рассчитает взносы.','edit-goal','Добавить цель','goals'))+'</div></div>'+
@@ -1126,7 +1146,7 @@ function itemPage(type){
 }
 function goals(){
   const f=C.forecast(S),without=C.forecast(S,C.today(),C.forecastEnd(C.today()),false);
-  return '<a class="personal-breadcrumb" href="#personal">'+I('back')+'Личное</a><div class="card-head"><div><h2>Ваши денежные цели</h2><div class="hint">Выделено '+money(C.reserved(S))+' · осталось накопить '+money(S.goals.reduce((a,g)=>a+Math.max(0,g.target-g.saved),0))+'</div></div>'+btn(I('plus')+'Новая цель','edit-goal','','small')+'</div>'+
+  return (premiumActive()?'<a class="personal-breadcrumb" href="#personal">'+I('back')+'Личное</a>':'')+'<div class="card-head"><div><h2>Ваши денежные цели</h2><div class="hint">Выделено '+money(C.reserved(S))+' · осталось накопить '+money(S.goals.reduce((a,g)=>a+Math.max(0,g.target-g.saved),0))+'</div></div>'+btn(I('plus')+'Новая цель','edit-goal','','small')+'</div>'+
   (S.goals.length&&f.firstGap?'<div class="notice">'+I('alert')+'<div><b>'+(without.firstGap?'Платежи и повседневные расходы требуют пересмотра':'Плановые взносы не помещаются в бюджет')+'</b><div>В общем плане на два месяца возникает нехватка '+dateLabel(f.firstGap.date,true)+'. '+link('Посмотреть даты →','calendar')+'</div></div></div>':'')+
   (S.goals.length?'<div class="goal-grid">'+S.goals.map(g=>goalCard(g)).join('')+'</div>':'<div class="card">'+empty('Дайте накоплениям цель','Выберите сумму и срок либо комфортный ежемесячный взнос.','edit-goal','Создать первую цель','goals')+'</div>')+
   '<p class="smallprint">«Отложить» выделяет часть денег на ваших счетах для цели и исключает её из доступного для трат. Сумма на счетах не меняется. Приложение не переводит деньги.</p>';
@@ -1159,7 +1179,7 @@ function accountOptions(){
   return '<div class="site-links"><a href="/help">Как пользоваться Ритмом</a><a href="/privacy">Ваши данные</a></div><details class="account-deletion"><summary>Удалить аккаунт</summary><form id="delete-account-form" data-sensitive-form data-owner="'+esc(currentUser.username)+'"><p>Аккаунт, план, история и пожелания будут удалены из рабочей базы. Сначала скачайте копию плана.</p><button class="btn line small" type="button" data-action="export">Скачать копию плана</button>'+passwordField('Текущий пароль','delete-current-password','currentPassword','current-password')+'<label for="delete-confirmation"><span>Введите УДАЛИТЬ</span><input id="delete-confirmation" name="confirmation" autocomplete="off" required pattern="УДАЛИТЬ" maxlength="7"></label><button class="btn danger" type="submit">Удалить аккаунт и данные</button><div class="field-message profile-feedback" id="delete-feedback" role="status" aria-live="polite"></div></form></details>';
 }
 function settings(){
-  return profileCards()+siteSettings()+'<section class="settings-section"><div class="section-heading"><h2>Финансовый план</h2></div><div class="setting-grid"><div class="card"><div class="tile">'+I('wallet')+'</div><h2 style="margin-top:16px">Баланс и расходы</h2><p class="muted">Текущая сумма на счетах, валюта и расходы на обычный день.</p><div class="metric-row"><span class="muted">На счетах сейчас</span><b>'+money(S.balance)+'</b></div><div class="metric-row"><span class="muted">Выделено на цели</span><b>'+money(C.reserved(S))+'</b></div><div class="metric-row"><span class="muted">Повседневные расходы</span><b>'+money(S.daily)+'/день</b></div>'+btn('Изменить','balance','','soft')+'</div><div class="card"><div class="tile blue">'+I('export')+'</div><h2 style="margin-top:16px">Ваши данные</h2><p class="muted">План сохраняется в вашем аккаунте. Экспортируйте его, чтобы иметь отдельную резервную копию.</p><div class="actions">'+btn('Экспорт плана','export')+btn('Импорт','import','','line')+'</div><p class="smallprint">Импорт заменяет текущий план. Данные в файле проверяются до замены.</p></div><div class="card"><h2>Попробовать пример</h2><p class="muted">Готовый план с зарплатой, авансом, подпиской, кредитом и целью.</p>'+btn('Загрузить пример','demo','','soft')+'</div><div class="card"><h2>Начать заново</h2><p class="muted">Очистить баланс, расписание, цели и историю в вашем аккаунте.</p>'+btn('Очистить план','reset','','danger')+'</div></div></section><p class="smallprint">Прогноз строится по вашим данным, включая ожидаемые доходы. Повседневные расходы служит оценкой будущих трат; реальные расходы записывайте по мере совершения.</p>'+accountOptions();
+  return subscriptionSettings()+profileCards()+siteSettings()+'<section class="settings-section"><div class="section-heading"><h2>Финансовый план</h2></div><div class="setting-grid"><div class="card"><div class="tile">'+I('wallet')+'</div><h2 style="margin-top:16px">Баланс и расходы</h2><p class="muted">Текущая сумма на счетах, валюта и расходы на обычный день.</p><div class="metric-row"><span class="muted">На счетах сейчас</span><b>'+money(S.balance)+'</b></div><div class="metric-row"><span class="muted">Выделено на цели</span><b>'+money(C.reserved(S))+'</b></div><div class="metric-row"><span class="muted">Повседневные расходы</span><b>'+money(S.daily)+'/день</b></div>'+btn('Изменить','balance','','soft')+'</div><div class="card"><div class="tile blue">'+I('export')+'</div><h2 style="margin-top:16px">Ваши данные</h2><p class="muted">План сохраняется в вашем аккаунте. Экспортируйте его, чтобы иметь отдельную резервную копию.</p><div class="actions">'+btn('Экспорт плана','export')+btn('Импорт','import','','line')+'</div><p class="smallprint">Импорт заменяет текущий план. Данные в файле проверяются до замены.</p></div><div class="card"><h2>Попробовать пример</h2><p class="muted">Готовый план с зарплатой, авансом, подпиской, кредитом и целью.</p>'+btn('Загрузить пример','demo','','soft')+'</div><div class="card"><h2>Начать заново</h2><p class="muted">Очистить баланс, расписание, цели и историю в вашем аккаунте.</p>'+btn('Очистить план','reset','','danger')+'</div></div></section><p class="smallprint">Прогноз строится по вашим данным, включая ожидаемые доходы. Повседневные расходы служит оценкой будущих трат; реальные расходы записывайте по мере совершения.</p>'+accountOptions();
 }
 function syncMobileNav(){
   const nav=document.querySelector('.mobile-nav'),active=nav.querySelector('a.active');
@@ -1174,11 +1194,13 @@ function privacyPreference(username){
 }
 function syncFinancePrivacy(){
   $('application').toggleAttribute('data-finances-hidden',amountsHidden);
+  if(!premiumActive())amountsHidden=false;
+  $('application').toggleAttribute('data-finances-hidden',amountsHidden);
   const button=$('finance-privacy'),label=amountsHidden?'Показать суммы':'Скрыть суммы';
-  button.setAttribute('aria-pressed',String(amountsHidden));button.setAttribute('aria-label',label);button.title=label;button.innerHTML=I(amountsHidden?'eyeOff':'eye');
+  button.hidden=!premiumActive();button.setAttribute('aria-pressed',String(amountsHidden));button.setAttribute('aria-label',label);button.title=label;button.innerHTML=I(amountsHidden?'eyeOff':'eye');
 }
 function toggleFinancePrivacy(){
-  if(!currentUser)return;
+  if(!currentUser||!premiumActive())return;
   amountsHidden=!amountsHidden;
   try{localStorage.setItem('ritm-hide-finances:'+currentUser.username,amountsHidden?'1':'0');}catch{}
   render();
@@ -1203,16 +1225,19 @@ function refreshPlanningDate(){
 }
 function render(){
   syncPlanningDate();schedulePlanningRefresh();
-  const drafts=captureProfileDrafts();
+  const drafts=captureProfileDrafts(),subscriptionDraft=captureSubscriptionDraft();
   route=location.hash.slice(1)||'home';if(!pages[route])route='home';
-  const selectedNav=route==='goals'?'personal':route;
+  if(route==='personal'&&!premiumActive()){route='goals';window.history.replaceState(null,'','#goals');}
+  if(route==='developer'&&!developerActive()){route='premium';window.history.replaceState(null,'','#premium');}
+  syncMembershipUI();
+  const selectedNav=route==='goals'&&premiumActive()?'personal':route==='premium'||route==='developer'?'settings':route;
   document.querySelectorAll('[data-nav]').forEach(a=>{a.classList.toggle('active',a.dataset.nav===selectedNav);if(a.dataset.nav===selectedNav)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   syncMobileNav();syncFinancePrivacy();
-  $('heading').textContent=pages[route][0];$('subtitle').textContent=pages[route][1];$('header-date').textContent=fullDate(C.today());
+  $('heading').textContent=route==='goals'&&!premiumActive()?'Цели':pages[route][0];$('subtitle').textContent=route==='home'&&!premiumActive()?'Ваши деньги и цели':pages[route][1];$('header-date').textContent=fullDate(C.today());
   $('storage-notice').innerHTML=storageError?'<div class="notice error">'+I('alert')+'<div>'+esc(storageError)+' '+link('Настройки →','settings')+'</div></div>':'';
-  $('content').innerHTML=route==='home'?home():route==='income'||route==='payment'?itemPage(route):route==='personal'?personalPage():route==='goals'?goals():route==='calendar'?calendar():settings();
+  $('content').innerHTML=route==='home'?home():route==='income'||route==='payment'?itemPage(route):route==='personal'?personalPage():route==='goals'?goals():route==='calendar'?calendar():route==='premium'?premiumPage():route==='developer'?developerPage():settings();
   document.title=pages[route][0]+' · Ритм';
-  restoreProfileDrafts(drafts);
+  restoreProfileDrafts(drafts);restoreSubscriptionDraft(subscriptionDraft);
 }
 const field=(label,name,value,type='text',hint='',attrs='')=>'<label><span>'+label+'</span><input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+attrs+'>'+ (hint?'<small class="hint">'+hint+'</small>':'')+'</label>';
 const select=(label,name,value,options)=>'<label><span>'+label+'</span><select name="'+name+'">'+Object.entries(options).map(([v,t])=>'<option value="'+v+'" '+(v===value?'selected':'')+'>'+t+'</option>').join('')+'</select></label>';
@@ -1372,7 +1397,7 @@ function setDailyWish(value){
   },Math.min(2147483647,Math.max(1000,remaining+100)));
 }
 async function loadDailyWish(){
-  if(!currentUser||wishBusy)return;
+  if(!currentUser||!premiumActive()||wishBusy)return;
   if(wishState&&Date.parse(wishState.expiresAt)<=Date.now())wishState=null;
   const generation=sessionGeneration,request=++wishRequest;
   wishLoading=true;if(route==='home')render();
@@ -1389,7 +1414,7 @@ async function loadDailyWish(){
   }
 }
 async function revealDailyWish(){
-  if(!currentUser||wishBusy||wishLoading||wishState?.opened)return;
+  if(!currentUser||!premiumActive()||wishBusy||wishLoading||wishState?.opened)return;
   const generation=sessionGeneration,request=++wishRequest;
   wishBusy=true;wishError='';render();
   try{
@@ -1408,7 +1433,7 @@ async function requestAPI(path,method='GET',data){
   if(!navigator.onLine)throw Error('Нет связи. Подключитесь к интернету и повторите действие.');
   const response=await fetch('/api/'+path,{method,credentials:'same-origin',headers:{...(currentUser?{'X-Ritm-User':currentUser.username}:{}),...(data?{'Content-Type':'application/json'}:{})},body:data?JSON.stringify(data):undefined,cache:'no-store'});
   let value;try{value=await response.json();}catch{throw Error('Сервер вернул непонятный ответ. Попробуйте позже.');}
-  if(!response.ok){const error=Error(value.error||'Не удалось выполнить запрос.');error.status=response.status;error.code=value.code;throw error;}
+  if(!response.ok){const error=Error(value.error||'Не удалось выполнить запрос.');error.status=response.status;error.code=value.code;if(error.code==='premium_required')void refreshMembership();throw error;}
   return value;
 }
 function setAuthMode(mode){
@@ -1435,7 +1460,7 @@ function setAuthMode(mode){
   $('auth-error').textContent='';
 }
 function showAuth(){
-  resetPersonal();resetFeatures();
+  resetSubscription();resetPersonal();resetFeatures();
   clearTimeout(planningTimer);planningTimer=null;
   clearProfileSecrets();profileBusy=false;recoveryBusy=false;recoveryEnabled=false;amountsHidden=false;syncFinancePrivacy();
   if($('recovery-dialog').open)closeRecoveryCode();
@@ -1445,13 +1470,13 @@ function showAuth(){
   syncConnectivity();
 }
 function acceptSession(payload){
-  resetPersonal();resetFeatures();
+  resetSubscription();resetPersonal();resetFeatures();
   clearProfileSecrets();profileBusy=false;recoveryBusy=false;recoveryEnabled=Boolean(payload.recoveryEnabled);amountsHidden=privacyPreference(payload.user.username);
   if($('recovery-dialog').open)closeRecoveryCode();
   const plan=C.validate(payload.plan);
   clearDailyWish();wishLoading=true;sessionGeneration++;currentUser=payload.user;S=plan;remoteRevision=payload.revision;queuedPlan=null;saving=false;saveConflict=false;storageError='';
   $('auth-form').reset();resetPasswordVisibility($('auth-form'));$('auth-screen').hidden=true;$('application').hidden=false;
-  render();authChannel?.postMessage({type:'session-changed',username:currentUser.username});$('session-name').textContent=currentUser.name;$('session-name').title=currentUser.username;void loadDailyWish();void loadReminders();void loadPersonal();
+  render();authChannel?.postMessage({type:'session-changed',username:currentUser.username});$('session-name').textContent=currentUser.name;$('session-name').title=currentUser.username;void loadDailyWish();void loadReminders();void loadPersonal();void loadSubscription();if(route==='developer')void loadDeveloper();scheduleMembership();
   if(payload.recoveryCode)showRecoveryCode(payload.recoveryCode);
 }
 async function flushPlan(){
@@ -1798,7 +1823,7 @@ function reminderEventsLocal(){
  return events.sort((a,b)=>a.originalDate.localeCompare(b.originalDate));
 }
 function syncReminderBadge(){
- const button=$('reminder-bell'),events=[...reminderEventsLocal(),...(reminderState?.prefs.inApp&&personalState?Personal.dueEvents(personalState):[])];
+ const button=$('reminder-bell'),events=[...reminderEventsLocal(),...(premiumActive()&&reminderState?.prefs.inApp&&personalState?Personal.dueEvents(personalState):[])];
  button.innerHTML=I('bell')+(events.length?'<span class="reminder-badge" aria-hidden="true">'+Math.min(events.length,9)+(events.length>9?'+':'')+'</span>':'');
  button.setAttribute('aria-label','Напоминания'+(events.length?': '+events.length:''));
 }
@@ -1834,8 +1859,8 @@ async function loadReminders(){
 function updateReminderList(){
  const list=$('reminder-list');if(!list)return;
  const events=reminderEventsLocal();
- const personalEvents=reminderState?.prefs.inApp&&personalState?Personal.dueEvents(personalState):[];
- list.innerHTML='<h3>Ближайшие дела</h3>'+personalEvents.map(event=>'<a class="reminder-entry" href="#personal" data-personal-action="open-from-reminder"><div><strong>'+esc(event.title)+'</strong><small>'+(event.type==='habit'?'Привычка':'Задача')+' · '+event.time+'</small></div>'+I('arrow')+'</a>').join('')+
+ const personalEvents=premiumActive()&&reminderState?.prefs.inApp&&personalState?Personal.dueEvents(personalState):[];
+ list.innerHTML='<h3>'+(premiumActive()?'Ближайшие дела':'Ближайшие платежи')+'</h3>'+personalEvents.map(event=>'<a class="reminder-entry" href="#personal" data-personal-action="open-from-reminder"><div><strong>'+esc(event.title)+'</strong><small>'+(event.type==='habit'?'Привычка':'Задача')+' · '+event.time+'</small></div>'+I('arrow')+'</a>').join('')+
  (events.length?events.slice(0,30).map(event=>'<div class="reminder-entry"><div><strong>'+esc(event.title)+'</strong><small>'+(event.overdue?'Просрочен · ':'')+fullDate(event.originalDate)+'</small></div><span class="reminder-amount">'+money(event.amount)+'</span></div>').join(''):!personalEvents.length?'<p class="feature-status">'+(reminderState?.prefs.inApp?'В выбранный период дел нет.':'Напоминания в Ритм выключены.')+'</p>':'');
 }
 function renderReminders(){
@@ -2022,7 +2047,7 @@ const Personal = (() => {
 
 let personalState=null,personalRevision=0,personalLoading=false,personalBusy=false,personalError='',personalRequest=0,personalTimer=null,personalForm=null,personalDay='',personalClockDay='';
 let personalHomeDone={},personalHomeDoneTimers={};
-for(const node of document.querySelectorAll('[data-nav="personal"] svg'))node.innerHTML='<path d="M20 4c-9-1-15 3-15 9a6 6 0 0 0 6 6c6 0 10-6 9-15Z"/><path d="m4 21 11-11"/>';
+for(const node of document.querySelectorAll('[data-nav="personal" data-plan-nav] svg'))node.innerHTML='<path d="M20 4c-9-1-15 3-15 9a6 6 0 0 0 6 6c6 0 10-6 9-15Z"/><path d="m4 21 11-11"/>';
 Object.assign(icons,{
  trash:'<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
  personal:'<path d="M20 4c-9-1-15 3-15 9a6 6 0 0 0 6 6c6 0 10-6 9-15Z"/><path d="m4 21 11-11"/>',
@@ -2047,14 +2072,14 @@ function refreshPersonalClockDate(){
  personalClockDay=day;
 }
 function schedulePersonalClock(){
- clearTimeout(personalTimer);if(!currentUser)return;
+ clearTimeout(personalTimer);if(!currentUser||!premiumActive())return;
  personalTimer=setTimeout(()=>{
   if(!currentUser)return;
   if(route==='home'||route==='personal')render();else schedulePersonalClock();
  },Math.max(100,60010-(Date.now()%60000)));
 }
 async function loadPersonal(){
- if(!currentUser||personalBusy)return;
+ if(!currentUser||!premiumActive()||personalBusy)return;
  const generation=sessionGeneration,request=++personalRequest;personalLoading=true;
  if(route==='personal')render();
  try{
@@ -2085,7 +2110,7 @@ function confirmPersonalHome(command){
  },1500);
 }
 async function mutatePersonal(command,message='',revision=personalRevision){
- if(!currentUser||!personalState||personalBusy)return false;
+ if(!currentUser||!premiumActive()||!personalState||personalBusy)return false;
  const generation=sessionGeneration;personalRequest++;personalLoading=false;personalBusy=true;personalError='';
  for(const button of document.querySelectorAll('[data-personal-action]'))button.disabled=true;
  try{
@@ -2152,7 +2177,7 @@ function personalHome(){
  return '<section class="personal-home"><div class="personal-home-head"><h2>Сейчас и дальше</h2><a class="inline-link" href="#personal">Открыть личное '+I('arrow')+'</a></div>'+personalNotice()+'<div class="personal-home-grid">'+nextCard('task')+nextCard('habit')+'</div></section>';
 }
 function openPersonalForm(kind,id='',date=personalDay||personalClock().date){
- if(!personalState||personalBusy)return;
+ if(!premiumActive()||!personalState||personalBusy)return;
  const task=personalState.tasks.find(row=>row.id===id),habit=personalState.habits.find(row=>row.id===id),row=task||habit;
  personalForm={kind,id,date,revision:personalRevision};$('personal-form-error').textContent='';
  const titleField=value=>field('Название','title',value||'','text','','required maxlength="120" autocomplete="off"');
@@ -2223,6 +2248,192 @@ $('personal-dialog').addEventListener('click',event=>{if(event.target===$('perso
 window.addEventListener('focus',()=>{if(currentUser&&!personalBusy&&!document.querySelector('dialog[open]'))void loadPersonal();});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&currentUser){if(route==='personal'||route==='home')render();if(!personalBusy&&!document.querySelector('dialog[open]'))void loadPersonal();}});
 authChannel?.addEventListener('message',event=>{if(event.data?.type==='personal-changed'&&event.data.username===currentUser?.username&&!personalBusy&&!$('personal-dialog').open)void loadPersonal();});
+
+
+let subscriptionState=null,subscriptionLoading=false,subscriptionBusy=false,subscriptionError='',subscriptionRequest=0;
+let developerState=null,developerLoading=false,developerError='',selectedSubscription='year',membershipTimer=null,previewBasic=false;
+const premiumMark=()=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>';
+function premiumActive(){
+ const m=currentUser?.membership;return !previewBasic&&m?.tier==='premium'&&(m.lifetime||Date.parse(m.expiresAt)>Date.now());
+}
+const developerActive=()=>currentUser?.membership?.developer===true;
+const subscriptionMoney=amount=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0}).format(amount/100)+' теңге';
+const subscriptionDate=value=>value?new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Qyzylorda'}).format(new Date(value)):'';
+function membershipLabel(){
+ const m=currentUser?.membership;
+ return m?.lifetime?'Пожизненный Premium':m?.tier==='premium'?'Premium до '+subscriptionDate(m.expiresAt):'Базовый · бесплатно';
+}
+function resetSubscription(){
+ clearTimeout(membershipTimer);membershipTimer=null;subscriptionRequest++;
+ subscriptionState=null;developerState=null;subscriptionLoading=false;subscriptionBusy=false;developerLoading=false;
+ subscriptionError='';developerError='';selectedSubscription='year';previewBasic=false;
+}
+function syncMembershipUI(){
+ const active=premiumActive();
+ for(const a of document.querySelectorAll('[data-plan-nav]')){
+  a.dataset.nav=active?'personal':'goals';a.href=active?'#personal':'#goals';
+  a.querySelector('span').textContent=active?'Личное':'Цели';
+  const svg=a.querySelector('svg');svg.innerHTML=active?'<rect x="5" y="3" width="14" height="18" rx="3"/><path d="m8 9 1.5 1.5L12 8m-4 8h8"/>':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 11v2"/>';
+ }
+ const entry=$('premium-entry');entry.innerHTML=premiumMark()+(previewBasic?'Базовый · предпросмотр':active?'Premium':'Попробовать Premium');
+ entry.classList.toggle('active',active);entry.setAttribute('aria-label','Подписка: '+membershipLabel());
+}
+function captureSubscriptionDraft(){
+ const forms=[...document.querySelectorAll('form[data-sub-form]')];if(!forms.length||!currentUser)return null;
+ return {owner:currentUser.username,route,focus:document.activeElement?.id,selection:document.activeElement?.selectionStart,values:forms.flatMap(form=>[...form.querySelectorAll('input')].map(n=>({id:n.id,value:n.value,checked:n.checked})))};
+}
+function restoreSubscriptionDraft(draft){
+ if(!draft||draft.owner!==currentUser?.username||draft.route!==route)return;
+ for(const x of draft.values){const n=$(x.id);if(n){n.value=x.value;n.checked=x.checked;}}
+ const input=$(draft.focus);if(input){input.focus({preventScroll:true});try{input.setSelectionRange(draft.selection,draft.selection);}catch{}}
+}
+function applyMembership(value){
+ if(!currentUser)return false;
+ const hadPremium=currentUser.membership?.tier==='premium'&&!previewBasic,was=premiumActive(),old=JSON.stringify(currentUser.membership);currentUser.membership=value;
+ const changed=old!==JSON.stringify(value),is=premiumActive();
+ if(hadPremium&&!is){resetPersonal();clearDailyWish();amountsHidden=false;void sendWorkerPrivacy();}
+ if(!was&&is){amountsHidden=privacyPreference(currentUser.username);void loadPersonal();void loadDailyWish();}
+ return changed;
+}
+function scheduleMembership(){
+ clearTimeout(membershipTimer);if(!currentUser)return;
+ const expiry=Date.parse(currentUser.membership?.expiresAt),delay=Number.isFinite(expiry)&&expiry>Date.now()?Math.min(60000,Math.max(100,expiry-Date.now()+50)):60000;
+ membershipTimer=setTimeout(()=>void refreshMembership(),delay);
+}
+async function refreshMembership(){
+ if(!currentUser||subscriptionBusy){scheduleMembership();return;}
+ const generation=sessionGeneration;
+ try{
+  if(route==='premium'){await loadSubscription();}
+  else{
+   const response=await requestAPI('membership');
+   if(generation!==sessionGeneration)return;
+   if(applyMembership(response.membership))render();
+  }
+ }catch(error){if(generation===sessionGeneration&&error.status===401){showAuth();void startAuth();}}
+ finally{if(generation===sessionGeneration)scheduleMembership();}
+}
+async function loadSubscription(){
+ if(!currentUser||subscriptionLoading)return;
+ const generation=sessionGeneration,request=++subscriptionRequest;subscriptionLoading=true;
+ try{
+  const response=await requestAPI('subscription');
+  if(generation!==sessionGeneration||request!==subscriptionRequest)return;
+  const changed=JSON.stringify(subscriptionState)!==JSON.stringify(response);subscriptionState=response;subscriptionError='';
+  const membershipChanged=applyMembership(response.membership);
+  if(changed||membershipChanged)render();
+ }catch(error){
+  if(generation!==sessionGeneration||request!==subscriptionRequest)return;
+  if(error.status===401){showAuth();void startAuth();return;}
+  subscriptionError=error.message;if(route==='premium')render();
+ }finally{if(generation===sessionGeneration&&request===subscriptionRequest){subscriptionLoading=false;scheduleMembership();}}
+}
+async function loadDeveloper(){
+ if(!developerActive()||developerLoading)return;
+ const generation=sessionGeneration;developerLoading=true;
+ try{
+  const response=await requestAPI('developer/subscription');
+  if(generation!==sessionGeneration)return;
+  developerState=response;developerError='';if(route==='developer')render();
+ }catch(error){
+  if(generation!==sessionGeneration)return;
+  developerError=error.message;if(route==='developer')render();
+ }finally{if(generation===sessionGeneration)developerLoading=false;}
+}
+function subscriptionSettings(){
+ return '<section class="subscription-settings-card"><div class="tile">'+premiumMark()+'</div><div class="subscription-settings-copy"><h2>'+esc(membershipLabel())+'</h2><p>'+(premiumActive()?'Дела, привычки и финансы в вашем ритме.':'Все финансы бесплатно. Больше возможностей — в Premium.')+'</p></div><a class="btn" href="#premium">Подписка '+I('arrow')+'</a></section>'+
+ (developerActive()?'<section class="card" style="margin-bottom:24px"><h2>Кабинет разработчика</h2><p class="muted">Реквизиты Kaspi, проверка переводов и предпросмотр базовой версии.</p><a class="btn line" href="#developer">Открыть кабинет</a></section>':'');
+}
+function subscriptionOrder(order){
+ const status={pending:'Перевод на проверке',approved:'Перевод подтверждён',rejected:'Перевод не подтверждён'};
+ return '<section class="subscription-status '+order.status+'" data-sub-order="'+esc(order.id)+'" data-status="'+order.status+'"><h3>'+status[order.status]+'</h3><p>'+subscriptionMoney(order.amount)+' · '+(order.period==='year'?'12 месяцев':'1 месяц')+' · '+esc(subscriptionDate(order.createdAt))+'</p>'+
+ (order.status==='pending'?'<p>Заявка отправлена. Premium включится после проверки перевода. Повторно переводить деньги по этой заявке не нужно.</p><p>Получатель: '+esc(order.recipient.name)+' · '+esc(order.recipient.phone)+'</p>':order.status==='rejected'?'<p>'+esc(order.reason)+'</p>':'')+'</section>';
+}
+function premiumPage(){
+ const m=currentUser.membership,latest=subscriptionState?.orders?.[0],pending=subscriptionState?.orders?.find(o=>o.status==='pending');
+ const benefits=[['list','Мой день','Задачи со временем, отметки выполнения и перенос на любую дату.'],['book','Мои привычки','Ежедневные привычки и маленькие шаги к вашим целям.'],['eye','Скрытие сумм','Один взгляд на экран — и финансовые цифры скрыты.'],['spark','Пожелание дня','Короткое пожелание, которое открывается по нажатию.']];
+ const rows=[['Доходы, платежи и календарь',true],['Итоги месяца и архив',true],['Накопления на денежные цели',true],['Напоминания о платежах',true],['Личные задачи и привычки',false],['Напоминания о личных делах',false],['Скрытие финансовых сумм',false],['Ежедневное пожелание',false]];
+ const plans=subscriptionState?.plans||[{id:'month',amount:99000},{id:'year',amount:990000}];
+ return '<div class="subscription-wrap" data-subscription-page><section class="subscription-hero"><span class="subscription-badge">'+premiumMark()+'Ритм Premium</span><h2>Больше места<br>для ваших целей</h2><p>Планируйте деньги, дела и привычки в одном месте. Каждый день — небольшой шаг к тому, что важно вам.</p></section>'+
+ (previewBasic?'<section class="subscription-status"><h3>Предпросмотр базовой версии</h3><p>Ваш пожизненный Premium действует. Вы видите интерфейс обычного пользователя.</p><button class="btn line" type="button" data-sub-action="preview-off">Вернуться в Premium</button></section>':'')+
+ (m.tier==='premium'?'<section class="subscription-status" data-membership-status><h3>'+esc(membershipLabel())+'</h3><p>'+(m.lifetime?'Все возможности уже доступны без продления.':'Подписка активна. При продлении оплаченный срок добавится к текущему.')+'</p>'+(developerActive()?'<a class="inline-link" href="#developer">Кабинет разработчика '+I('arrow')+'</a>':'')+'</section>':'')+
+ '<section class="subscription-section"><h2>Что даёт Premium</h2><div class="subscription-benefits">'+benefits.map(([icon,title,description])=>'<article class="subscription-benefit"><div class="tile">'+(icon==='spark'?premiumMark():I(icon))+'</div><div><h3>'+title+'</h3><p>'+description+'</p></div></article>').join('')+'</div></section>'+
+ '<section class="subscription-section subscription-compare"><table><caption>Выберите свой ритм</caption><thead><tr><th scope="col">Возможности</th><th scope="col">Базовый<br><small>Бесплатно</small></th><th scope="col">Premium</th></tr></thead><tbody>'+rows.map(([label,free])=>'<tr><td>'+label+'</td><td><span class="'+(free?'subscription-check':'muted')+'" aria-label="'+(free?'Включено':'Не входит')+'">'+(free?'✓':'—')+'</span></td><td class="subscription-check"><span aria-label="Включено">✓</span></td></tr>').join('')+'</tbody></table></section>'+
+ (!m.lifetime?'<section class="subscription-section"><h2>'+(m.tier==='premium'?'Продлить подписку':'Ваш Premium')+'</h2><div class="subscription-plans" aria-label="Срок подписки">'+plans.map(p=>'<button type="button" class="subscription-plan" data-sub-action="choose-plan" data-period="'+p.id+'" aria-pressed="'+(selectedSubscription===p.id)+'"><div class="subscription-plan-title">'+(p.id==='year'?'На год':'На месяц')+(p.id==='year'?'<small>2 месяца в подарок</small>':'')+'</div><div class="subscription-price">'+subscriptionMoney(p.amount).replace(' теңге','')+' <small>теңге</small></div><p>'+(p.id==='year'?'12 месяцев · 825 теңге в месяц':'1 календарный месяц')+'</p></button>').join('')+'</div><p class="smallprint">Без автоматических списаний. Срок начинается после подтверждения оплаты.</p></section>'+(!pending?subscriptionCheckout():subscriptionOrder(pending)):'')+
+ (latest&&!pending?subscriptionOrder(latest):'')+
+ (subscriptionError?'<p class="feature-error" role="alert">'+esc(subscriptionError)+'</p><button class="btn line" type="button" data-sub-action="refresh">Повторить</button>':'')+
+ '<section class="subscription-section card"><h3>Что будет после окончания подписки?</h3><p class="muted">Финансовый план, цели, архив и напоминания о платежах останутся доступны. Ваши задачи и привычки сохранятся и снова откроются после продления Premium.</p></section></div>';
+}
+function subscriptionCheckout(){
+ const merchant=subscriptionState?.merchant;
+ if(!merchant?.ready)return '<section class="subscription-section subscription-checkout" data-payment-unavailable><h2>Оплата через Kaspi</h2><p class="muted">'+(subscriptionState?'Реквизиты скоро появятся. Пока можно пользоваться бесплатной версией.':'Загружаем реквизиты…')+'</p><button class="btn" type="button" disabled>Я перевёл</button></section>';
+ const plan=subscriptionState.plans.find(p=>p.id===selectedSubscription);
+ return '<section class="subscription-section subscription-checkout"><h2>Как подключить</h2><div class="subscription-step"><span class="subscription-step-number">1</span><div class="subscription-step-content"><strong>Переведите через Kaspi</strong><p>Проверьте имя получателя в Kaspi перед переводом.</p><span class="subscription-transfer-amount">'+subscriptionMoney(plan.amount)+'</span><div class="subscription-recipient"><div><strong>'+esc(merchant.phone)+'</strong><small>'+esc(merchant.name)+'</small></div><button class="btn line small" type="button" data-sub-action="copy-phone" aria-label="Скопировать номер Kaspi">'+I('copy')+'</button></div></div></div>'+
+ '<div class="subscription-step"><span class="subscription-step-number">2</span><div class="subscription-step-content"><strong>Сообщите о переводе</strong><p>Подписка будет подключена к аккаунту <b>'+esc(currentUser.username)+'</b>. Укажите имя отправителя для проверки.</p><form id="subscription-order-form" class="subscription-form" data-sub-form><label for="subscription-sender">Имя отправителя в Kaspi<input id="subscription-sender" name="senderName" autocomplete="name" maxlength="100" required value="'+esc(currentUser.name)+'"></label><label class="subscription-confirm" for="subscription-confirm"><input id="subscription-confirm" name="confirmed" type="checkbox" required>Я перевёл '+subscriptionMoney(plan.amount)+' по указанным реквизитам</label><p id="subscription-form-error" class="feature-error" role="alert">'+esc(subscriptionError)+'</p><button type="submit" class="btn" '+(subscriptionBusy?'disabled':'')+'>'+(subscriptionBusy?'Отправляем…':'Я перевёл')+'</button></form></div></div>'+
+ '<div class="subscription-step"><span class="subscription-step-number">3</span><div class="subscription-step-content"><strong>Дождитесь подтверждения</strong><p>Разработчик проверит перевод и включит Premium. Здесь появится статус и срок подписки.</p></div></div></section>';
+}
+function developerPage(){
+ if(!developerActive())return '';
+ const merchant=developerState?.merchant||{phone:'',name:'',revision:0},orders=developerState?.orders||[],pending=orders.filter(o=>o.status==='pending');
+ const renderOrder=o=>'<article class="subscription-admin-order" data-developer-order="'+esc(o.id)+'" data-status="'+o.status+'"><span class="subscription-order-tag">'+({pending:'Ожидает проверки',approved:'Подтверждено',rejected:'Отклонено'})[o.status]+'</span><h3>'+esc(o.name)+' · '+esc(o.username)+'</h3><strong>'+subscriptionMoney(o.amount)+' · '+(o.period==='year'?'Год':'Месяц')+'</strong><p>Отправитель: '+esc(o.senderName)+'<br>Заявка от '+esc(subscriptionDate(o.createdAt))+'<br>Получатель: '+esc(o.recipient.name)+' · '+esc(o.recipient.phone)+'</p>'+
+ (o.status==='pending'?'<p>Подтверждайте только после проверки поступления в Kaspi.</p><div class="actions"><button class="btn" type="button" data-sub-action="approve" data-order="'+esc(o.id)+'" '+(subscriptionBusy?'disabled':'')+'>Подтвердить перевод</button><button class="btn line" type="button" data-sub-action="reject" data-order="'+esc(o.id)+'" '+(subscriptionBusy?'disabled':'')+'>Отклонить</button></div>':o.status==='rejected'?'<p>'+esc(o.reason)+'</p>':'')+'</article>';
+ return '<div class="subscription-wrap"><div class="card-head"><div><h2>Premium · управление</h2><p class="hint">Пожизненный доступ разработчика</p></div><button class="btn line small" data-sub-action="refresh-developer" type="button">Обновить</button></div><div class="subscription-admin"><section class="card"><h2>Реквизиты Kaspi</h2><p class="muted">Эти реквизиты увидят покупатели подписки.</p>'+
+ (developerState?'<form id="merchant-form" class="subscription-form" data-sub-form><label for="merchant-phone">Номер для перевода<input id="merchant-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 7XX XXX XX XX" maxlength="30" required value="'+esc(merchant.phone)+'"></label><label for="merchant-name">Имя получателя в Kaspi<input id="merchant-name" name="name" autocomplete="off" maxlength="100" required value="'+esc(merchant.name)+'"></label><label for="merchant-password">Ваш текущий пароль<input id="merchant-password" name="currentPassword" type="password" autocomplete="current-password" required maxlength="128"></label><p id="merchant-error" class="feature-error" role="alert">'+esc(developerError)+'</p><button class="btn" type="submit" '+(subscriptionBusy?'disabled':'')+'>Сохранить реквизиты</button></form><p class="smallprint">'+(merchant.ready?'Приём заявок включён.':'Приём заявок включится после заполнения реквизитов.')+'</p>':'<p class="muted">'+esc(developerError||'Загружаем…')+'</p>')+
+ '<div class="subscription-preview"><strong>Проверить базовую версию</strong><p>Посмотрите приложение глазами обычного пользователя.</p><button class="btn line small" type="button" data-sub-action="'+(previewBasic?'preview-off':'preview-on')+'">'+(previewBasic?'Вернуться в Premium':'Включить предпросмотр')+'</button></div></section><section class="card"><h2>Заявки на оплату · '+pending.length+'</h2><p class="feature-error" role="alert">'+esc(developerError)+'</p>'+
+ (pending.length?pending.map(renderOrder).join(''):'<p class="muted">Новых заявок пока нет.</p>')+
+ (orders.some(o=>o.status!=='pending')?'<details><summary>Обработанные заявки</summary>'+orders.filter(o=>o.status!=='pending').map(renderOrder).join('')+'</details>':'')+'</section></div></div>';
+}
+function setPreview(active){
+ if(!developerActive())return;
+ resetPersonal();clearDailyWish();previewBasic=active;amountsHidden=!active&&privacyPreference(currentUser.username);
+ if(!active){void loadPersonal();void loadDailyWish();}
+ render();void sendWorkerPrivacy();notify(active?'Предпросмотр базовой версии':'Премиум восстановлен');
+}
+document.addEventListener('click',async event=>{
+ const b=event.target.closest('[data-sub-action]');if(!b||!currentUser)return;
+ const action=b.dataset.subAction;
+ if(action==='choose-plan'){selectedSubscription=b.dataset.period;subscriptionError='';render();return;}
+ if(action==='refresh'){void loadSubscription();return;}
+ if(action==='refresh-developer'){void loadDeveloper();return;}
+ if(action==='preview-on'||action==='preview-off'){setPreview(action==='preview-on');return;}
+ if(action==='copy-phone'){
+  try{await navigator.clipboard.writeText(subscriptionState.merchant.phone);notify('Номер скопирован');}catch{notify('Выделите номер и скопируйте его');}return;
+ }
+ if(!['approve','reject'].includes(action)||subscriptionBusy||!developerActive())return;
+ let reason='';
+ if(action==='approve'&&!confirm('Вы проверили поступление перевода в Kaspi? Подтверждение включит Premium.'))return;
+ if(action==='reject'){reason=prompt('Причина отклонения заявки:','Перевод не найден. Проверьте реквизиты и сумму.');if(reason===null)return;}
+ const generation=sessionGeneration;subscriptionBusy=true;
+ document.querySelectorAll('[data-sub-action="approve"],[data-sub-action="reject"]').forEach(n=>n.disabled=true);
+ try{
+  await requestAPI('developer/orders/'+b.dataset.order,'POST',{status:action==='approve'?'approved':'rejected',reason});
+  if(generation!==sessionGeneration)return;
+  developerError='';await loadDeveloper();notify(action==='approve'?'Premium активирован':'Заявка отклонена');
+ }catch(error){if(generation===sessionGeneration){developerError=error.message;render();}}
+ finally{if(generation===sessionGeneration){subscriptionBusy=false;if(route==='developer')render();}}
+});
+document.addEventListener('submit',async event=>{
+ const form=event.target.closest('form[data-sub-form]');if(!form)return;
+ event.preventDefault();if(!currentUser||subscriptionBusy||!form.reportValidity())return;
+ const generation=sessionGeneration,merchantForm=form.id==='merchant-form';
+ const payload=merchantForm?{phone:form.elements.phone.value,name:form.elements.name.value,currentPassword:form.elements.currentPassword.value,revision:developerState.merchant.revision}:{period:selectedSubscription,senderName:form.elements.senderName.value,merchantRevision:subscriptionState.merchant.revision};
+ subscriptionBusy=true;form.querySelector('button[type="submit"]').disabled=true;
+ try{
+  const response=await requestAPI(merchantForm?'developer/subscription':'subscription/orders',merchantForm?'PATCH':'POST',payload);
+  if(generation!==sessionGeneration)return;
+  if(merchantForm){form.elements.currentPassword.value='';developerError='';developerState.merchant=response.merchant;await loadSubscription();notify('Реквизиты сохранены');}
+  else{form.reset();subscriptionError='';await loadSubscription();notify('Заявка отправлена на проверку');}
+ }catch(error){
+  if(generation!==sessionGeneration)return;
+  if(merchantForm){developerError=error.message;$('merchant-error').textContent=error.message;form.elements.currentPassword.value='';}
+  else{subscriptionError=error.message;$('subscription-form-error').textContent=error.message;}
+ }finally{
+  if(generation===sessionGeneration){subscriptionBusy=false;const submit=form.querySelector('button[type="submit"]');if(submit)submit.disabled=false;if(!subscriptionError&&!developerError)render();}
+ }
+});
+window.addEventListener('hashchange',()=>{if(route==='premium')void loadSubscription();if(route==='developer')void loadDeveloper();});
+window.addEventListener('focus',()=>void refreshMembership());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void refreshMembership();});
 
 void startAuth();
 
