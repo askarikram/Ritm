@@ -11,7 +11,7 @@ export function localReminderClock(zone,now=new Date()){
 }
 export function reminderEvents(Core,plan,prefs,now=new Date(),includeOverdue=true){
   const clock=localReminderClock(prefs.timeZone,now),end=Core.addDays(clock.date,prefs.lead);
-  const events=Core.scheduled(plan,clock.date,end,false).filter(event=>event.type==='payment');
+  const events=Core.scheduled(plan,clock.date,end,false,clock.date).filter(event=>event.type==='payment');
   if(includeOverdue)for(const event of Core.currentEvents(plan,'payment',clock.date))if(event.overdue&&!events.some(other=>other.key===event.key))events.push(event);
   return events.sort((a,b)=>a.originalDate.localeCompare(b.originalDate)||a.title.localeCompare(b.title));
 }

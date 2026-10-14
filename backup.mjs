@@ -11,6 +11,7 @@ export const backupTables={
  ritm_push_keys:['id','public_key','private_key'],
  ritm_memberships:['user_id','lifetime','expires_at','developer'],
  ritm_payment_settings:['id','phone','name','revision','updated_at'],
+ ritm_notifications:['id','user_id','cause_key','kind','payload','created_at','read_at','resolved_at'],
  ritm_subscription_orders:['id','user_id','period','amount','currency','recipient_phone','recipient_name','sender_name','status','created_at','decided_at','developer_id','reason']
 };
 const ephemeral=new Set(['ritm_sessions','ritm_push_subscriptions','ritm_push_deliveries','ritm_rate_limits']);
@@ -34,7 +35,7 @@ export function decryptBackup(envelope,key){
  const snapshot=JSON.parse(gunzipSync(compressed,{maxOutputLength:limit}).toString('utf8'));
  // Earlier releases contain eight or nine permanent tables.
  if(snapshot?.format==='ritm-full-backup'&&snapshot.version===1&&snapshot.tables&&!Object.hasOwn(snapshot.tables,'ritm_memberships'))snapshot.tables.ritm_memberships=[];
- if(snapshot?.format==='ritm-full-backup'&&snapshot.version===1&&snapshot.tables)for(const table of ['ritm_payment_settings','ritm_subscription_orders'])if(!Object.hasOwn(snapshot.tables,table))snapshot.tables[table]=[];
+ if(snapshot?.format==='ritm-full-backup'&&snapshot.version===1&&snapshot.tables)for(const table of ['ritm_payment_settings','ritm_subscription_orders','ritm_notifications'])if(!Object.hasOwn(snapshot.tables,table))snapshot.tables[table]=[];
  if(snapshot?.format!=='ritm-full-backup'||snapshot.version!==1||!snapshot.tables||Object.keys(snapshot.tables).sort().join(',')!==Object.keys(backupTables).sort().join(','))throw Error('Invalid backup tables');
  for(const [table,columns] of Object.entries(backupTables)){
   const rows=snapshot.tables[table];

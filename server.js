@@ -14,6 +14,7 @@ import pg from 'pg';
 import { wishDay, wishForDay } from './daily-wishes.mjs';
 import { appIcons } from './app-icons.mjs';
 import { createArchiveService } from './archive-service.mjs';
+import { createNotificationService } from './notification-store.mjs';
 import { createReminderService } from './reminder-store.mjs';
 import { verifySchedulerToken } from './scheduler-auth.mjs';
 import { createPersonalService } from './personal-service.mjs';
@@ -257,7 +258,8 @@ const archives=createArchiveService({pool,Core});
 const personal=createPersonalService({pool});
 const memberships=createMembershipService({pool});
 const subscriptions=createSubscriptionService({pool,memberships});
-const reminders=createReminderService({pool,Core,appOrigin,testMode:process.env.NODE_ENV==='test'});
+const notifications=createNotificationService({pool,Core});
+const reminders=createReminderService({pool,Core,notifications,appOrigin,testMode:process.env.NODE_ENV==='test'});
 const cookieName=production?'__Host-ritm-session':'ritm-session',ttl=30*24*60*60*1000,shortTTL=12*60*60*1000;
 const sql={
   byName:'SELECT id,username,name,password_hash,salt FROM ritm_users WHERE username=$1',
@@ -286,7 +288,7 @@ async function initialize(){
     await client.query('CREATE INDEX IF NOT EXISTS ritm_sessions_expiry ON ritm_sessions(expires_at)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_wish_accounts(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,lane SMALLINT NOT NULL CHECK(lane BETWEEN 0 AND 4),timezone TEXT NOT NULL,opened_date DATE NOT NULL)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_recovery_codes(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL)');
-    await archives.initialize(client);await personal.initialize(client);await reminders.initialize(client);await limiter.initialize(client);developerGranted=await memberships.initialize(client);await subscriptions.initialize(client);
+    await archives.initialize(client);await personal.initialize(client);await reminders.initialize(client);await limiter.initialize(client);developerGranted=await memberships.initialize(client);await subscriptions.initialize(client);await notifications.initialize(client);
   });
   if(developerGranted)console.log('RITM_DEVELOPER_PREMIUM_GRANTED');
 }
@@ -579,6 +581,15 @@ async function handle(req,res){
         let result;try{result=await archives.save(user.id,data,now);}catch(error){if(error.status)throw error;if(['В архиве','Выберите','Введите','Некорректная'].some(prefix=>error.message.startsWith(prefix)))fail(400,error.message);throw error;}
         send(res,200,{record:result});
       }return;
+    }
+    if(req.method==='GET'&&url.pathname==='/api/notifications'){
+      const user=await requireUser(req,res);send(res,200,await notifications.list(user.id,{filter:url.searchParams.get('filter'),cursor:url.searchParams.get('cursor')}));return;
+    }
+    if(req.method==='GET'&&url.pathname.startsWith('/api/notifications/')){
+      const user=await requireUser(req,res);send(res,200,await notifications.get(user.id,url.pathname.slice('/api/notifications/'.length)));return;
+    }
+    if(req.method==='POST'&&url.pathname==='/api/notifications/read'){
+      const user=await requireUser(req,res);await rateLimit('notification-read:'+user.id,600);send(res,200,await notifications.read(user.id,await readJSON(req)));return;
     }
     if(['GET','PATCH'].includes(req.method)&&url.pathname==='/api/reminders'){
       const user=await requireUser(req,res);
