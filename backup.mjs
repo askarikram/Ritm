@@ -51,13 +51,14 @@ export async function captureBackup(pool,key){
  }catch(error){try{await client.query('ROLLBACK');}catch{}throw error;}finally{client.release();}
 }
 export async function restoreBackup(client,snapshot){
- for(const table of Object.keys(backupTables)){
-  if(Number((await client.query('SELECT count(*) AS n FROM "'+table+'"')).rows[0].n)!==0)throw Error('Restore target is not empty');
- }
  await client.query('BEGIN');
  try{
+  await client.query('LOCK TABLE '+Object.keys(backupTables).map(t=>'"'+t+'"').join(',')+' IN ACCESS EXCLUSIVE MODE');
+  for(const table of Object.keys(backupTables)){
+   if(table!=='ritm_push_keys'&&Number((await client.query('SELECT count(*) AS n FROM "'+table+'"')).rows[0].n)!==0)throw Error('Restore target is not empty');
+  }
   for(const [table,columns] of Object.entries(backupTables))for(const row of snapshot.tables[table]){
-   await client.query('INSERT INTO "'+table+'"('+columns.map(c=>'"'+c+'"').join(',')+') VALUES('+columns.map((_,i)=>'$'+(i+1)).join(',')+')',columns.map(c=>row[c]));
+   await client.query('INSERT INTO "'+table+'"('+columns.map(c=>'"'+c+'"').join(',')+') VALUES('+columns.map((_,i)=>'$'+(i+1)).join(',')+')'+(table==='ritm_push_keys'?' ON CONFLICT(id) DO UPDATE SET public_key=EXCLUDED.public_key,private_key=EXCLUDED.private_key':''),columns.map(c=>row[c]));
   }
   for(const table of Object.keys(backupTables))if(Number((await client.query('SELECT count(*) AS n FROM "'+table+'"')).rows[0].n)!==snapshot.tables[table].length)throw Error('Restored row count mismatch');
   await client.query('COMMIT');
