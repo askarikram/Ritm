@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
+import { captureBackup,decryptBackup } from '../backup.mjs';
 import { extendSubscription } from '../subscription-service.mjs';
 import { fixturePool,grantFixturePremium } from './premium-fixture.mjs';
 export async function verifySubscriptions(base){
@@ -70,6 +71,8 @@ export async function verifySubscriptions(base){
   check((await request(dev,'/api/developer/orders/'+rejected.id,'POST',{status:'approved'})).status===409,'rejected decision cannot later be silently changed');
   check((await request(dev,'/api/subscription/orders','POST',{period:'month',senderName:'Тест',merchantRevision:1})).status===409,'lifetime developer cannot accidentally buy a subscription');
   check((await request(dev,'/api/developer/subscription')).body.orders.every(o=>o.username&&o.senderName),'developer review shows buyer identity and transfer sender');
+  const backupKey=randomBytes(32).toString('hex'),snapshot=decryptBackup(await captureBackup(pool,backupKey),backupKey);
+  check(snapshot.tables.ritm_subscription_orders.some(o=>o.id===id&&o.status==='approved')&&snapshot.tables.ritm_payment_settings[0].phone==='+77010000000'&&snapshot.tables.ritm_memberships.some(m=>m.user_id===dev.id&&m.lifetime),'encrypted full backup includes payment records destination and membership rights');
  }finally{
   await pool.query('DELETE FROM ritm_users WHERE username=ANY($1::text[])',[created]);
   await pool.query('DELETE FROM ritm_payment_settings');

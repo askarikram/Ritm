@@ -2302,6 +2302,8 @@ function scheduleMembership(){
 }
 async function refreshMembership(){
  if(!currentUser||subscriptionBusy){scheduleMembership();return;}
+ const membership=currentUser.membership;
+ if(membership?.tier==='premium'&&!membership.lifetime&&Date.parse(membership.expiresAt)<=Date.now()){applyMembership({...membership,tier:'basic',lifetime:false,developer:false});render();}
  const generation=sessionGeneration;
  try{
   if(route==='premium'){await loadSubscription();}
