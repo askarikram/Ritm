@@ -43,6 +43,7 @@ export async function verifySubscriptionUI(base){
    await buyer.page.reload({waitUntil:'networkidle'});await buyer.page.locator('#subscription-order-form').waitFor();
    await buyer.page.locator('[data-sub-action="choose-plan"][data-period="month"]').click();
    check(await buyer.page.locator('[data-period="month"]').getAttribute('aria-pressed')==='true'&&(await buyer.page.locator('.subscription-transfer-amount').textContent()).includes('990'),name+': selected plan synchronizes transfer amount');
+   await buyer.page.locator('#subscription-confirm').check();await buyer.page.locator('[data-period="year"]').click();check(!await buyer.page.locator('#subscription-confirm').isChecked(),name+': tariff change requires transfer confirmation again');await buyer.page.locator('[data-period="month"]').click();
    await buyer.page.locator('#subscription-sender').fill('Тестовый отправитель');await buyer.page.locator('#subscription-confirm').check();
    await buyer.page.locator('#subscription-order-form [type="submit"]').click();await buyer.page.locator('[data-sub-order][data-status="pending"]').waitFor();
    check(await buyer.page.locator('#finance-privacy').isHidden(),name+': transfer report does not unlock Premium');

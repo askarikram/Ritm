@@ -2049,7 +2049,7 @@ const Personal = (() => {
 
 let personalState=null,personalRevision=0,personalLoading=false,personalBusy=false,personalError='',personalRequest=0,personalTimer=null,personalForm=null,personalDay='',personalClockDay='';
 let personalHomeDone={},personalHomeDoneTimers={};
-for(const node of document.querySelectorAll('[data-nav="personal" data-plan-nav] svg'))node.innerHTML='<path d="M20 4c-9-1-15 3-15 9a6 6 0 0 0 6 6c6 0 10-6 9-15Z"/><path d="m4 21 11-11"/>';
+for(const node of document.querySelectorAll('[data-nav="personal"] svg'))node.innerHTML='<path d="M20 4c-9-1-15 3-15 9a6 6 0 0 0 6 6c6 0 10-6 9-15Z"/><path d="m4 21 11-11"/>';
 Object.assign(icons,{
  trash:'<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
  personal:'<path d="M20 4c-9-1-15 3-15 9a6 6 0 0 0 6 6c6 0 10-6 9-15Z"/><path d="m4 21 11-11"/>',
@@ -2322,7 +2322,9 @@ async function loadSubscription(){
  try{
   const response=await requestAPI('subscription');
   if(generation!==sessionGeneration||request!==subscriptionRequest)return;
-  const changed=JSON.stringify(subscriptionState)!==JSON.stringify(response);subscriptionState=response;subscriptionError='';
+  const changed=JSON.stringify(subscriptionState)!==JSON.stringify(response),merchantChanged=subscriptionState&&subscriptionState.merchant.revision!==response.merchant.revision;
+  if(merchantChanged&&$('subscription-confirm'))$('subscription-confirm').checked=false;
+  subscriptionState=response;subscriptionError=merchantChanged?'Реквизиты обновлены. Проверьте получателя перед переводом.':'';
   const membershipChanged=applyMembership(response.membership);
   if(changed||membershipChanged)render();
  }catch(error){
@@ -2395,7 +2397,7 @@ function setPreview(active){
 document.addEventListener('click',async event=>{
  const b=event.target.closest('[data-sub-action]');if(!b||!currentUser)return;
  const action=b.dataset.subAction;
- if(action==='choose-plan'){selectedSubscription=b.dataset.period;subscriptionError='';render();return;}
+ if(action==='choose-plan'){if(subscriptionBusy)return;if(selectedSubscription!==b.dataset.period&&$('subscription-confirm'))$('subscription-confirm').checked=false;selectedSubscription=b.dataset.period;subscriptionError='';render();return;}
  if(action==='refresh'){void loadSubscription();return;}
  if(action==='refresh-developer'){void loadDeveloper();return;}
  if(action==='preview-on'||action==='preview-off'){setPreview(action==='preview-on');return;}
