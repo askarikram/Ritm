@@ -24,7 +24,7 @@ jobs:
       - name: Obtain an encrypted complete snapshot
         run: node scripts/backup-daily.mjs
       - name: Keep the encrypted backup for 30 days
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: ritm-full-backup-${{ github.run_id }}
           path: backup-output/*.json
