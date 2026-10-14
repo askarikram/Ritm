@@ -1227,8 +1227,8 @@ function render(){
   syncPlanningDate();schedulePlanningRefresh();
   const drafts=captureProfileDrafts(),subscriptionDraft=captureSubscriptionDraft();
   route=location.hash.slice(1)||'home';if(!pages[route])route='home';
-  if(route==='personal'&&!premiumActive()){route='goals';window.history.replaceState(null,'','#goals');}
-  if(route==='developer'&&!developerActive()){route='premium';window.history.replaceState(null,'','#premium');}
+  if(route==='personal'&&!premiumActive()){route='goals';location.replace('#goals');}
+  if(route==='developer'&&!developerActive()){route='premium';location.replace('#premium');}
   syncMembershipUI();
   const selectedNav=route==='goals'&&premiumActive()?'personal':route==='premium'||route==='developer'?'settings':route;
   document.querySelectorAll('[data-nav]').forEach(a=>{a.classList.toggle('active',a.dataset.nav===selectedNav);if(a.dataset.nav===selectedNav)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});

@@ -8,7 +8,7 @@ export async function verifySubscriptions(base){
   ['2026-01-31T10:15:00Z',1,'2026-02-28T10:15:00Z'],
   ['2024-02-29T10:15:00Z',12,'2025-02-28T10:15:00Z'],
   ['2026-10-31T22:15:00Z',1,'2026-12-01T22:15:00Z']
- ])check(new Date(extendSubscription(Date.parse(start),months)).toISOString()===expected,'calendar subscription uses Kazakhstan date and clamps month end '+start);
+ ])check(extendSubscription(Date.parse(start),months)===Date.parse(expected),'calendar subscription uses Kazakhstan date and clamps month end '+start);
  const pool=fixturePool(base),suffix=[...randomBytes(8)].map(n=>String.fromCharCode(97+n%26)).join(''),password='PremiumFixturePass123',created=[];
  const a={username:'premiuma'+suffix},b={username:'premiumb'+suffix},dev={username:'premiumdev'+suffix};
  const request=async(account,path,method='GET',data,extra={})=>{
