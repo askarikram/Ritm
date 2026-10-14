@@ -9,7 +9,9 @@ export const backupTables={
  ritm_personal:['user_id','state','revision'],
  ritm_reminder_prefs:['user_id','prefs'],
  ritm_push_keys:['id','public_key','private_key'],
- ritm_memberships:['user_id','lifetime','expires_at','developer']
+ ritm_memberships:['user_id','lifetime','expires_at','developer'],
+ ritm_payment_settings:['id','phone','name','revision','updated_at'],
+ ritm_subscription_orders:['id','user_id','period','amount','currency','recipient_phone','recipient_name','sender_name','status','created_at','decided_at','developer_id','reason']
 };
 const ephemeral=new Set(['ritm_sessions','ritm_push_subscriptions','ritm_push_deliveries','ritm_rate_limits']);
 const limit=64*1024*1024;
@@ -30,8 +32,9 @@ export function decryptBackup(envelope,key){
  const cipher=createDecipheriv('aes-256-gcm',keyBytes(key),iv);cipher.setAAD(Buffer.from('ritm-full-backup:v1'));cipher.setAuthTag(tag);
  const compressed=Buffer.concat([cipher.update(Buffer.from(envelope.data,'base64')),cipher.final()]);
  const snapshot=JSON.parse(gunzipSync(compressed,{maxOutputLength:limit}).toString('utf8'));
- // Backups from releases before membership support contain the original eight tables.
+ // Earlier releases contain eight or nine permanent tables.
  if(snapshot?.format==='ritm-full-backup'&&snapshot.version===1&&snapshot.tables&&!Object.hasOwn(snapshot.tables,'ritm_memberships'))snapshot.tables.ritm_memberships=[];
+ if(snapshot?.format==='ritm-full-backup'&&snapshot.version===1&&snapshot.tables)for(const table of ['ritm_payment_settings','ritm_subscription_orders'])if(!Object.hasOwn(snapshot.tables,table))snapshot.tables[table]=[];
  if(snapshot?.format!=='ritm-full-backup'||snapshot.version!==1||!snapshot.tables||Object.keys(snapshot.tables).sort().join(',')!==Object.keys(backupTables).sort().join(','))throw Error('Invalid backup tables');
  for(const [table,columns] of Object.entries(backupTables)){
   const rows=snapshot.tables[table];

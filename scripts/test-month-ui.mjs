@@ -1,3 +1,4 @@
+import { grantFixturePremium } from './premium-fixture.mjs';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { chromium, webkit } from 'playwright';
@@ -32,7 +33,7 @@ export async function verifyMonthUI(base){
     };
     try{
       const signup=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Проверка месяца',remember:true}});
-      check(signup.ok(),name+': disposable month account created');created=true;
+      check(signup.ok(),name+': disposable month account created');created=true;await grantFixturePremium(base,username);
       const plan={version:1,balance:1000000,daily:1000,currency:'KZT',done:{},ledger:[],items:[
         {id:'once-income',title:'Разовая премия',type:'income',amount:1000,date:'2024-01-31',repeat:'none'},
         {id:'once-payment',title:'Разовая покупка',type:'payment',amount:2000,date:'2024-01-31',repeat:'none'},

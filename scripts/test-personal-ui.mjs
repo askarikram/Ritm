@@ -1,3 +1,4 @@
+import { grantFixturePremium } from './premium-fixture.mjs';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { chromium,webkit } from 'playwright';
@@ -12,7 +13,7 @@ export async function verifyPersonalUI(base){
  const row=id=>page.locator('[data-personal-row="'+id+'"]'),navigate=async route=>{await page.evaluate(route=>location.hash=route,route);await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route)+'"][aria-current="page"]'),route);};
  let created=false;
  try{
- const signup=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Проверка личного'}});check(signup.ok(),name+': disposable personal UI account created');created=true;
+ const signup=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Проверка личного'}});check(signup.ok(),name+': disposable personal UI account created');created=true;await grantFixturePremium(base,username);
  const moneyPlan={version:1,balance:42000000,daily:0,currency:'KZT',items:[],goals:[{id:'savings',title:'Путешествие',target:50000000,saved:10000000,mode:'monthly',monthly:1000000,start:day,deadline:Personal.addDays(day,365),done:[]}],done:{},ledger:[]};
  check((await page.request.put(base+'/api/plan',{headers,data:{revision:0,plan:moneyPlan}})).ok(),name+': existing savings plan seeded');
  let seed=await read(),revision=seed.revision;

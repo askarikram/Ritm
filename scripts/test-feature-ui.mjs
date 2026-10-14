@@ -1,3 +1,4 @@
+import { grantFixturePremium } from './premium-fixture.mjs';
 import assert from 'node:assert/strict';
 import { randomBytes,createECDH } from 'node:crypto';
 import { chromium,webkit } from 'playwright';
@@ -8,7 +9,7 @@ export async function verifyFeatureUI(base){
  const username='archiveui'+[...randomBytes(8)].map(n=>String.fromCharCode(97+n%26)).join(''),password='ArchiveUiPassword123',headers={Origin:base,'X-Ritm-User':username},errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  try{
- const signup=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Проверка архива'}});check(signup.ok(),name+': archive UI account created');
+ const signup=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Проверка архива'}});check(signup.ok(),name+': archive UI account created');await grantFixturePremium(base,username);
  await page.goto(base,{waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});
  if(await page.locator('#close-recovery').isVisible())await page.locator('#close-recovery').click();
  await page.waitForFunction(()=>document.querySelector('#reminder-bell svg'));

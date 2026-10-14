@@ -1,3 +1,4 @@
+import { grantFixturePremium } from './premium-fixture.mjs';
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
@@ -60,6 +61,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       check(codeFile.includes(username)&&codeFile.includes(signupCode)&&codeDownload.suggestedFilename()==='ritm-recovery-'+username+'.txt',engineName+': recovery code can be saved as a file');
       await page.locator('#close-recovery').click();
       check(await page.locator('#recovery-code').textContent()==='',engineName+': dismissed recovery code removed from DOM');
+      await grantFixturePremium(base,username);await page.reload({waitUntil:'networkidle'});
       await page.locator('button.daily-wish').waitFor();
       await page.waitForFunction(()=>!document.querySelector('button.daily-wish')?.disabled);
       check(await page.locator('.wish-text').count()===0,engineName+': wish concealed before click');
@@ -217,6 +219,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
 
       const alternateUsername='privacy'+suffix,alternatePassword='PrivacyTestPassword123';
       const alternative=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username:alternateUsername,name:'Проверка режима',password:alternatePassword,confirmPassword:alternatePassword}});
+      await grantFixturePremium(base,alternateUsername);
       check(alternative.ok(),engineName+': second account available for privacy isolation');
       await page.reload({waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});
       check(await page.locator('#finance-privacy').getAttribute('aria-pressed')==='false',engineName+': privacy preference belongs to account');

@@ -19,6 +19,7 @@ import { verifySchedulerToken } from './scheduler-auth.mjs';
 import { createPersonalService } from './personal-service.mjs';
 import { captureBackup } from './backup.mjs';
 import { createMembershipService, developerUsername } from './memberships.mjs';
+import { createSubscriptionService } from './subscription-service.mjs';
 const Core = (() => {
   const iso = d => d.toISOString().slice(0,10);
   const parse = s => new Date(s + 'T12:00:00Z');
@@ -255,6 +256,7 @@ pool.on('error',error=>console.error('Соединение с базой:',error
 const archives=createArchiveService({pool,Core});
 const personal=createPersonalService({pool});
 const memberships=createMembershipService({pool});
+const subscriptions=createSubscriptionService({pool,memberships});
 const reminders=createReminderService({pool,Core,appOrigin,testMode:process.env.NODE_ENV==='test'});
 const cookieName=production?'__Host-ritm-session':'ritm-session',ttl=30*24*60*60*1000,shortTTL=12*60*60*1000;
 const sql={
@@ -284,7 +286,7 @@ async function initialize(){
     await client.query('CREATE INDEX IF NOT EXISTS ritm_sessions_expiry ON ritm_sessions(expires_at)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_wish_accounts(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,lane SMALLINT NOT NULL CHECK(lane BETWEEN 0 AND 4),timezone TEXT NOT NULL,opened_date DATE NOT NULL)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_recovery_codes(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL)');
-    await archives.initialize(client);await personal.initialize(client);await reminders.initialize(client);await limiter.initialize(client);developerGranted=await memberships.initialize(client);
+    await archives.initialize(client);await personal.initialize(client);await reminders.initialize(client);await limiter.initialize(client);developerGranted=await memberships.initialize(client);await subscriptions.initialize(client);
   });
   if(developerGranted)console.log('RITM_DEVELOPER_PREMIUM_GRANTED');
 }
@@ -395,6 +397,24 @@ async function handle(req,res){
     if(['POST','PUT','DELETE','PATCH'].includes(req.method)&&req.headers.origin!==appOrigin)fail(403,'Запрос пришёл с другого адреса.');
     if(req.method==='GET'&&url.pathname==='/api/membership'){
       const user=await requireUser(req,res);send(res,200,{membership:await memberships.forUser(user.id)});return;
+    }
+    if(req.method==='GET'&&url.pathname==='/api/subscription'){
+      const user=await requireUser(req,res);send(res,200,await subscriptions.summary(user.id));return;
+    }
+    if(req.method==='POST'&&url.pathname==='/api/subscription/orders'){
+      const user=await requireUser(req,res);await rateLimit('subscription:'+user.id,30);
+      send(res,200,await subscriptions.create(user.id,await readJSON(req)));return;
+    }
+    if(['GET','PATCH'].includes(req.method)&&url.pathname==='/api/developer/subscription'){
+      const user=await requireUser(req,res);await subscriptions.developer(user.id);
+      if(req.method==='GET'){send(res,200,await subscriptions.dashboard(user.id));return;}
+      await rateLimit('merchant:'+user.id,10);const data=await readJSON(req);
+      await checkCurrentPassword(user.id,data.currentPassword);
+      send(res,200,await subscriptions.configure(user.id,data));return;
+    }
+    if(req.method==='POST'&&url.pathname.startsWith('/api/developer/orders/')){
+      const user=await requireUser(req,res);await subscriptions.developer(user.id);await rateLimit('orders-admin:'+user.id,100);
+      send(res,200,await subscriptions.decide(user.id,url.pathname.slice('/api/developer/orders/'.length),await readJSON(req)));return;
     }
     if(req.method==='GET'&&url.pathname==='/api/me'){send(res,200,await sessionPayload(await requireUser(req,res)));return;}
     if(req.method==='POST'&&['/api/signup','/api/login'].includes(url.pathname)){
@@ -514,6 +534,7 @@ async function handle(req,res){
 
     if(['GET','POST'].includes(req.method)&&url.pathname==='/api/wish'){
       const user=await requireUser(req,res);
+      if((await memberships.forUser(user.id)).tier!=='premium')fail(403,'Этот раздел доступен в Premium.','premium_required');
       const data=req.method==='POST'?await readJSON(req):null;
       const requestedZone=(data?data.timeZone:url.searchParams.get('timeZone'))||'UTC';
       try{wishDay(requestedZone);}catch(error){fail(400,error.message);}
@@ -542,6 +563,7 @@ async function handle(req,res){
 
     if(['GET','POST'].includes(req.method)&&url.pathname==='/api/personal'){
       const user=await requireUser(req,res);
+      if((await memberships.forUser(user.id)).tier!=='premium')fail(403,'Этот раздел доступен в Premium.','premium_required');
       if(req.method==='GET')send(res,200,await personal.get(user.id,url.searchParams.get('timeZone')));
       else{await rateLimit('personal:'+user.id,600);send(res,200,await personal.mutate(user.id,await readJSON(req)));}
       return;

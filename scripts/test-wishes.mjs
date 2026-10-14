@@ -1,3 +1,4 @@
+import { grantFixturePremium } from './premium-fixture.mjs';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import pg from 'pg';
@@ -45,7 +46,7 @@ export async function verifyWishes(base){
     check((await request(null,'/api/wish')).status===401,'anonymous wish denied');
     for(const account of accounts){
       const signup=await request(account,'/api/signup','POST',{username:account.username,name:account.name,password:account.password,confirmPassword:account.password});
-      assert.equal(signup.status,200);created.push(account.username);account.original=signup.body;
+      assert.equal(signup.status,200);created.push(account.username);await grantFixturePremium(base,account.username);account.original=(await request(account,'/api/me')).body;
       const locked=await request(account,'/api/wish?timeZone=Asia%2FAlmaty');
       check(locked.status===200&&!locked.body.opened&&!Object.hasOwn(locked.body,'text'),'wish hidden before click');
     }
