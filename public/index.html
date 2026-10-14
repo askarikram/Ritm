@@ -1422,7 +1422,7 @@ window.addEventListener('hashchange',()=>{if(!currentUser)return;render();window
 
 let authMode='login',currentUser=null,remoteRevision=0,queuedPlan=null,saving=false,saveConflict=false,sessionGeneration=0,authBusy=false;
 let recoveryEnabled=false,recoveryBusy=false;
-let notificationState=null,notificationLoading=false,notificationBusy=false,notificationError='',notificationRequest=0,notificationTimer=null,notificationFilter='all',notificationDetail=null,notificationReadQueue=[];
+let notificationState=null,notificationLoading=false,notificationBusy=false,notificationError='',notificationRequest=0,notificationTimer=null,notificationFilter='all',notificationDetail=null,notificationReadQueue=[],notificationViewCache=new WeakMap();
 let subscriptionState=null,subscriptionLoading=false,subscriptionBusy=false,subscriptionError='',subscriptionRequest=0;
 let developerState=null,developerLoading=false,developerError='',selectedSubscription='year',membershipTimer=null,previewBasic=false;
 let wishState=null,wishLoading=false,wishBusy=false,wishError='',wishTimer,wishRequest=0;
@@ -2480,7 +2480,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 function resetNotifications(){
  notificationRequest++;clearTimeout(notificationTimer);notificationTimer=null;
- notificationState=null;notificationLoading=false;notificationBusy=false;notificationError='';notificationFilter='all';notificationDetail=null;notificationReadQueue=[];
+ notificationState=null;notificationLoading=false;notificationBusy=false;notificationError='';notificationFilter='all';notificationDetail=null;notificationReadQueue=[];notificationViewCache=new WeakMap();
  if($('notification-detail-dialog').open)$('notification-detail-dialog').close();
  $('notification-detail-body').replaceChildren();$('reminders-body').replaceChildren();
 }
@@ -2534,8 +2534,15 @@ function notificationInboxHTML(){
  (notificationError?'<p class="feature-error" role="alert">'+esc(notificationError)+'</p><button class="btn line small" type="button" data-notify-action="refresh">Повторить</button>':'');
 }
 function renderNotificationInbox(){
- if($('reminders-dialog').open)$('reminders-body').innerHTML=notificationInboxHTML();
- const page=$('notification-page-body');if(page)page.innerHTML=notificationInboxHTML();
+ const html=notificationInboxHTML();
+ const draw=node=>{
+  if(!node||notificationViewCache.get(node)===html)return;
+  const focused=document.activeElement?.dataset.notificationId;
+  node.innerHTML=html;notificationViewCache.set(node,html);
+  if(focused)node.querySelector('[data-notification-id="'+focused+'"]')?.focus({preventScroll:true});
+ };
+ if($('reminders-dialog').open)draw($('reminders-body'));
+ draw($('notification-page-body'));
 }
 function notificationsPage(){return '<div class="notification-inbox"><div id="notification-page-body"></div></div>';}
 function openNotifications(){
