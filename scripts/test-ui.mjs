@@ -141,7 +141,9 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       check(after.revision===before.revision&&after.user.name==='Александр Новый',engineName+': profile changes preserve financial plan');
 
       const navigate=async route=>{
+        const titles={home:'Главная',income:'Поступления',payment:'Платежи',goals:'Накопить деньги',calendar:'Календарь',settings:'Настройки',profile:'Профиль','settings-app':'Приложение и помощь','settings-data':'Ваши данные','settings-delete':'Удалить аккаунт'};
         await page.evaluate(route=>{location.hash=route;},route);
+        await page.waitForFunction(title=>document.getElementById('heading').textContent===title,titles[route]);
         await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route==='profile'||route.startsWith('settings-')?'settings':route)+'"][aria-current="page"]')!==null,route);
       };
       const waitSaved=()=>page.waitForFunction(()=>document.getElementById('save-state').textContent==='План сохранён');
