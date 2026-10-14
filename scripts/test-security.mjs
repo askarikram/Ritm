@@ -42,9 +42,12 @@ export async function verifySecurity(base){
   const snapshot=decryptBackup(await captureBackup(pool,key),key);check(Object.keys(snapshot.tables).length===8&&snapshot.tables.ritm_users.some(r=>r.id===owner),'complete backup includes all eight permanent application tables');
   await pool.query('CREATE SCHEMA "'+schema+'"');schemaCreated=true;
   for(const table of Object.keys(backupTables))await pool.query('CREATE TABLE "'+schema+'"."'+table+'" (LIKE public."'+table+'" INCLUDING ALL)');
+  for(const table of Object.keys(backupTables).filter(t=>backupTables[t].includes('user_id')))await pool.query('ALTER TABLE "'+schema+'"."'+table+'" ADD FOREIGN KEY(user_id) REFERENCES "'+schema+'"."ritm_users"(id)');
   const client=await pool.connect();
   try{
-   await client.query('SET search_path TO "'+schema+'"');await restoreBackup(client,snapshot);
+   await client.query('SET search_path TO "'+schema+'"');
+   await client.query('INSERT INTO ritm_push_keys(id,public_key,private_key) VALUES(1,$1,$2)',['initial-public','initial-private']);
+   await restoreBackup(client,snapshot);
    for(const table of Object.keys(backupTables)){
     const actual=(await client.query('SELECT '+backupTables[table].map(c=>'"'+c+'"').join(',')+' FROM "'+table+'" ORDER BY 1')).rows;
     assert.deepEqual(JSON.parse(JSON.stringify(actual)),JSON.parse(JSON.stringify(snapshot.tables[table])));
