@@ -35,7 +35,7 @@ export async function verifySubscriptionUI(base){
    check(await buyer.page.locator('.mobile-nav [data-nav="goals"]').textContent()==='Цели',name+': Basic menu offers monetary goals');await fits(buyer.page,'Basic home');
    await navigate(buyer.page,'personal','Цели');check(await buyer.page.locator('.personal-breadcrumb').count()===0,name+': personal route safely redirects Basic to savings');
    await navigate(buyer.page,'premium','Premium');await buyer.page.locator('[data-payment-unavailable]').waitFor();
-   check(await buyer.page.locator('[data-payment-unavailable] button').isDisabled(),name+': checkout disabled without Kaspi details');await fits(buyer.page,'Premium page');
+   check(await buyer.page.locator('[data-payment-unavailable] button').isDisabled(),name+': checkout disabled without Kaspi details');await fits(buyer.page,'Premium page');if(name==='chromium'){for(const width of [390,1440]){await buyer.page.setViewportSize({width,height:1000});console.log('RITM_SCREENSHOT_PREMIUM_'+width+' '+(await buyer.page.screenshot({fullPage:true})).toString('base64'));}await buyer.page.setViewportSize({width:390,height:844});}
    await owner.page.goto(base+'/#developer',{waitUntil:'networkidle'});await owner.page.locator('#merchant-form').waitFor();await fits(owner.page,'developer cabinet');
    await owner.page.locator('#merchant-phone').fill('+7 701 000 00 00');await owner.page.locator('#merchant-name').fill('Тестовый получатель');
    await owner.page.locator('#merchant-password').fill(password);await owner.page.locator('#merchant-form [type="submit"]').click();
