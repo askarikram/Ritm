@@ -103,6 +103,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       await page.locator('.account-pill').click();
       await page.waitForFunction(()=>document.getElementById('heading').textContent==='Настройки');
       await page.locator('.settings-row[href="#profile"]').click();
+      await page.locator('#profile-name-form').waitFor({state:'visible'});
       check(await page.locator('#profile-name-form').isVisible()&&await page.locator('#profile-password-form').isVisible(),engineName+': profile available in settings');
       await page.evaluate(()=>location.hash='settings-data');await page.getByRole('button',{name:'Загрузить пример',exact:true}).click();
       await page.waitForFunction(()=>document.getElementById('heading').textContent==='Главная'&&document.getElementById('save-state').textContent==='План сохранён');
