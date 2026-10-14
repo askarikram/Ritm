@@ -1383,6 +1383,8 @@ window.addEventListener('hashchange',()=>{if(!currentUser)return;render();window
 
 let authMode='login',currentUser=null,remoteRevision=0,queuedPlan=null,saving=false,saveConflict=false,sessionGeneration=0,authBusy=false;
 let recoveryEnabled=false,recoveryBusy=false;
+let subscriptionState=null,subscriptionLoading=false,subscriptionBusy=false,subscriptionError='',subscriptionRequest=0;
+let developerState=null,developerLoading=false,developerError='',selectedSubscription='year',membershipTimer=null,previewBasic=false;
 let wishState=null,wishLoading=false,wishBusy=false,wishError='',wishTimer,wishRequest=0;
 const wishTimeZone=()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC';}catch{return 'UTC';}};
 function clearDailyWish(){
@@ -2250,8 +2252,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 authChannel?.addEventListener('message',event=>{if(event.data?.type==='personal-changed'&&event.data.username===currentUser?.username&&!personalBusy&&!$('personal-dialog').open)void loadPersonal();});
 
 
-let subscriptionState=null,subscriptionLoading=false,subscriptionBusy=false,subscriptionError='',subscriptionRequest=0;
-let developerState=null,developerLoading=false,developerError='',selectedSubscription='year',membershipTimer=null,previewBasic=false;
+
 const premiumMark=()=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>';
 function premiumActive(){
  const m=currentUser?.membership;return !previewBasic&&m?.tier==='premium'&&(m.lifetime||Date.parse(m.expiresAt)>Date.now());

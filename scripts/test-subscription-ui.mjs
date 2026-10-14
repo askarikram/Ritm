@@ -11,7 +11,7 @@ export async function verifySubscriptionUI(base){
   const account=async role=>{
    const context=await browser.newContext({viewport:{width:390,height:844},timezoneId:'Asia/Qyzylorda',reducedMotion:'reduce'});contexts.push(context);
    const page=await context.newPage(),username='subui'+role+suffix;
-   page.on('pageerror',e=>errors.push(e.message));page.on('dialog',dialog=>dialog.accept());
+   page.on('pageerror',e=>{errors.push(e.message);console.log('RITM_SUBSCRIPTION_BROWSER_ERROR '+e.stack);});page.on('dialog',dialog=>dialog.accept());
    const response=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Проверка подписки'}});
    assert.ok(response.ok());created.push(username);return {page,username};
   };
@@ -30,7 +30,7 @@ export async function verifySubscriptionUI(base){
   try{
    original=(await pool.query('SELECT * FROM ritm_payment_settings WHERE id=1')).rows[0];await pool.query('DELETE FROM ritm_payment_settings');
    const buyer=await account('buyer'),owner=await account('developer');await grantFixturePremium(base,owner.username,true);
-   await buyer.page.goto(base,{waitUntil:'networkidle'});await buyer.page.locator('#application').waitFor({state:'visible'});
+   await buyer.page.goto(base,{waitUntil:'networkidle'});try{await buyer.page.locator('#application').waitFor({state:'visible'});}catch(error){console.log('RITM_SUBSCRIPTION_AUTH_ERROR '+await buyer.page.locator('#auth-error').textContent());throw error;}
    check(await buyer.page.locator('#finance-privacy').isHidden()&&await buyer.page.locator('.daily-wish').count()===0&&await buyer.page.locator('[data-personal-next]').count()===0,name+': Basic has no eye wish or tasks');
    check(await buyer.page.locator('.mobile-nav [data-nav="goals"]').textContent()==='Цели',name+': Basic menu offers monetary goals');await fits(buyer.page,'Basic home');
    await navigate(buyer.page,'personal','Цели');check(await buyer.page.locator('.personal-breadcrumb').count()===0,name+': personal route safely redirects Basic to savings');
