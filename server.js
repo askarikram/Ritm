@@ -8,8 +8,8 @@ APP_ORIGIN можно задать для собственного HTTPS-дом�
 */
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
-import { randomBytes, randomUUID, createHash, scrypt, timingSafeEqual } from 'node:crypto';
-import { promisify } from 'node:util';
+import { randomBytes, randomUUID, createHash, timingSafeEqual } from 'node:crypto';
+import { derivePassword, validLoginPassword, validNewPassword, createRateLimiter } from './security.mjs';
 import pg from 'pg';
 import { wishDay, wishForDay } from './daily-wishes.mjs';
 import { appIcons } from './app-icons.mjs';
@@ -17,6 +17,7 @@ import { createArchiveService } from './archive-service.mjs';
 import { createReminderService } from './reminder-store.mjs';
 import { verifySchedulerToken } from './scheduler-auth.mjs';
 import { createPersonalService } from './personal-service.mjs';
+import { captureBackup } from './backup.mjs';
 const Core = (() => {
   const iso = d => d.toISOString().slice(0,10);
   const parse = s => new Date(s + 'T12:00:00Z');
@@ -44,9 +45,13 @@ const Core = (() => {
   const available = s => s.balance-reserved(s);
   const dates = (item,from,to) => {
     if(item.repeat==='none') return item.date>=from&&item.date<=to?[item.date]:[];
-    const out=[];
-    for(let n=0;n<4000;n++){
-      const date=item.repeat==='weekly'?addDays(item.date,n*7):month(item.date,n*(item.repeat==='yearly'?12:1));
+    if(from>to||item.date>to)return [];
+    const out=[],step=item.repeat==='yearly'?12:1;
+    const distance=(Number(from.slice(0,4))-Number(item.date.slice(0,4)))*12+Number(from.slice(5,7))-Number(item.date.slice(5,7));
+    const first=item.repeat==='weekly'?Math.max(0,Math.ceil(days(item.date,from)/7)):Math.max(0,Math.floor(distance/step)-1);
+    // Jump directly to the requested interval; old anchors do not add work.
+    for(let n=first,count=0;count<4000;n++,count++){
+      const date=item.repeat==='weekly'?addDays(item.date,n*7):month(item.date,n*step);
       if(date>to) break;
       if(date>=from) out.push(date);
     }
@@ -214,7 +219,7 @@ const Core = (() => {
   return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,goalMonthAmount,freezeGoalMonth,monthOpening,monthOverview,freezeMonthBalance,allowance,record,validate};
 })();
 const validUsername = value => typeof value==='string' && /^[a-z]{1,32}$/.test(value);
-const validPassword = value => typeof value==='string' && /^[A-Za-z0-9]{8,128}$/.test(value);
+const validPassword = validLoginPassword;
 const validName = value => typeof value==='string' && value.trim().length>=1 && value.trim().length<=80 && !/[\u0000-\u001f\u007f]/.test(value);
 const HTML=readFileSync(new URL('./public/index.html',import.meta.url),'utf8');
 const release=process.env.RENDER_GIT_COMMIT||createHash('sha256').update(HTML).digest('hex').slice(0,16);
@@ -276,11 +281,11 @@ async function initialize(){
     await client.query('CREATE INDEX IF NOT EXISTS ritm_sessions_expiry ON ritm_sessions(expires_at)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_wish_accounts(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,lane SMALLINT NOT NULL CHECK(lane BETWEEN 0 AND 4),timezone TEXT NOT NULL,opened_date DATE NOT NULL)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_recovery_codes(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL)');
-    await archives.initialize(client);await personal.initialize(client);await reminders.initialize(client);
+    await archives.initialize(client);await personal.initialize(client);await reminders.initialize(client);await limiter.initialize(client);
   });
 }
-const derive=promisify(scrypt),hashToken=t=>createHash('sha256').update(t).digest('hex');
-const dummySalt=randomBytes(16).toString('hex'),rateWindows=new Map();
+const derive=derivePassword,hashToken=t=>createHash('sha256').update(t).digest('hex');
+const dummySalt=randomBytes(16).toString('hex');
 const newRecoveryCode=()=>randomBytes(16).toString('hex').toUpperCase().match(/.{4}/g).join('-');
 const normalizeRecovery=value=>typeof value==='string'&&value.length<=80?value.replace(/[\s-]/g,'').toUpperCase():'';
 const recoveryHash=code=>hashToken(normalizeRecovery(code));
@@ -293,13 +298,8 @@ async function checkCurrentPassword(userId,password){
   return row;
 }
 function fail(status,message,code){const error=Error(message);error.status=status;if(code)error.code=code;throw error;}
-function rateLimit(key,limit){
-  const now=Date.now();let row=rateWindows.get(key);
-  if(!row||now-row.start>=900000){row={start:now,count:0};rateWindows.set(key,row);}
-  if(++row.count>limit)fail(429,'Слишком много попыток. Повторите через 15 минут.');
-}
-// Чистим только память: фоновое обращение к PostgreSQL мешало бы Neon засыпать.
-const cleanup=setInterval(()=>{for(const [key,row] of rateWindows)if(Date.now()-row.start>=900000)rateWindows.delete(key);},60000);cleanup.unref();
+const limiter=createRateLimiter(pool);
+const rateLimit=(key,limit)=>limiter.consume(key,limit);
 let nextSessionCleanup=0;
 async function maybePurgeSessions(){
   const now=Date.now();if(now<nextSessionCleanup)return;nextSessionCleanup=now+6*60*60*1000;
@@ -379,6 +379,11 @@ async function handle(req,res){
     if(req.method==='GET'&&url.pathname==='/sitemap.xml'){res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8'});res.end('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+['/','/help','/privacy'].map(path=>'<url><loc>'+appOrigin+path+'</loc></url>').join('')+'</urlset>');return;}
     if(req.method==='GET'&&url.pathname==='/favicon.ico'){res.writeHead(204);res.end();return;}
     if(!url.pathname.startsWith('/api/'))fail(404,'Страница не найдена.');
+    if(req.method==='POST'&&url.pathname==='/api/maintenance/backup'){
+      try{await verifySchedulerToken((req.headers.authorization||'').replace(/^Bearer /,''),appOrigin,{workflow:'backup-daily'});}catch{fail(401,'Недействительная подпись резервного копирования.');}
+      await rateLimit('maintenance-backup',4);
+      send(res,200,await captureBackup(pool,process.env.RITM_BACKUP_KEY));return;
+    }
     if(req.method==='POST'&&url.pathname==='/api/reminders/dispatch'){
       try{await verifySchedulerToken((req.headers.authorization||'').replace(/^Bearer /,''),appOrigin);}catch{fail(401,'Недействительная подпись планировщика.');}
       send(res,200,await reminders.dispatch());return;
@@ -388,11 +393,12 @@ async function handle(req,res){
     if(req.method==='POST'&&['/api/signup','/api/login'].includes(url.pathname)){
       // Ограничение на логин действует и при смене IP. Лимит сервера выше,
       // поскольку у хостинга несколько посетителей могут иметь общий адрес прокси.
-      rateLimit('auth-address:'+(req.socket.remoteAddress||'unknown'),240);
+      await rateLimit('auth-address:'+(req.socket.remoteAddress||'unknown'),240);
       const data=await readJSON(req),username=data.username,password=data.password;
       if(!validUsername(username))fail(400,'Логин — только маленькие латинские буквы, от 1 до 32, без цифр и пробелов.');
-      if(!validPassword(password))fail(400,'Пароль — от 8 до 128 символов, только латинские буквы и цифры.');
-      rateLimit('auth-user:'+username,10);
+      if(!validPassword(password))fail(400,'Введите пароль от 8 до 128 символов.');
+      if(url.pathname==='/api/signup'&&!validNewPassword(password))fail(400,'Новый пароль — от 12 до 128 символов. Выберите длинную фразу или случайный пароль.');
+      await rateLimit('auth-user:'+username,10);
       let user=(await pool.query(sql.byName,[username])).rows[0],recoveryCode;
       if(url.pathname==='/api/signup'){
         if(data.confirmPassword!==password)fail(400,'Пароли не совпадают. Проверьте оба поля.');
@@ -414,7 +420,7 @@ async function handle(req,res){
       await setSession(req,res,user.id,data.remember!==false);send(res,200,{...await sessionPayload(user),...(recoveryCode?{recoveryCode}:{})});return;
     }
     if(req.method==='POST'&&url.pathname==='/api/recovery-code'){
-      const user=await requireUser(req,res);rateLimit('recovery-create:'+user.id,10);
+      const user=await requireUser(req,res);await rateLimit('recovery-create:'+user.id,10);
       const data=await readJSON(req),record=await checkCurrentPassword(user.id,data.currentPassword),code=newRecoveryCode();
       await transaction(async client=>{
         const current=(await client.query('SELECT password_hash,salt FROM ritm_users WHERE id=$1 FOR UPDATE',[user.id])).rows[0];
@@ -424,11 +430,11 @@ async function handle(req,res){
       send(res,200,{recoveryCode:code});return;
     }
     if(req.method==='POST'&&url.pathname==='/api/recover'){
-      rateLimit('recover-address:'+(req.socket.remoteAddress||'unknown'),120);
+      await rateLimit('recover-address:'+(req.socket.remoteAddress||'unknown'),120);
       const data=await readJSON(req),code=normalizeRecovery(data.recoveryCode);
       if(!validUsername(data.username)||!/^[A-F0-9]{32}$/.test(code))fail(401,'Неверный логин или резервный код.');
-      rateLimit('recover-user:'+data.username,10);
-      if(!validPassword(data.newPassword))fail(400,'Новый пароль — от 8 до 128 символов, только латинские буквы и цифры.');
+      await rateLimit('recover-user:'+data.username,10);
+      if(!validNewPassword(data.newPassword))fail(400,'Новый пароль — от 12 до 128 символов. Выберите длинную фразу или случайный пароль.');
       if(data.newPassword!==data.confirmPassword)fail(400,'Пароли не совпадают. Проверьте оба поля.');
       const record=(await pool.query('SELECT u.id,r.code_hash FROM ritm_users u JOIN ritm_recovery_codes r ON r.user_id=u.id WHERE u.username=$1',[data.username])).rows[0];
       const candidate=recoveryHash(code),expected=record?.code_hash||hashToken('no-recovery-code');
@@ -448,7 +454,7 @@ async function handle(req,res){
       send(res,200,{...await sessionPayload(user),recoveryCode:nextCode});return;
     }
     if(req.method==='DELETE'&&url.pathname==='/api/account'){
-      const user=await requireUser(req,res);rateLimit('delete-user:'+user.id,10);
+      const user=await requireUser(req,res);await rateLimit('delete-user:'+user.id,10);
       const data=await readJSON(req);
       if(data.confirmation!=='УДАЛИТЬ')fail(400,'Введите УДАЛИТЬ для подтверждения.');
       const record=await checkCurrentPassword(user.id,data.currentPassword);
@@ -466,7 +472,7 @@ async function handle(req,res){
     }
 
     if(req.method==='PATCH'&&url.pathname==='/api/profile'){
-      const user=await requireUser(req,res);rateLimit('profile-user:'+user.id,60);
+      const user=await requireUser(req,res);await rateLimit('profile-user:'+user.id,60);
       const data=await readJSON(req);
       if(!validName(data.name))fail(400,'Введите имя от 1 до 80 символов.');
       const result=await pool.query('UPDATE ritm_users SET name=$1 WHERE id=$2 RETURNING username,name',[data.name.trim(),user.id]);
@@ -474,10 +480,10 @@ async function handle(req,res){
       send(res,200,{user:result.rows[0]});return;
     }
     if(req.method==='POST'&&url.pathname==='/api/password'){
-      const user=await requireUser(req,res);rateLimit('password-user:'+user.id,10);
+      const user=await requireUser(req,res);await rateLimit('password-user:'+user.id,10);
       const data=await readJSON(req);
       if(!validPassword(data.currentPassword))fail(400,'Введите текущий пароль.');
-      if(!validPassword(data.newPassword))fail(400,'Новый пароль — от 8 до 128 символов, только латинские буквы и цифры.');
+      if(!validNewPassword(data.newPassword))fail(400,'Новый пароль — от 12 до 128 символов. Выберите длинную фразу или случайный пароль.');
       if(data.newPassword!==data.confirmPassword)fail(400,'Пароли не совпадают. Проверьте оба поля.');
       const record=(await pool.query('SELECT password_hash,salt FROM ritm_users WHERE id=$1',[user.id])).rows[0];
       if(!record)fail(401,'Войдите в аккаунт.','not_signed_in');
@@ -508,7 +514,7 @@ async function handle(req,res){
         const day=wishDay(row?.timezone||requestedZone),opened=Boolean(row&&row.opened_date===day.date);
         send(res,200,{...day,opened,...(opened?{text:wishForDay(row.lane,day.date)}:{})});return;
       }
-      rateLimit('wish-user:'+user.id,100);
+      await rateLimit('wish-user:'+user.id,100);
       const result=await transaction(async client=>{
         // Serialise first-time lane assignments so the first five accounts get different collections.
         await client.query('SELECT pg_advisory_xact_lock(74691820)');
@@ -529,7 +535,7 @@ async function handle(req,res){
     if(['GET','POST'].includes(req.method)&&url.pathname==='/api/personal'){
       const user=await requireUser(req,res);
       if(req.method==='GET')send(res,200,await personal.get(user.id,url.searchParams.get('timeZone')));
-      else{rateLimit('personal:'+user.id,600);send(res,200,await personal.mutate(user.id,await readJSON(req)));}
+      else{await rateLimit('personal:'+user.id,600);send(res,200,await personal.mutate(user.id,await readJSON(req)));}
       return;
     }
     if(['GET','PUT'].includes(req.method)&&url.pathname==='/api/archive'){
@@ -539,7 +545,7 @@ async function handle(req,res){
         let result;try{result=await archives.list(user.id,year,now);}catch(error){if(error.status)throw error;if(error.message.startsWith('Выберите'))fail(400,error.message);throw error;}
         send(res,200,result);
       }else{
-        rateLimit('archive:'+user.id,300);const data=await readJSON(req);
+        await rateLimit('archive:'+user.id,300);const data=await readJSON(req);
         let result;try{result=await archives.save(user.id,data,now);}catch(error){if(error.status)throw error;if(['В архиве','Выберите','Введите','Некорректная'].some(prefix=>error.message.startsWith(prefix)))fail(400,error.message);throw error;}
         send(res,200,{record:result});
       }return;
@@ -549,7 +555,7 @@ async function handle(req,res){
       send(res,200,req.method==='GET'?await reminders.settings(user.id,url.searchParams.get('timeZone')):await reminders.savePrefs(user.id,await readJSON(req)));return;
     }
     if(['POST','DELETE'].includes(req.method)&&url.pathname==='/api/push/subscription'){
-      const user=await requireUser(req,res);rateLimit('push:'+user.id,100);const data=await readJSON(req);
+      const user=await requireUser(req,res);await rateLimit('push:'+user.id,100);const data=await readJSON(req);
       send(res,200,req.method==='POST'?await reminders.subscribe(user.id,hashToken(token(req)),data):await reminders.unsubscribe(user.id,data.endpoint));return;
     }
     if(req.method==='POST'&&url.pathname==='/api/push/status'){
@@ -558,7 +564,7 @@ async function handle(req,res){
     }
 
     if(req.method==='PUT'&&url.pathname==='/api/plan'){
-      const user=await requireUser(req,res);rateLimit('save-user:'+user.id,600);const data=await readJSON(req);
+      const user=await requireUser(req,res);await rateLimit('save-user:'+user.id,600);const data=await readJSON(req);
       if(!Number.isSafeInteger(data.revision)||data.revision<0||data.revision>=2147483647)fail(400,'Некорректная версия плана.');
       try{Core.validate(data.plan);}catch(error){fail(400,error.message);}
       const result=await transaction(async client=>{
@@ -570,6 +576,7 @@ async function handle(req,res){
     }
     fail(404,'Запрос не найден.');
   }catch(error){
+    if(error.retryAfter&&!res.headersSent)res.setHeader('Retry-After',String(error.retryAfter));
     if(!res.headersSent)send(res,error.status||500,{error:error.status?error.message:'Ошибка сервера. Попробуйте позже.',...(error.status&&error.code?{code:error.code}:{})});else res.end();
     if(!error.status)console.error('Ошибка Ритм:',error.code||error.name);
   }
@@ -578,9 +585,8 @@ const server=createServer((req,res)=>{void handle(req,res);});
 server.requestTimeout=30000;server.headersTimeout=10000;server.maxHeadersCount=60;
 async function start(){await initialize();server.listen(port,host,()=>console.log('Ритм: '+appOrigin));}
 function stop(){
-  clearInterval(cleanup);
   const deadline=setTimeout(()=>{server.closeAllConnections();process.exit(1);},10000);deadline.unref();
   server.close(()=>{void pool.end().then(()=>process.exit(0)).catch(()=>process.exit(1));});
 }
 process.on('SIGTERM',stop);process.on('SIGINT',stop);
-start().catch(error=>{clearInterval(cleanup);console.error('Не удалось запустить Ритм:',error.code||error.name);void pool.end().finally(()=>process.exit(1));});
+start().catch(error=>{console.error('Не удалось запустить Ритм:',error.code||error.name);void pool.end().finally(()=>process.exit(1));});

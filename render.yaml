@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    buildCommand: npm install && npm run check
+    buildCommand: npm ci --ignore-scripts && npm audit --omit=dev --audit-level=low && npm run check
     startCommand: npm start
     healthCheckPath: /healthz
     envVars:
