@@ -62,7 +62,7 @@ export function createNotificationService({pool,Core}){
    const parts=options.cursor.split('.');before=Number(parts[0]);beforeId=parts[1];
    if(parts.length!==2||!Number.isSafeInteger(before)||before<1||!uuid(beforeId))throw bad('Обновите список уведомлений.');
   }
-  const row=await source(userId);await sync(userId,row,now);const active=premium(row,now);
+  const row=await source(userId);await sync(userId,row,now);const active=premium(row,now)&&options.scope!=='payments';
   const found=(await pool.query("SELECT * FROM ritm_notifications WHERE user_id=$1 AND (kind='payment' OR $2) AND ($3::bigint IS NULL OR (created_at,id)<($3::bigint,$4::uuid)) AND ($5='all' OR $5='unread' AND read_at IS NULL OR $5='read' AND read_at IS NOT NULL) ORDER BY created_at DESC,id DESC LIMIT 51",[userId,active,before,beforeId,filter])).rows;
   const rows=found.slice(0,50),last=rows.at(-1);
   return {...await counts(userId,active),notifications:rows.map(json),nextCursor:found.length>50?last.created_at+'.'+last.id:null};
@@ -74,7 +74,7 @@ export function createNotificationService({pool,Core}){
   if(!row)throw bad('Уведомление не найдено.',404);return {notification:json(row)};
  }
  async function read(userId,data,now=new Date()){
-  const row=await source(userId),active=premium(row,now);
+  const row=await source(userId),active=premium(row,now)&&data.scope!=='payments';
   if(data.action==='read_all')await pool.query("UPDATE ritm_notifications SET read_at=COALESCE(read_at,$3) WHERE user_id=$1 AND (kind='payment' OR $2) AND read_at IS NULL",[userId,active,now.getTime()]);
   else{
    if(!uuid(data.id))throw bad('Уведомление не найдено.',404);

@@ -47,7 +47,7 @@ export async function verifySecurity(base){
   const newPassword='Тихий вечер и ясные цели 2026!',headers={Cookie:login.cookie,'X-Ritm-User':username};
   check((await request('/api/password','POST',{currentPassword:oldPassword,newPassword,confirmPassword:newPassword},headers)).status===200,'password changes accept a Unicode phrase');
   check((await request('/api/login','POST',{username,password:newPassword})).status===200,'Unicode phrase signs in successfully');
-  const emptyTables=Object.fromEntries(Object.keys(backupTables).filter(t=>!['ritm_memberships','ritm_payment_settings','ritm_subscription_orders'].includes(t)).map(t=>[t,[]]));
+  const emptyTables=Object.fromEntries(Object.keys(backupTables).filter(t=>!['ritm_memberships','ritm_payment_settings','ritm_subscription_orders','ritm_notifications'].includes(t)).map(t=>[t,[]]));
   const oldBackup=encryptBackup({format:'ritm-full-backup',version:1,createdAt:new Date().toISOString(),tables:emptyTables},key);
   check(decryptBackup(oldBackup,key).tables.ritm_memberships.length===0,'older eight-table encrypted backups remain recoverable');
   const nineTables={...emptyTables,ritm_memberships:[]};check(Object.keys(decryptBackup(encryptBackup({format:'ritm-full-backup',version:1,createdAt:new Date().toISOString(),tables:nineTables},key),key).tables).length===Object.keys(backupTables).length,'nine-table membership backups migrate to include payment records');

@@ -583,7 +583,7 @@ async function handle(req,res){
       }return;
     }
     if(req.method==='GET'&&url.pathname==='/api/notifications'){
-      const user=await requireUser(req,res);send(res,200,await notifications.list(user.id,{filter:url.searchParams.get('filter'),cursor:url.searchParams.get('cursor')}));return;
+      const user=await requireUser(req,res);send(res,200,await notifications.list(user.id,{filter:url.searchParams.get('filter'),cursor:url.searchParams.get('cursor'),scope:url.searchParams.get('scope')}));return;
     }
     if(req.method==='GET'&&url.pathname.startsWith('/api/notifications/')){
       const user=await requireUser(req,res);send(res,200,await notifications.get(user.id,url.pathname.slice('/api/notifications/'.length)));return;
