@@ -1422,7 +1422,7 @@ window.addEventListener('hashchange',()=>{if(!currentUser)return;render();window
 
 let authMode='login',currentUser=null,remoteRevision=0,queuedPlan=null,saving=false,saveConflict=false,sessionGeneration=0,authBusy=false;
 let recoveryEnabled=false,recoveryBusy=false;
-let notificationState=null,notificationLoading=false,notificationBusy=false,notificationError='',notificationRequest=0,notificationTimer=null,notificationFilter='all',notificationDetail=null,notificationReadQueue=[],notificationViewCache=new WeakMap();
+let notificationState=null,notificationLoading=false,notificationBusy=false,notificationError='',notificationRequest=0,notificationTimer=null,notificationFilter='all',notificationDetail=null,notificationReadQueue=[],notificationViewCache=new WeakMap(),notificationReloadPending=false;
 let subscriptionState=null,subscriptionLoading=false,subscriptionBusy=false,subscriptionError='',subscriptionRequest=0;
 let developerState=null,developerLoading=false,developerError='',selectedSubscription='year',membershipTimer=null,previewBasic=false;
 let wishState=null,wishLoading=false,wishBusy=false,wishError='',wishTimer,wishRequest=0;
@@ -2501,7 +2501,10 @@ function restoreNotificationSettings(draft){
  if(reminderBusy)form.querySelector('[type="submit"]').disabled=true;
 }
 async function loadNotifications(append=false){
- if(!currentUser||notificationBusy||notificationLoading||append&&!notificationState?.nextCursor)return;
+ if(!currentUser)return;
+ if(notificationBusy||notificationLoading){if(!append)notificationReloadPending=true;return;}
+ if(append&&!notificationState?.nextCursor)return;
+ notificationReloadPending=false;
  const generation=sessionGeneration,request=++notificationRequest,filter=notificationFilter;
  notificationLoading=true;notificationError='';
  if(!notificationState)renderNotificationInbox();
@@ -2519,7 +2522,7 @@ async function loadNotifications(append=false){
   if(generation!==sessionGeneration||request!==notificationRequest)return;
   if(error.status===401){showAuth();void startAuth();return;}
   notificationError=error.message;renderNotificationInbox();
- }finally{if(generation===sessionGeneration&&request===notificationRequest){notificationLoading=false;scheduleNotifications();renderNotificationInbox();}}
+ }finally{if(generation===sessionGeneration&&request===notificationRequest){notificationLoading=false;renderNotificationInbox();if(notificationReloadPending){notificationReloadPending=false;void loadNotifications();}else scheduleNotifications();}}
 }
 function notificationStamp(value){return new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(value));}
 function notificationType(n){return n.type==='payment'?'Платёж':n.type==='habit'?'Привычка':'Задача';}

@@ -55,6 +55,23 @@ export async function verifyNotificationUI(base){
    await page.request.post(base+'/api/personal',{headers,data:{revision:personal.revision,action:'add_task',item:{title:'Подготовить документы',date:day,time:'00:00'}}});
    await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>document.querySelector('#reminder-bell .reminder-badge')?.textContent==='1');
    check((await page.locator('#notification-page-body').textContent()).includes('Подготовить документы'),name+': Premium receives concrete personal reminder');
+   await navigate('personal');
+   await page.evaluate(()=>{
+    window.__notificationOriginalFetch=window.fetch;const real=window.fetch.bind(window);let first=true;
+    window.fetch=async(...args)=>{
+     const response=await real(...args),path=typeof args[0]==='string'?args[0]:args[0].url;
+     if(first&&path.startsWith('/api/notifications?')){first=false;await new Promise(resolve=>window.__releaseNotificationResponse=resolve);}
+     return response;
+    };
+    window.dispatchEvent(new Event('focus'));
+   });
+   await page.waitForFunction(()=>typeof window.__releaseNotificationResponse==='function');
+   await page.locator('[data-personal-action="complete-task"]').first().click();
+   await page.waitForFunction(()=>document.querySelector('[data-personal-action="complete-task"]')?.getAttribute('aria-pressed')==='true');
+   await page.evaluate(()=>window.__releaseNotificationResponse());
+   await page.waitForFunction(()=>!document.querySelector('#reminder-bell .reminder-badge'));
+   check(true,name+': completing a task refreshes unread state even with an older inbox request in flight');
+   await page.evaluate(()=>{window.fetch=window.__notificationOriginalFetch;delete window.__notificationOriginalFetch;delete window.__releaseNotificationResponse;});
    await navigate('profile');await page.locator('#profile-name-form [data-action="account-logout"]').click();await page.locator('#auth-screen').waitFor({state:'visible'});
    check(await page.locator('#reminders-body').textContent()===''&&await page.locator('#notification-detail-body').textContent()==='',name+': logout clears notification contents');
    await otherPage.request.post(base+'/api/signup',{headers:{Origin:base},data:{username:otherUsername,password,confirmPassword:password,name:'Другой аккаунт'}});otherCreated=true;
