@@ -37,7 +37,7 @@ export async function verifyMonths() {
   const unpaid=plan([item('rent','payment'),item('salary','income'),item('once','payment','none')]);
   eq(C.scheduled(unpaid,'2024-02-01','2024-02-29',true).map(e=>e.key).sort(),['once@2024-01-31','rent@2024-02-29','salary@2024-02-29'],'monthly unpaid January does not carry into February');
   eq(C.pastEvents(unpaid,'payment','2024-02-01'),[],'monthly reset creates no separate overdue debt');
-  eq(C.currentEvents(unpaid,'payment','2024-02-01').map(e=>e.key),['rent@2024-02-29','once@2024-01-31'],'once-overdue remains pending while monthly cycle resets');
+  eq(C.currentEvents(unpaid,'payment','2024-02-01').map(e=>e.key),['once@2024-01-31','rent@2024-02-29'],'once-overdue remains pending while monthly cycle resets');
   eq(C.scheduled(plan([item('rent','payment')]),'2024-01-31','2024-01-31',true)[0].overdue,false,'current monthly date retained');
   eq(C.scheduled(plan([item('rent','payment','monthly','2024-01-15')]),'2024-01-31','2024-01-31',true)[0].overdue,true,'unpaid current-month charge remains overdue until reset');
   eq(C.scheduled(unpaid,'2024-01-29','2024-03-10',false,'2024-02-01').filter(e=>e.id==='rent').map(e=>e.originalDate),['2024-02-29'],'calendar spillover hides old unpaid monthly dates');
