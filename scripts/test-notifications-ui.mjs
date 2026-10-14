@@ -54,7 +54,7 @@ export async function verifyNotificationUI(base){
    await page.request.post(base+'/api/personal',{headers,data:{revision:personal.revision,action:'add_task',item:{title:'Подготовить документы',date:day,time:'00:00'}}});
    await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>document.querySelector('#reminder-bell .reminder-badge')?.textContent==='1');
    check((await page.locator('#notification-page-body').textContent()).includes('Подготовить документы'),name+': Premium receives concrete personal reminder');
-   await page.locator('[data-action="account-logout"]').first().click();await page.locator('#auth-screen').waitFor({state:'visible'});
+   await navigate('profile');await page.locator('#profile-name-form [data-action="account-logout"]').click();await page.locator('#auth-screen').waitFor({state:'visible'});
    check(await page.locator('#reminders-body').textContent()===''&&await page.locator('#notification-detail-body').textContent()==='',name+': logout clears notification contents');
    await otherPage.request.post(base+'/api/signup',{headers:{Origin:base},data:{username:otherUsername,password,confirmPassword:password,name:'Другой аккаунт'}});otherCreated=true;
    await otherPage.reload({waitUntil:'networkidle'});await otherPage.locator('#application').waitFor({state:'visible'});
