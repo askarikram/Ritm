@@ -27,7 +27,8 @@ export async function verifyNotificationUI(base){
    await page.locator('[data-notification-id="'+id+'"]').click();await page.locator('#notification-detail-dialog').waitFor({state:'visible'});
    check((await page.locator('#notification-detail-body').textContent()).includes('Аренда квартиры')&&(await page.locator('#notification-detail-body').textContent()).replace(/\s/g,'').includes('8500теңге'),name+': reminder detail shows actual title amount and date');
    check((await page.locator('#reminder-bell').textContent()).includes('2'),name+': opening detail does not read every arrival');
-   await page.locator('#notification-detail-dialog [data-notify-action="close-detail"]').first().click();
+   const readSaved=page.waitForResponse(r=>r.url().endsWith('/api/notifications/read')&&r.request().method()==='POST');
+   await page.locator('#notification-detail-dialog [data-notify-action="close-detail"]').first().click();check((await readSaved).ok(),name+': read receipt saved on server');
    await page.waitForFunction(id=>document.querySelector('[data-notification-id="'+id+'"]')?.classList.contains('is-read')&&document.querySelector('#reminder-bell .reminder-badge')?.textContent==='1',id);
    await page.waitForFunction(id=>{const n=document.querySelector('[data-notification-id="'+id+'"]');return n&&getComputedStyle(n).backgroundColor==='rgb(255, 255, 255)';},id);
    check(true,name+': closed reminder becomes white and badge decreases');
