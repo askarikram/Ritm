@@ -37,7 +37,7 @@ export async function verifyMonths() {
   const unpaid=plan([item('rent','payment'),item('salary','income'),item('once','payment','none')]);
   eq(C.scheduled(unpaid,'2024-02-01','2024-02-29',true).map(e=>e.key).sort(),['once@2024-01-31','rent@2024-02-29','salary@2024-02-29'],'monthly unpaid January does not carry into February');
   eq(C.pastEvents(unpaid,'payment','2024-02-01'),[],'monthly reset creates no separate overdue debt');
-  eq(C.currentEvents(unpaid,'payment','2024-02-01').map(e=>e.key),['rent@2024-02-29','once@2024-01-31'],'once-overdue remains pending while monthly cycle resets');
+  eq(C.currentEvents(unpaid,'payment','2024-02-01').map(e=>e.key),['once@2024-01-31','rent@2024-02-29'],'once-overdue remains pending while monthly cycle resets');
   eq(C.scheduled(plan([item('rent','payment')]),'2024-01-31','2024-01-31',true)[0].overdue,false,'current monthly date retained');
   eq(C.scheduled(plan([item('rent','payment','monthly','2024-01-15')]),'2024-01-31','2024-01-31',true)[0].overdue,true,'unpaid current-month charge remains overdue until reset');
   eq(C.scheduled(unpaid,'2024-01-29','2024-03-10',false,'2024-02-01').filter(e=>e.id==='rent').map(e=>e.originalDate),['2024-02-29'],'calendar spillover hides old unpaid monthly dates');
@@ -135,5 +135,10 @@ export async function verifyMonths() {
     {...budget,monthlyIncludeDaily:'false'},
     {...budget,goals:[{...budget.goals[0],monthPlans:{'2024-01':-1}}]}
   ]){assert.throws(()=>C.validate(invalid),/Некоррект/);checks++;}
+  for(const type of ['income','payment']){
+    const mixed=plan([item('monthly',type,'monthly','2020-06-20'),item('later',type,'none','2026-10-30'),item('earliest',type,'none','2026-10-12'),item('yearly',type,'yearly','2021-10-18')]);
+    eq(C.currentEvents(mixed,type,'2026-10-14').map(e=>[e.id,e.date]),[['earliest','2026-10-12'],['yearly','2026-10-18'],['monthly','2026-10-20'],['later','2026-10-30']],type+': active list follows next occurrence, not insertion order or recurring anchor');
+    eq(C.currentEvents(mixed,type,'2026-10-14').reduce((sum,e)=>sum+e.amount,0),40000,type+': sorting preserves the planned total');
+  }
   console.log('RITM_MONTHS_PASS '+checks+' checks');
 }

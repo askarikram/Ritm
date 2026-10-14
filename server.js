@@ -18,6 +18,7 @@ import { createReminderService } from './reminder-store.mjs';
 import { verifySchedulerToken } from './scheduler-auth.mjs';
 import { createPersonalService } from './personal-service.mjs';
 import { captureBackup } from './backup.mjs';
+import { createMembershipService, developerUsername } from './memberships.mjs';
 const Core = (() => {
   const iso = d => d.toISOString().slice(0,10);
   const parse = s => new Date(s + 'T12:00:00Z');
@@ -63,7 +64,7 @@ const Core = (() => {
     if(!date||s.done[item.id+'@'+date])return null;
     return {...item,date,originalDate:date,key:item.id+'@'+date,overdue:date<now};
   };
-  const currentEvents = (s,type,now=today()) => s.items.filter(item=>item.type===type).map(item=>pendingEvent(s,item,now)).filter(Boolean);
+  const currentEvents = (s,type,now=today()) => s.items.filter(item=>item.type===type).map(item=>pendingEvent(s,item,now)).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,'ru')||a.id.localeCompare(b.id));
   const pastEvents = (s,type,now=today()) => {
     const events=[];
     for(const item of s.items.filter(item=>item.type===type&&['weekly','yearly'].includes(item.repeat))){
@@ -253,6 +254,7 @@ const pool=new pg.Pool({connectionString:databaseURL.toString(),ssl:{rejectUnaut
 pool.on('error',error=>console.error('Соединение с базой:',error.code||error.name));
 const archives=createArchiveService({pool,Core});
 const personal=createPersonalService({pool});
+const memberships=createMembershipService({pool});
 const reminders=createReminderService({pool,Core,appOrigin,testMode:process.env.NODE_ENV==='test'});
 const cookieName=production?'__Host-ritm-session':'ritm-session',ttl=30*24*60*60*1000,shortTTL=12*60*60*1000;
 const sql={
@@ -274,6 +276,7 @@ async function transaction(work){
   finally{client.release();}
 }
 async function initialize(){
+  let developerGranted=false;
   await transaction(async client=>{
     await client.query('CREATE TABLE IF NOT EXISTS ritm_users(id UUID PRIMARY KEY,username VARCHAR(32) NOT NULL CONSTRAINT ritm_users_username_key UNIQUE,name VARCHAR(80) NOT NULL,password_hash TEXT NOT NULL,salt TEXT NOT NULL,created_at BIGINT NOT NULL)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_plans(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,plan_json JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 0)');
@@ -281,8 +284,9 @@ async function initialize(){
     await client.query('CREATE INDEX IF NOT EXISTS ritm_sessions_expiry ON ritm_sessions(expires_at)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_wish_accounts(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,lane SMALLINT NOT NULL CHECK(lane BETWEEN 0 AND 4),timezone TEXT NOT NULL,opened_date DATE NOT NULL)');
     await client.query('CREATE TABLE IF NOT EXISTS ritm_recovery_codes(user_id UUID PRIMARY KEY REFERENCES ritm_users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL)');
-    await archives.initialize(client);await personal.initialize(client);await reminders.initialize(client);await limiter.initialize(client);
+    await archives.initialize(client);await personal.initialize(client);await reminders.initialize(client);await limiter.initialize(client);developerGranted=await memberships.initialize(client);
   });
+  if(developerGranted)console.log('RITM_DEVELOPER_PREMIUM_GRANTED');
 }
 const derive=derivePassword,hashToken=t=>createHash('sha256').update(t).digest('hex');
 const dummySalt=randomBytes(16).toString('hex');
@@ -343,7 +347,7 @@ async function sessionPayload(user){
   const row=(await pool.query(sql.getPlan,[user.id])).rows[0];
   if(!row)throw Error('Отсутствует план аккаунта.');
   await archives.capture(user.id,row.plan_json,await reminders.accountDay(user.id));
-  return {user:{username:user.username,name:user.name},plan:row.plan_json,revision:row.revision,recoveryEnabled:row.recovery_enabled};
+  return {user:{username:user.username,name:user.name,membership:await memberships.forUser(user.id)},plan:row.plan_json,revision:row.revision,recoveryEnabled:row.recovery_enabled};
 }
 async function readJSON(req){
   if(!String(req.headers['content-type']||'').toLowerCase().startsWith('application/json'))fail(415,'Нужен JSON-запрос.');
@@ -389,6 +393,9 @@ async function handle(req,res){
       send(res,200,await reminders.dispatch());return;
     }
     if(['POST','PUT','DELETE','PATCH'].includes(req.method)&&req.headers.origin!==appOrigin)fail(403,'Запрос пришёл с другого адреса.');
+    if(req.method==='GET'&&url.pathname==='/api/membership'){
+      const user=await requireUser(req,res);send(res,200,{membership:await memberships.forUser(user.id)});return;
+    }
     if(req.method==='GET'&&url.pathname==='/api/me'){send(res,200,await sessionPayload(await requireUser(req,res)));return;}
     if(req.method==='POST'&&['/api/signup','/api/login'].includes(url.pathname)){
       // Ограничение на логин действует и при смене IP. Лимит сервера выше,
@@ -404,6 +411,7 @@ async function handle(req,res){
         if(data.confirmPassword!==password)fail(400,'Пароли не совпадают. Проверьте оба поля.');
         if(!validName(data.name))fail(400,'Введите имя от 1 до 80 символов.');
         if(user)fail(409,'Этот логин уже занят. Выберите другой.');
+        if(username===developerUsername)fail(403,'Этот логин зарезервирован для разработчика.');
         const salt=randomBytes(16).toString('hex'),key=await derive(password,salt,64,{N:32768,r:8,p:3,maxmem:64*1024*1024});
         user={id:randomUUID(),username,name:data.name.trim()};recoveryCode=newRecoveryCode();
         try{await transaction(async client=>{
@@ -477,7 +485,7 @@ async function handle(req,res){
       if(!validName(data.name))fail(400,'Введите имя от 1 до 80 символов.');
       const result=await pool.query('UPDATE ritm_users SET name=$1 WHERE id=$2 RETURNING username,name',[data.name.trim(),user.id]);
       if(!result.rowCount)fail(401,'Войдите в аккаунт.','not_signed_in');
-      send(res,200,{user:result.rows[0]});return;
+      send(res,200,{user:{...result.rows[0],membership:await memberships.forUser(user.id)}});return;
     }
     if(req.method==='POST'&&url.pathname==='/api/password'){
       const user=await requireUser(req,res);await rateLimit('password-user:'+user.id,10);
@@ -500,7 +508,7 @@ async function handle(req,res){
         return result.rows[0];
       });
       res.setHeader('Set-Cookie',cookie(value,remember,life));
-      send(res,200,{user:changed});return;
+      send(res,200,{user:{...changed,membership:await memberships.forUser(user.id)}});return;
     }
 
 
