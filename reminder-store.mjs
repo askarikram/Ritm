@@ -6,7 +6,7 @@ import { membershipStatus } from './memberships.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const bad=(message,status=400)=>Object.assign(Error(message),{status});
 export const reminderOwner=userId=>hash('ritm-device:'+userId).slice(0,32);
-export function createReminderService({pool,Core,appOrigin,testMode=false,sendNotification=webpush.sendNotification.bind(webpush)}){
+export function createReminderService({pool,Core,appOrigin,testMode=false,notifications,sendNotification=webpush.sendNotification.bind(webpush)}){
   let vapid;
   const eventsFor=(row,prefs,now)=>[...duePushEvents(Core,row.plan_json,prefs,now),...(row.personal_state&&membershipStatus(row,now.getTime()).tier==='premium'?Personal.dueEvents(row.personal_state,now):[])];
   async function initialize(client){
@@ -77,12 +77,13 @@ export function createReminderService({pool,Core,appOrigin,testMode=false,sendNo
           if(!fresh||!eventsFor(fresh,p,now).some(item=>item.key===event.key)){
             await pool.query("UPDATE ritm_push_deliveries SET state='failed' WHERE user_id=$1 AND endpoint_hash=$2 AND event_key=$3 AND notify_date=$4 AND lead=$5",values.slice(0,5));counts.skipped++;continue;
           }
+          const receipt=notifications?await notifications.record(row.user_id,event,p,fresh.plan_json,now):null;
           const when=p.lead===0?'Сегодня':p.lead===1?'Завтра':'Через 3 дня';
           const genericBody=personalEvent?(event.type==='habit'?'Пора выполнить привычку.':'У вас запланирована задача.')+' Откройте Ритм, чтобы посмотреть.':when+' запланирован платёж. Откройте Ритм, чтобы посмотреть.';
           const amount=personalEvent?'':new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(event.amount/100)+' '+(fresh.plan_json.currency==='KZT'?'теңге':'$');
           const body=!personalEvent&&p.showAmounts?when+': '+event.title+' — '+amount:genericBody;
           try{
-            await sendNotification(row.subscription,JSON.stringify({title:'Ритм · Напоминание',body,genericBody,owner:reminderOwner(row.user_id),tag:hash(event.key+notifyDate+lead).slice(0,24),route:personalEvent?'personal':'payment'}),{vapidDetails:vapid,TTL:21600,timeout:8000});
+            await sendNotification(row.subscription,JSON.stringify({title:'Ритм · Напоминание',body,genericBody,owner:reminderOwner(row.user_id),tag:hash(event.key+notifyDate+lead).slice(0,24),route:personalEvent?'personal':'payment',...(receipt?{notificationId:receipt.id}:{})}),{vapidDetails:vapid,TTL:21600,timeout:8000});
             await pool.query("UPDATE ritm_push_deliveries SET state='sent' WHERE user_id=$1 AND endpoint_hash=$2 AND event_key=$3 AND notify_date=$4 AND lead=$5",values.slice(0,5));counts.sent++;
           }catch(error){
             if([404,410].includes(error.statusCode)){await pool.query('DELETE FROM ritm_push_subscriptions WHERE user_id=$1 AND endpoint=$2',[row.user_id,row.endpoint]);counts.removed++;}

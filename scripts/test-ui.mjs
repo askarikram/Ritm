@@ -102,11 +102,13 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       }
       await page.locator('.account-pill').click();
       await page.waitForFunction(()=>document.getElementById('heading').textContent==='Настройки');
+      await page.locator('.settings-row[href="#profile"]').click();
+      await page.locator('#profile-name-form').waitFor({state:'visible'});
       check(await page.locator('#profile-name-form').isVisible()&&await page.locator('#profile-password-form').isVisible(),engineName+': profile available in settings');
-      await page.getByRole('button',{name:'Загрузить пример',exact:true}).click();
+      await page.evaluate(()=>location.hash='settings-data');await page.getByRole('button',{name:'Загрузить пример',exact:true}).click();
       await page.waitForFunction(()=>document.getElementById('heading').textContent==='Главная'&&document.getElementById('save-state').textContent==='План сохранён');
       const before=await (await page.request.get(base+'/api/me',{headers:{'X-Ritm-User':username}})).json();
-      await page.locator('.account-pill').click();
+      await page.locator('.account-pill').click();await page.locator('.settings-row[href="#profile"]').click();
       await page.locator('#profile-name').fill('Александр Новый');
       await page.locator('#profile-name-form button[type="submit"]').click();
       await page.waitForFunction(()=>document.getElementById('profile-name-feedback')?.textContent==='Имя сохранено.');
@@ -139,8 +141,10 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       check(after.revision===before.revision&&after.user.name==='Александр Новый',engineName+': profile changes preserve financial plan');
 
       const navigate=async route=>{
+        const titles={home:'Главная',income:'Поступления',payment:'Платежи',goals:'Накопить деньги',calendar:'Календарь',settings:'Настройки',profile:'Профиль','settings-app':'Приложение и помощь','settings-data':'Ваши данные','settings-delete':'Удалить аккаунт'};
         await page.evaluate(route=>{location.hash=route;},route);
-        await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route)+'"][aria-current="page"]')!==null,route);
+        await page.waitForFunction(title=>document.getElementById('heading').textContent===title,titles[route]);
+        await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route==='profile'||route.startsWith('settings-')?'settings':route)+'"][aria-current="page"]')!==null,route);
       };
       const waitSaved=()=>page.waitForFunction(()=>document.getElementById('save-state').textContent==='План сохранён');
       for(const [type,baseCents] of [['income',7000000n],['payment',2529900n]]){
@@ -241,7 +245,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
         await page.setViewportSize({width,height:width>=1000?1000:844});
         for(const route of ['home','income','payment','goals','calendar','settings']) {
           await page.evaluate(route=>{location.hash=route;},route);
-          await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route)+'"][aria-current="page"]')!==null,route);
+          await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route==='profile'||route.startsWith('settings-')?'settings':route)+'"][aria-current="page"]')!==null,route);
           check(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),engineName+': '+route+' fits '+width+'px');
           if(width<=950){
             const geometry=await page.locator('.mobile-nav').evaluate(nav=>{
@@ -270,6 +274,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
           }
 
         }
+        await navigate('profile');
         const geometry=await page.locator('#profile-password-form .password-control').evaluateAll(controls=>controls.map(control=>{
           const input=control.querySelector('input').getBoundingClientRect(),button=control.querySelector('button').getBoundingClientRect();
           return {height:input.height,radius:getComputedStyle(control.querySelector('input')).borderRadius,buttonFits:button.left>=input.left&&button.right<=input.right&&button.top>=input.top&&button.bottom<=input.bottom};
@@ -324,7 +329,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       // Verify installation assets and offline behavior with a real service worker.
       await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller),null,{timeout:15000});
       check(await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;return r.active?.state==='activated';}),engineName+': app worker controls page');
-      await navigate('settings');
+      await navigate('settings-app');
       await page.locator('.install-card [data-install-app]').click();
       check(await page.locator('#install-dialog').isVisible()&&(await page.locator('#install-instructions').textContent()).length>30,engineName+': installation instructions available');
       await page.locator('#close-install').click();
@@ -332,6 +337,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
         const image=new Image();image.src='/icons/icon-512.png';await image.decode();return image.naturalWidth===512;
       }),engineName+': app icon decodes in browser');
 
+      await navigate('profile');
       const codeForm=page.locator('#recovery-code-form');
       await codeForm.locator('[name="currentPassword"]').fill('WrongPassword123');
       await codeForm.locator('button[type="submit"]').click();
@@ -375,7 +381,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       await page.evaluate(async()=>{const registration=await navigator.serviceWorker.getRegistration('/');await registration.update();});
       await page.locator('#update-banner').waitFor({state:'visible'});
       check(await page.evaluate(async()=>Boolean((await navigator.serviceWorker.getRegistration('/')).waiting)),engineName+': new worker waits for explicit update');
-      await navigate('settings');
+      await navigate('profile');
       await page.locator('#profile-current-password').fill('PendingPassword123');
       await page.locator('[data-password-target="profile-current-password"]').click();
       await page.locator('#apply-update').click();
@@ -398,7 +404,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
       await page.locator('#editor button[type="submit"]').click();
       await page.waitForFunction(()=>document.getElementById('save-state').textContent==='Есть несохранённые изменения');
       check(await page.locator('#connection-status').isVisible(),engineName+': offline edits clearly marked unsaved');
-      await navigate('settings');
+      await navigate('settings-data');
       const exportPromise=page.waitForEvent('download');await page.locator('[data-action="export"]').first().click();
       const backup=await exportPromise,backupStream=await backup.createReadStream();let backupText='';
       for await(const chunk of backupStream)backupText+=chunk.toString();
@@ -450,8 +456,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
         check((await page.locator('[data-planned-total="payment"]').textContent()).replace(/\s/g,'')===((expected+50n)/100n).toString()+'теңге','large total formatted without precision loss');
       }
 
-      await navigate('settings');
-      await page.locator('.account-deletion summary').click();
+      await navigate('settings-delete');
       await page.locator('#delete-current-password').fill(recoveredPassword);
       await page.locator('#delete-confirmation').fill('УДАЛИТЬ');
       await page.locator('#delete-account-form button[type="submit"]').click();

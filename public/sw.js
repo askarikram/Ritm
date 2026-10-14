@@ -58,7 +58,7 @@ async function showReminder(data){
  if(!prefs.owner||data?.owner!==prefs.owner)return;
  const title='Ритм · Напоминание',fallback='Запланирован платёж. Откройте Ритм, чтобы посмотреть.';
  const body=prefs.hidden?data.genericBody:data.body;
- await self.registration.showNotification(title,{body:typeof body==='string'?body.slice(0,260):fallback,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:'ritm-'+String(data.tag||'payment').slice(0,40),data:{owner:prefs.owner,route:data.route==='personal'?'personal':'payment'},renotify:false});
+ await self.registration.showNotification(title,{body:typeof body==='string'?body.slice(0,260):fallback,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',tag:'ritm-'+String(data.tag||'payment').slice(0,40),data:{owner:prefs.owner,route:data.route==='personal'?'personal':'payment',notificationId:typeof data.notificationId==='string'&&/^[a-f0-9-]{36}$/i.test(data.notificationId)?data.notificationId:null},renotify:false});
 }
 self.addEventListener('push',event=>{
  let data;try{data=event.data?.json();}catch{return;}
@@ -69,7 +69,8 @@ self.addEventListener('notificationclick',event=>{
  event.waitUntil((async()=>{
   const prefs=await displayPrefs();if(!prefs.owner||event.notification.data?.owner!==prefs.owner)return;
   const route=event.notification.data?.route==='personal'?'personal':'payment';
-  const url=new URL('/#'+route,self.location.origin).href;
+  const receipt=event.notification.data?.notificationId;
+  const url=new URL(receipt?'/#notifications?view='+encodeURIComponent(receipt):'/#'+route,self.location.origin).href;
   for(const client of await self.clients.matchAll({type:'window',includeUncontrolled:true})){
    if(new URL(client.url).origin===self.location.origin){await client.navigate(url);await client.focus();return;}
   }

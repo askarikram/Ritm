@@ -8,6 +8,9 @@ export async function verifyFeatureUI(base){
  const browser=await engine.launch({headless:true}),context=await browser.newContext({viewport:{width:390,height:844},timezoneId:'UTC',reducedMotion:'reduce'}),page=await context.newPage();
  const username='archiveui'+[...randomBytes(8)].map(n=>String.fromCharCode(97+n%26)).join(''),password='ArchiveUiPassword123',headers={Origin:base,'X-Ritm-User':username},errors=[];
  page.on('pageerror',e=>errors.push(e.message));
+ const openNotificationSettings=async()=>{await page.evaluate(()=>location.hash='settings-notifications');await page.locator('#reminders-form').waitFor({state:'visible'});};
+ const closeNotificationSettings=async()=>{await page.evaluate(()=>location.hash='home');await page.waitForFunction(()=>document.getElementById('heading').textContent==='Главная');};
+
  try{
  const signup=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Проверка архива'}});check(signup.ok(),name+': archive UI account created');await grantFixturePremium(base,username);
  await page.goto(base,{waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});
@@ -35,11 +38,11 @@ export async function verifyFeatureUI(base){
  check(await page.locator('[data-archive-detail="2026-01"]:visible').evaluate(node=>node.getBoundingClientRect().right<=innerWidth+1),name+': archive fits viewport '+width);
  if(name==='chromium'&&[390,1440].includes(width))console.log('RITM_SCREENSHOT_ARCHIVE_'+width+' '+(await page.screenshot({fullPage:false})).toString('base64'));
  await page.locator('[data-feature-close="archive-dialog"]').click();
- await page.locator('#reminder-bell').click();await page.locator('#reminders-form').waitFor({state:'visible'});
- check(!/Telegram|Gmail|Телеграм/.test(await page.locator('#reminders-body').textContent()),name+': only Ritm and device channels '+width);
+ await openNotificationSettings();await page.locator('#reminders-form').waitFor({state:'visible'});
+ check(!/Telegram|Gmail|Телеграм/.test(await page.locator('#reminders-settings-body').textContent()),name+': only Ritm and device channels '+width);
  check(await page.locator('#reminders-form').evaluate(node=>node.getBoundingClientRect().right<=innerWidth+1),name+': reminder settings fit '+width);
  if(name==='chromium'&&[390,1440].includes(width))console.log('RITM_SCREENSHOT_REMINDERS_'+width+' '+(await page.screenshot({fullPage:false})).toString('base64'));
- await page.locator('[data-feature-close="reminders-dialog"]').click();
+ await closeNotificationSettings();
  }
 
  if(name==='chromium'){
@@ -81,21 +84,21 @@ export async function verifyFeatureUI(base){
    navigator.serviceWorker.getRegistration=async()=>r;
    Object.defineProperty(navigator.serviceWorker,'ready',{value:Promise.resolve(r)});
   },subscription);
-  await page.locator('#reminder-bell').click();await page.locator('#device-toggle').click();
+  await openNotificationSettings();await page.locator('#device-toggle').click();
   await page.waitForFunction(()=>document.getElementById('device-toggle')?.textContent==='Отключить');
   check((await page.request.post(base+'/api/push/status',{headers,data:{endpoint:subscription.endpoint}})).ok(),'chromium: enable phone button registers authenticated subscription');
   check((await (await page.request.post(base+'/api/push/status',{headers,data:{endpoint:subscription.endpoint}})).json()).enabled,'chromium: enabled device belongs to current session');
   await page.locator('#device-toggle').click();await page.waitForFunction(()=>document.getElementById('device-toggle')?.textContent==='Включить');
   check(!(await (await page.request.post(base+'/api/push/status',{headers,data:{endpoint:subscription.endpoint}})).json()).enabled,'chromium: disable phone button removes server subscription');
-  await page.locator('[data-feature-close="reminders-dialog"]').click();
+  await closeNotificationSettings();
  }
 
- await page.locator('#reminder-bell').click();await page.locator('#reminders-form [name="inApp"]').uncheck();await page.locator('#reminders-form [name="lead"][value="3"]').check();await page.locator('#reminders-form [name="time"]').fill('10:30');await page.locator('#reminders-form [type="submit"]').click();
+ await openNotificationSettings();await page.locator('#reminders-form [name="inApp"]').uncheck();await page.locator('#reminders-form [name="lead"][value="3"]').check();await page.locator('#reminders-form [name="time"]').fill('10:30');await page.locator('#reminders-form [type="submit"]').click();
  await page.waitForFunction(()=>document.getElementById('toast').textContent==='Напоминания настроены');
- await page.locator('[data-feature-close="reminders-dialog"]').click();await page.reload({waitUntil:'networkidle'});
- await page.locator('#reminder-bell').click();await page.locator('#reminders-form').waitFor({state:'visible'});
+ await closeNotificationSettings();await page.reload({waitUntil:'networkidle'});
+ await openNotificationSettings();await page.locator('#reminders-form').waitFor({state:'visible'});
  check(!await page.locator('#reminders-form [name="inApp"]').isChecked()&&await page.locator('#reminders-form [name="lead"][value="3"]').isChecked()&&await page.locator('#reminders-form [name="time"]').inputValue()==='10:30',name+': reminder preferences survive reload');
- await page.locator('[data-feature-close="reminders-dialog"]').click();
+ await closeNotificationSettings();
  await page.locator('[data-action="archive"]').click();await page.locator('[data-archive-month="2026-01"]').click();
  check((await page.locator('[data-archive-value="remaining"]:visible').textContent()).replace(/\D/g,'')==='30000',name+': historical month survives reload');
  await page.locator('[data-feature-close="archive-dialog"]').click();check(errors.length===0,name+': feature UI has no runtime errors');
