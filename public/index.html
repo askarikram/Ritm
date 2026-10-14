@@ -880,7 +880,7 @@ const Core = (() => {
     if(!date||s.done[item.id+'@'+date])return null;
     return {...item,date,originalDate:date,key:item.id+'@'+date,overdue:date<now};
   };
-  const currentEvents = (s,type,now=today()) => s.items.filter(item=>item.type===type).map(item=>pendingEvent(s,item,now)).filter(Boolean);
+  const currentEvents = (s,type,now=today()) => s.items.filter(item=>item.type===type).map(item=>pendingEvent(s,item,now)).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,'ru')||a.id.localeCompare(b.id));
   const pastEvents = (s,type,now=today()) => {
     const events=[];
     for(const item of s.items.filter(item=>item.type===type&&['weekly','yearly'].includes(item.repeat))){
@@ -1103,7 +1103,7 @@ function monthSummary(now){
     '</section>';
 }
 function history(type){
-  const entries=S.ledger.filter(e=>e.type===type);
+  const entries=S.ledger.filter(e=>e.type===type).sort((a,b)=>b.date.localeCompare(a.date));
   if(!entries.length)return '<div class="hint">Подтверждённых операций пока нет.</div>';
   return '<div class="table-wrap"><table class="history-table"><thead><tr><th>Операция</th><th>Фактическая дата</th><th class="number">Сумма</th><th></th></tr></thead><tbody>'+entries.map(e=>{
     const item=S.items.find(item=>item.id===e.itemId);

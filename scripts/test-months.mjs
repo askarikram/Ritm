@@ -135,5 +135,10 @@ export async function verifyMonths() {
     {...budget,monthlyIncludeDaily:'false'},
     {...budget,goals:[{...budget.goals[0],monthPlans:{'2024-01':-1}}]}
   ]){assert.throws(()=>C.validate(invalid),/Некоррект/);checks++;}
+  for(const type of ['income','payment']){
+    const mixed=plan([item('monthly',type,'monthly','2020-06-20'),item('later',type,'none','2026-10-30'),item('earliest',type,'none','2026-10-12'),item('yearly',type,'yearly','2021-10-18')]);
+    eq(C.currentEvents(mixed,type,'2026-10-14').map(e=>[e.id,e.date]),[['earliest','2026-10-12'],['yearly','2026-10-18'],['monthly','2026-10-20'],['later','2026-10-30']],type+': active list follows next occurrence, not insertion order or recurring anchor');
+    eq(C.currentEvents(mixed,type,'2026-10-14').reduce((sum,e)=>sum+e.amount,0),40000,type+': sorting preserves the planned total');
+  }
   console.log('RITM_MONTHS_PASS '+checks+' checks');
 }
