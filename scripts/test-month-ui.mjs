@@ -157,3 +157,97 @@ export async function verifyMonthUI(base){
   }
   console.log('RITM_MONTH_UI_PASS '+checks+' checks');
 }
+
+
+export async function verifyExpenseUI(base){
+  let checks=0;
+  const check=(condition,label)=>{assert.ok(condition,label);checks++;console.log('RITM_EXPENSE_UI_CHECK '+label);};
+  for(const [engineName,engine] of [['chromium',chromium],['webkit',webkit]]){
+    const browser=await engine.launch({headless:true});
+    const context=await browser.newContext({viewport:{width:390,height:844},timezoneId:'Asia/Almaty',reducedMotion:'reduce'});
+    const page=await context.newPage(),errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    page.on('dialog',dialog=>dialog.accept());
+    const username='expensetest'+[...randomBytes(8)].map(n=>String.fromCharCode(97+n%26)).join('');
+    const password='ExpenseTestPassword123',headers={Origin:base,'X-Ritm-User':username};
+    let created=false;
+    const saved=()=>page.waitForFunction(()=>document.getElementById('save-state')?.textContent==='План сохранён');
+    const read=async()=>{const response=await page.request.get(base+'/api/me',{headers});assert.ok(response.ok());return (await response.json()).plan;};
+    const navigate=async target=>{await page.evaluate(target=>{location.hash=target;},target);await page.waitForFunction(target=>document.querySelector('[data-nav="'+target+'"][aria-current="page"]'),target);};
+    const row=id=>page.locator('[data-history-list="payment"] [data-action="edit-expense"][data-id="'+id+'"]');
+    const submit=async()=>{await page.locator('#editor button[type="submit"]').click();await page.locator('#dialog').waitFor({state:'hidden'});await saved();};
+    try{
+      const response=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Проверка расходов',remember:true}});
+      check(response.ok(),engineName+': create disposable Basic expense account');created=true;
+      const plan={version:1,balance:1000000,daily:0,currency:'KZT',goals:[],done:{},ledger:[],items:[
+        {id:'future-payment',title:'Ещё не оплаченная подписка',amount:120000,date:'2026-10-20',type:'payment',repeat:'monthly'},
+        {id:'future-income',title:'Будущая зарплата',amount:500000,date:'2026-10-25',type:'income',repeat:'monthly'}
+      ],monthBalances:{'2026-10':1200000}};
+      for(let i=0;i<6;i++){
+        const date='2026-10-'+String(15-i).padStart(2,'0'),id='expense-'+i,key=id+'@'+date,amount=(6-i)*10000;
+        plan.items.push({id,title:'Расход '+i,amount,date,type:'payment',repeat:'none'});
+        plan.ledger.push({id:'receipt-'+i,itemId:id,key,title:'Расход '+i,amount,date,plannedDate:date,type:'payment'});plan.done[key]=true;
+      }
+      plan.ledger.unshift({id:'income-receipt',itemId:'income-received',key:'income-received@2026-10-16',title:'Полученная зарплата',amount:400000,date:'2026-10-16',plannedDate:'2026-10-16',type:'income'});plan.done['income-received@2026-10-16']=true;
+      check((await page.request.put(base+'/api/plan',{headers,data:{revision:0,plan}})).ok(),engineName+': seed expense history and unpaid schedule');
+      await page.clock.install({time:new Date('2026-10-16T05:00:00Z')});
+      await page.goto(base,{waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});await saved();
+      const card=page.locator('[data-recent-expenses]');
+      check(await card.isVisible(),engineName+': Basic home shows recent expense card');
+      check(await page.getByRole('heading',{name:'До следующего поступления',exact:true}).count()===0,engineName+': old allowance block removed');
+      assert.deepEqual(await card.locator('[data-recent-expense]').evaluateAll(nodes=>nodes.map(n=>n.dataset.recentExpense)),['receipt-0','receipt-1','receipt-2','receipt-3','receipt-4']);check(true,engineName+': five actual expenses follow newest actual dates');
+      check(!(await card.textContent()).includes('зарплата')&&!(await card.textContent()).includes('подписка'),engineName+': income and unpaid scheduled payments excluded');
+      await card.locator('.recent-expense-more').click();
+      await page.waitForURL('**/#payment?view=history');
+      await row('receipt-0').waitFor({state:'visible'});
+      check(await page.locator('[data-history-list="payment"]').evaluate(n=>n.getBoundingClientRect().top<innerHeight&&document.activeElement===n),engineName+': history link scrolls and moves keyboard focus to actual expenses');
+      await row('receipt-0').click();
+      check(await page.locator('#dialog-title').textContent()==='Изменить расход',engineName+': pencil opens expense editor');
+      check(await page.locator('#editor [name="title"]').inputValue()==='Расход 0'&&await page.locator('#editor [name="amount"]').inputValue()==='600'&&await page.locator('#editor [name="date"]').inputValue()==='2026-10-15',engineName+': expense editor prefilled from actual history');
+      await page.locator('#editor [name="title"]').fill('Уточнённые продукты');
+      await page.locator('#editor [name="amount"]').fill('800');
+      await page.locator('#editor [name="date"]').fill('2026-10-09');
+      await submit();
+      let stored=await read(),edited=stored.ledger.find(e=>e.id==='receipt-0');
+      check(stored.balance===980000&&edited.amount===80000&&edited.date==='2026-10-09'&&edited.title==='Уточнённые продукты',engineName+': edited expense and exact balance difference saved to server');
+      check(stored.ledger.length===7&&edited.key==='expense-0@2026-10-15'&&edited.plannedDate==='2026-10-15'&&stored.done[edited.key],engineName+': edit creates no duplicate and keeps original confirmation');
+      check(stored.items.find(i=>i.id==='expense-0').amount===60000&&stored.items.find(i=>i.id==='future-payment').repeat==='monthly',engineName+': history edit preserves original planned amounts and recurrence');
+      await row('receipt-0').click();await page.locator('#editor [name="amount"]').fill('500');await submit();
+      check((await read()).balance===1010000,engineName+': lowering expense returns only the difference');
+      await page.reload({waitUntil:'networkidle'});await saved();
+      await row('receipt-0').click();
+      check(await page.locator('#editor [name="title"]').inputValue()==='Уточнённые продукты'&&await page.locator('#editor [name="amount"]').inputValue()==='500'&&await page.locator('#editor [name="date"]').inputValue()==='2026-10-09',engineName+': all edited fields survive reload');
+      await page.locator('#dialog [data-action="close"]').first().click();
+      await navigate('home');
+      check(await card.locator('[data-recent-expense="receipt-0"]').count()===0&&await card.locator('[data-recent-expense="receipt-5"]').count()===1,engineName+': changing date immediately updates latest five expenses');
+      await card.locator('[data-action="expense"]').click();
+      await page.locator('#editor [name="title"]').fill('Кофе');
+      await page.locator('#editor [name="amount"]').fill('200');
+      await page.locator('#editor [name="date"]').fill('2026-10-16');await submit();
+      check((await read()).balance===990000,engineName+': add expense from home debits balance once');
+      check((await card.locator('[data-recent-expense]').first().textContent()).includes('Кофе'),engineName+': new manual expense appears first immediately');
+      for(const width of [320,390,1440]){
+        await page.setViewportSize({width,height:900});
+        check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),engineName+': recent expenses fit '+width+'px');
+        check(await card.locator('.recent-expense-row').evaluateAll(nodes=>nodes.every(n=>n.scrollWidth<=n.clientWidth+1)),engineName+': expense names and figures stay inside card at '+width+'px');
+      }
+      if(engineName==='chromium')for(const width of [390,1440]){await page.setViewportSize({width,height:1000});const shot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_EXPENSES_'+width+' '+shot.toString('base64'));}
+      await grantFixturePremium(base,username);await page.reload({waitUntil:'networkidle'});await saved();
+      await page.locator('#finance-privacy').click();
+      check(await card.locator('.recent-expense-amount').evaluateAll(nodes=>nodes.length===5&&nodes.every(n=>n.textContent.includes('••••'))),engineName+': Premium privacy masks every recent expense amount');
+      await card.locator('.recent-expense-more').click();await row('receipt-0').waitFor({state:'visible'});await row('receipt-0').click();
+      check(await page.locator('#editor [name="amount"]').getAttribute('type')==='password',engineName+': expense editor respects hidden amounts');
+      await page.locator('#dialog [data-action="close"]').first().click();await page.locator('#finance-privacy').click();
+      for(const width of [320,390,1440]){
+        await page.setViewportSize({width,height:900});
+        check(await row('receipt-0').evaluate(n=>{const a=n.getBoundingClientRect(),b=n.closest('table').getBoundingClientRect();return a.width>=40&&a.height>=40&&a.left>=b.left-1&&a.right<=b.right+1;}),engineName+': history pencil is visible and usable at '+width+'px');
+        check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),engineName+': history and edit buttons fit '+width+'px');
+      }
+      check(errors.length===0,engineName+': no browser errors in expense editing');
+    }finally{
+      if(created)await page.request.delete(base+'/api/account',{headers,data:{currentPassword:password,confirmation:'УДАЛИТЬ'}});
+      await context.close();await browser.close();
+    }
+  }
+  console.log('RITM_EXPENSE_UI_PASS '+checks+' checks');
+}

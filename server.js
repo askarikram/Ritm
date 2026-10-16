@@ -198,6 +198,19 @@ const Core = (() => {
     s.ledger.unshift(entry);s.done[event.key]=true;
     return entry;
   };
+  const expenseHistory = s => s.ledger.filter(e=>e.type==='payment').sort((a,b)=>b.date.localeCompare(a.date));
+  const editExpense = (s,id,{title,amount,date},now=today()) => {
+    const entry=s.ledger.find(e=>e.id===id&&e.type==='payment');
+    if(!entry)throw Error('Расход не найден.');
+    if(typeof title!=='string'||!title.trim()||title.trim().length>120)throw Error('Введите название расхода.');
+    if(!Number.isSafeInteger(amount)||amount<=0||amount>100000000000000)throw Error('Введите сумму больше нуля.');
+    if(!validDate(date)||date>now)throw Error('Дата расхода не может быть в будущем.');
+    const balance=s.balance+entry.amount-amount;
+    if(!Number.isSafeInteger(balance)||Math.abs(balance)>100000000000000)throw Error('Слишком большой итоговый баланс.');
+    s.balance=balance;
+    Object.assign(entry,{title:title.trim(),amount,date});
+    return entry;
+  };
   const validate = s => {
     if(!s||s.version!==1||!Array.isArray(s.items)||!Array.isArray(s.goals)||!Array.isArray(s.ledger)||!s.done||typeof s.done!=='object'||Array.isArray(s.done)) throw Error('Неподдерживаемый файл плана.');
     const money=(v,negative=false)=>Number.isSafeInteger(v)&&Math.abs(v)<=100000000000000&&(negative||v>=0);
@@ -219,7 +232,7 @@ const Core = (() => {
     if(marks.size!==s.ledger.length||Object.keys(s.done).some(k=>!marks.has(k)||s.done[k]!==true)||s.ledger.some(e=>!s.done[e.key]))throw Error('Некорректные отметки платежей.');
     return s;
   };
-  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,goalMonthAmount,freezeGoalMonth,monthOpening,monthOverview,freezeMonthBalance,allowance,record,validate};
+  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,goalMonthAmount,freezeGoalMonth,monthOpening,monthOverview,freezeMonthBalance,allowance,record,expenseHistory,editExpense,validate};
 })();
 const validUsername = value => typeof value==='string' && /^[a-z]{1,32}$/.test(value);
 const validPassword = validLoginPassword;
