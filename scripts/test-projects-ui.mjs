@@ -25,7 +25,7 @@ export async function verifyProjectUI(base){
    await page.waitForFunction(()=>location.hash==='#goals');check(await page.locator('.workspace-entry').count()===0,engineName+': Basic direct route cannot reveal the Premium workspace');
    await grantFixturePremium(base,username);await page.goto(base+'/?workspace=1#personal',{waitUntil:'networkidle'});await page.locator('.workspace-entry').waitFor({state:'visible'});
    check(await page.locator('[data-personal-section="task"]').count()===1&&await page.locator('[data-personal-section="habit"]').count()===1&&await page.locator('.personal-savings').count()===1,engineName+': new entry preserves My Day, habits and savings');
-   await page.locator('.workspace-entry').click();await page.getByRole('heading',{name:'Мои проекты',exact:true}).waitFor();
+   await page.locator('.workspace-entry').click();await page.waitForFunction(()=>document.getElementById('heading').textContent==='Мои проекты'&&document.querySelectorAll('.workspace-tabs>a').length===4);
    check(await page.locator('.workspace-tabs>a').count()===4&&await page.locator('[data-nav="personal"][aria-current="page"]').count()>0,engineName+': four sections nested under Personal');
    await form('add-project');await fields().locator('[name="title"]').fill('Прочитать и применить книгу');await fields().locator('[name="description"]').fill('Выбрать полезное и применить в жизни');await fields().locator('[name="deadline"]').fill(Personal.addDays(day,14));await submit();
    let state=(await read()).state;const project=state.workspace.projects[0].id;
