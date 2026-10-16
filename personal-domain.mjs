@@ -1,3 +1,4 @@
+import { Projects } from './projects-domain.mjs';
 const Personal = (() => {
  const parse=date=>new Date(date+'T12:00:00Z');
  const validDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&value>='1900-01-01'&&value<='2200-12-31'&&!Number.isNaN(parse(value).getTime())&&parse(value).toISOString().slice(0,10)===value;
@@ -26,6 +27,7 @@ const Personal = (() => {
    const pos=key.lastIndexOf('@'),habit=state.habits.find(h=>h.id===key.slice(0,pos)),date=key.slice(pos+1);
    if(done!==true||!habit||!validDate(date)||!occurs(habit,date))throw Error('Некорректная отметка привычки.');
   }
+  Projects.validate(state.workspace,state);
   return state;
  }
  const sorted=rows=>rows.sort((a,b)=>(a.time||'24:00').localeCompare(b.time||'24:00')||a.title.localeCompare(b.title));
@@ -70,6 +72,7 @@ const Personal = (() => {
    return {title:value.title.trim(),date:value.date,time:value.time};
   };
   const find=(list,id)=>{const row=list.find(row=>row.id===id);if(!row)throw Error('Запись уже изменена или удалена. Обновите личный раздел.');return row;};
+  if(a.startsWith('workspace_'))return validate(Projects.mutate(state,command,{day:c.date,now,newId}));
   if(a==='add_task')state.tasks.push({id:newId(),...readItem(command.item),done:false,completedOn:null});
   else if(a==='edit_task')Object.assign(find(state.tasks,command.id),readItem(command.item));
   else if(a==='complete_task'){
@@ -101,7 +104,7 @@ const Personal = (() => {
    find(state.habits,command.id);state.habits=state.habits.filter(row=>row.id!==command.id);
    for(const key of Object.keys(state.checks))if(key.startsWith(command.id+'@'))delete state.checks[key];
   }else throw Error('Действие не поддерживается.');
-  return validate(state);
+  return validate(Projects.syncTasks(state));
  }
  return {validDate,validTime,validZone,clock,fresh,validate,occurs,events,dayRows,next,dueEvents,apply,addDays};
 })();

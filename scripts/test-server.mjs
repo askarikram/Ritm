@@ -5,6 +5,7 @@ import { verifyWishes } from './test-wishes.mjs';
 import { verifyLaunch } from './test-launch.mjs';
 import { verifyMonths } from './test-months.mjs';
 import { verifyFeatures } from './test-features.mjs';
+import { verifyProjects } from './test-projects.mjs';
 import { verifyPersonal } from './test-personal.mjs';
 import { verifySubscriptions } from './test-subscription.mjs';
 import { verifyNotifications } from './test-notifications.mjs';
@@ -41,10 +42,12 @@ try {
   await verifyLaunch(base);
   await verifyFeatures(base);
   await verifyPersonal(base);
+  await verifyProjects(base);
   await verifySubscriptions(base);
   await verifyNotifications(base);
   await verifySecurity(base);
   if(process.env.RITM_TEST_UI==='1'){
+    const {verifyProjectUI}=await import('./test-projects-ui.mjs');await verifyProjectUI(base);
     const {verifyNotificationUI}=await import('./test-notifications-ui.mjs');await verifyNotificationUI(base);
     const {verifySubscriptionUI}=await import('./test-subscription-ui.mjs');await verifySubscriptionUI(base);
     const {verifyPersonalUI}=await import('./test-personal-ui.mjs');await verifyPersonalUI(base);
