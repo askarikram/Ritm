@@ -23,7 +23,7 @@ export async function verifyProjectUI(base){
    const signup=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Личные проекты'}});check(signup.ok(),engineName+': disposable workspace account created');created=true;
    await page.goto(base+'/#projects',{waitUntil:'networkidle'});await page.locator('#application').waitFor({state:'visible'});
    await page.waitForFunction(()=>location.hash==='#goals');check(await page.locator('.workspace-entry').count()===0,engineName+': Basic direct route cannot reveal the Premium workspace');
-   await grantFixturePremium(base,username);await page.goto(base+'/#personal',{waitUntil:'networkidle'});await page.locator('.workspace-entry').waitFor({state:'visible'});
+   await grantFixturePremium(base,username);await page.goto(base+'/?workspace=1#personal',{waitUntil:'networkidle'});await page.locator('.workspace-entry').waitFor({state:'visible'});
    check(await page.locator('[data-personal-section="task"]').count()===1&&await page.locator('[data-personal-section="habit"]').count()===1&&await page.locator('.personal-savings').count()===1,engineName+': new entry preserves My Day, habits and savings');
    await page.locator('.workspace-entry').click();await page.getByRole('heading',{name:'Мои проекты',exact:true}).waitFor();
    check(await page.locator('.workspace-tabs>a').count()===4&&await page.locator('[data-nav="personal"][aria-current="page"]').count()>0,engineName+': four sections nested under Personal');
