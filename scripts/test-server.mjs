@@ -49,8 +49,9 @@ try {
     const {verifySubscriptionUI}=await import('./test-subscription-ui.mjs');await verifySubscriptionUI(base);
     const {verifyPersonalUI}=await import('./test-personal-ui.mjs');await verifyPersonalUI(base);
     const {verifyFeatureUI}=await import('./test-feature-ui.mjs');await verifyFeatureUI(base);
-    const {verifyMonthUI}=await import('./test-month-ui.mjs');
+    const {verifyMonthUI,verifyExpenseUI}=await import('./test-month-ui.mjs');
     await verifyMonthUI(base);
+    await verifyExpenseUI(base);
     const {verifyUI}=await import('./test-ui.mjs');
     await verifyUI(base,{setOriginAvailable});
   }

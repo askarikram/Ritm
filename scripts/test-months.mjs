@@ -140,5 +140,40 @@ export async function verifyMonths() {
     eq(C.currentEvents(mixed,type,'2026-10-14').map(e=>[e.id,e.date]),[['earliest','2026-10-12'],['yearly','2026-10-18'],['monthly','2026-10-20'],['later','2026-10-30']],type+': active list follows next occurrence, not insertion order or recurring anchor');
     eq(C.currentEvents(mixed,type,'2026-10-14').reduce((sum,e)=>sum+e.amount,0),40000,type+': sorting preserves the planned total');
   }
+  const editing=plan([item('rent-edit','payment','monthly','2024-01-20',10000),item('income-edit','income','none','2024-01-10',20000),item('pending-edit','payment','none','2024-01-25',30000)]);
+  C.record(editing,C.currentEvents(editing,'payment','2024-01-20').find(e=>e.id==='rent-edit'),10000,'2024-01-20','2024-01-20');
+  C.record(editing,C.currentEvents(editing,'income','2024-01-20')[0],20000,'2024-01-10','2024-01-20');
+  const paid=editing.ledger.find(e=>e.type==='payment'),original={...paid},scheduledBefore=JSON.stringify(editing.items),countBefore=editing.ledger.length;
+  C.editExpense(editing,paid.id,{title:'  Уточнённая аренда  ',amount:15000,date:'2024-01-19'},'2024-01-20');
+  eq(editing.balance,1005000,'editing actual expense applies only amount difference');
+  eq([paid.title,paid.amount,paid.date],['Уточнённая аренда',15000,'2024-01-19'],'expense editor updates title, actual amount and date together');
+  eq([paid.id,paid.key,paid.itemId,paid.plannedDate],[original.id,original.key,original.itemId,original.plannedDate],'editing keeps transaction identity and original occurrence');
+  eq(editing.done[paid.key],true,'edited payment stays confirmed');
+  eq(editing.ledger.length,countBefore,'editing creates no second debit or duplicate history');
+  eq(JSON.stringify(editing.items),scheduledBefore,'editing actual history preserves scheduled amounts and recurrence');
+  eq(C.currentEvents(editing,'payment','2024-02-01').find(e=>e.id==='rent-edit').date,'2024-02-20','monthly recurrence keeps its original day after history date changes');
+  C.editExpense(editing,paid.id,{title:paid.title,amount:5000,date:'2023-12-31'},'2024-01-20');
+  eq(editing.balance,1015000,'reducing actual expense returns only the difference to balance');
+  eq(paid.plannedDate,'2024-01-20','moving actual date across months retains scheduled occurrence');
+  eq(C.validate(editing),editing,'edited history still passes import and server validation');
+  eq(C.expenseHistory(editing).map(e=>e.id),[paid.id],'recent expenses exclude income and unpaid scheduled payments');
+  editing.ledger.unshift({...paid,id:'newer-expense',itemId:'newer-item',key:'newer-item@2024-01-18',plannedDate:'2024-01-18',date:'2024-01-18'});
+  editing.done['newer-item@2024-01-18']=true;
+  eq(C.expenseHistory(editing).map(e=>e.id),['newer-expense',paid.id],'expense history sorts by actual date, newest first');
+  const invalidEdits=[
+    {title:'',amount:100,date:'2024-01-20'},
+    {title:'x'.repeat(121),amount:100,date:'2024-01-20'},
+    {title:'Трата',amount:0,date:'2024-01-20'},
+    {title:'Трата',amount:-1,date:'2024-01-20'},
+    {title:'Трата',amount:1.5,date:'2024-01-20'},
+    {title:'Трата',amount:100000000000001,date:'2024-01-20'},
+    {title:'Трата',amount:100,date:'2024-02-30'},
+    {title:'Трата',amount:100,date:'2024-01-21'}
+  ];
+  for(const update of invalidEdits){const snapshot=JSON.stringify(editing);assert.throws(()=>C.editExpense(editing,paid.id,update,'2024-01-20'));eq(JSON.stringify(editing),snapshot,'invalid edit changes neither history nor balance');}
+  const readOnly=editing.ledger.find(e=>e.type==='income'),snapshot=JSON.stringify(editing);
+  assert.throws(()=>C.editExpense(editing,readOnly.id,{title:'Трата',amount:100,date:'2024-01-20'},'2024-01-20'),/Расход не найден/);eq(JSON.stringify(editing),snapshot,'expense editor cannot turn income into spending');
+  editing.balance=100000000000000;
+  const beforeOverflow=JSON.stringify(editing);assert.throws(()=>C.editExpense(editing,paid.id,{title:'Трата',amount:1,date:'2024-01-20'},'2024-01-20'),/баланс/);eq(JSON.stringify(editing),beforeOverflow,'balance limit failure leaves expense unchanged');
   console.log('RITM_MONTHS_PASS '+checks+' checks');
 }

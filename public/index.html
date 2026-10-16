@@ -854,6 +854,10 @@ label,.field>label{font-size:14px;font-weight:500}
 .notification-inbox{max-width:720px;margin:auto}.notification-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}.notification-summary p{margin:0;color:var(--muted);font-size:14px}.notification-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.notification-filters button{font:inherit;font-size:13px;border:1px solid #e1e9e2;background:white;color:var(--muted);border-radius:12px;padding:9px 12px;cursor:pointer}.notification-filters button[aria-pressed=true]{background:#edf5ef;border-color:#afccb8;color:#24694e}.notification-list{display:grid;gap:10px}.notification-row{display:flex;align-items:flex-start;gap:12px;width:100%;padding:17px;text-align:left;font:inherit;color:var(--ink);background:white;border:1px solid #e5ebe5;border-radius:17px;cursor:pointer;min-width:0}.notification-row.is-read{background:#fff}.notification-row.is-unread{background:#eaf4ed;border-color:#c0d9c8}.notification-row .tile{width:38px;height:38px;flex-shrink:0;background:#f3f6f3}.notification-row.is-unread .tile{background:white;color:#24694e}.notification-row-content{flex:1;min-width:0}.notification-row-content strong{display:block;font-size:15px;line-height:1.45;overflow-wrap:anywhere;font-weight:550}.notification-row.is-unread strong{font-weight:650;color:#20543e}.notification-row-content small{display:block;color:var(--muted);font-size:12px;line-height:1.55;margin-top:5px;overflow-wrap:anywhere}.notification-state{width:8px;height:8px;background:#24694e;flex-shrink:0;border-radius:50%;margin-top:7px}.notification-state.is-read{width:18px;height:18px;background:transparent;color:#8b9e90;margin-top:0}.notification-state .icon{width:18px;height:18px}.notification-empty{padding:28px 16px;text-align:center;background:#fff;border:1px solid #e5ebe5;border-radius:18px}.notification-empty .tile{margin:0 auto 13px}.notification-empty h3{font-size:17px;margin:0 0 8px}.notification-empty p{font-size:14px;color:var(--muted);line-height:1.6;margin:0}.notification-more{width:100%;margin-top:16px}.notification-detail-head{display:flex;gap:12px;align-items:center;margin-bottom:20px}.notification-detail-head .tile{flex-shrink:0}.notification-detail-head small{display:block;color:var(--muted);font-size:12px}.notification-detail-title{font-size:23px;line-height:1.35;overflow-wrap:anywhere;margin:0 0 18px}.notification-detail-metric{display:flex;gap:14px;justify-content:space-between;align-items:flex-start;padding:13px 0;border-bottom:1px solid #edf0ed;font-size:14px}.notification-detail-metric span{color:var(--muted);flex-shrink:0}.notification-detail-metric strong{text-align:right;font-weight:550;overflow-wrap:anywhere}.notification-detail-copy{font-size:14px;line-height:1.7;color:var(--muted);margin:20px 0}.notification-detail-dialog .actions{margin-top:24px;flex-wrap:wrap}
 @media(max-width:600px){.settings-row{padding:17px 15px;gap:12px}.settings-row strong{font-size:15px}.settings-row small{font-size:12px}.settings-notification-card{padding:19px}.notification-row{padding:15px 13px;gap:10px}.notification-summary{align-items:flex-start}.notification-summary .btn{font-size:12px;padding:8px 10px}.notification-filters{gap:6px}.notification-filters button{padding:9px 10px;font-size:12px}.notification-detail-title{font-size:21px}.notification-detail-metric{font-size:13px}}
 
+
+.recent-expenses .card-head{gap:12px;align-items:center;margin-bottom:6px}.recent-expenses h2{font-size:20px;line-height:1.3}.recent-expenses .card-head .icon-button{flex:0 0 42px}
+.recent-expense-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:17px 0;border-bottom:1px solid var(--line);min-width:0}.recent-expense-row .grow{min-width:0}.recent-expense-row b{display:block;font-size:15px;line-height:1.5;overflow-wrap:anywhere}.recent-expense-row .hint{font-size:12px;margin-top:5px}.recent-expense-amount{min-width:0;max-width:48%;text-align:right;font-size:15px;line-height:1.5;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.recent-expense-more{display:inline-flex;align-items:center;gap:8px;margin-top:18px;min-height:36px;color:var(--green);font-size:14px;font-weight:500}.recent-expense-more .icon{width:18px;height:18px}.recent-expense-empty{padding:24px 0 8px}.recent-expense-empty h3{margin:16px 0 8px}.recent-expense-empty p{margin:0 0 18px}.history-table .history-edit{flex:0 0 42px;min-width:42px;width:42px;min-height:42px;padding:10px}
 </style></head><body>
 <div id="connection-status" class="connection-status" role="status" aria-live="polite" hidden></div>
 <div id="update-banner" class="update-banner" role="status" hidden><div><b>Доступно обновление Ритма</b><p>Установим его после сохранения вашего плана.</p></div><button class="btn soft" id="apply-update" type="button">Обновить</button></div>
@@ -1039,6 +1043,19 @@ const Core = (() => {
     s.ledger.unshift(entry);s.done[event.key]=true;
     return entry;
   };
+  const expenseHistory = s => s.ledger.filter(e=>e.type==='payment').sort((a,b)=>b.date.localeCompare(a.date));
+  const editExpense = (s,id,{title,amount,date},now=today()) => {
+    const entry=s.ledger.find(e=>e.id===id&&e.type==='payment');
+    if(!entry)throw Error('Расход не найден.');
+    if(typeof title!=='string'||!title.trim()||title.trim().length>120)throw Error('Введите название расхода.');
+    if(!Number.isSafeInteger(amount)||amount<=0||amount>100000000000000)throw Error('Введите сумму больше нуля.');
+    if(!validDate(date)||date>now)throw Error('Дата расхода не может быть в будущем.');
+    const balance=s.balance+entry.amount-amount;
+    if(!Number.isSafeInteger(balance)||Math.abs(balance)>100000000000000)throw Error('Слишком большой итоговый баланс.');
+    s.balance=balance;
+    Object.assign(entry,{title:title.trim(),amount,date});
+    return entry;
+  };
   const validate = s => {
     if(!s||s.version!==1||!Array.isArray(s.items)||!Array.isArray(s.goals)||!Array.isArray(s.ledger)||!s.done||typeof s.done!=='object'||Array.isArray(s.done)) throw Error('Неподдерживаемый файл плана.');
     const money=(v,negative=false)=>Number.isSafeInteger(v)&&Math.abs(v)<=100000000000000&&(negative||v>=0);
@@ -1060,7 +1077,7 @@ const Core = (() => {
     if(marks.size!==s.ledger.length||Object.keys(s.done).some(k=>!marks.has(k)||s.done[k]!==true)||s.ledger.some(e=>!s.done[e.key]))throw Error('Некорректные отметки платежей.');
     return s;
   };
-  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,goalMonthAmount,freezeGoalMonth,monthOpening,monthOverview,freezeMonthBalance,allowance,record,validate};
+  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,goalMonthAmount,freezeGoalMonth,monthOpening,monthOverview,freezeMonthBalance,allowance,record,expenseHistory,editExpense,validate};
 })();
 
 const C=Core, $=id=>document.getElementById(id), KEY='ritm-finance-v1';
@@ -1112,13 +1129,18 @@ function dailyWishCard(){
 
 const quickAction=(label,icon,action,tone='')=>btn('<span class="quick-action-mark '+tone+'" aria-hidden="true">'+I(icon)+'</span><span class="quick-action-label">'+label+'</span>',action,'','quick-action');
 function home(){
-  const now=C.today(),a=C.allowance(S),events=C.scheduled(S,now,C.addDays(now,365),true),payment=events.find(e=>e.type==='payment'),f=C.monthlyForecast(S,now),g=S.goals.find(g=>g.saved<g.target)||S.goals[0],blank=!S.balance&&!S.items.length&&!S.goals.length;
+  const now=C.today(),events=C.scheduled(S,now,C.addDays(now,365),true),next=events.find(e=>e.type==='income'),payment=events.find(e=>e.type==='payment'),f=C.monthlyForecast(S,now),g=S.goals.find(g=>g.saved<g.target)||S.goals[0],blank=!S.balance&&!S.items.length&&!S.goals.length;
   const nextCard=(type,event,title)=>'<a class="card next-card" href="#'+type+'"><div class="tile '+(type==='payment'?'orange':'')+'">'+I(type)+'</div><div class="grow"><div class="next-title">'+title+'</div><div class="value">'+(event?money(event.amount):'Добавить')+'</div><div class="hint wrap">'+(event?esc(event.title)+' · '+(event.overdue?'просрочен, ':'')+dateLabel(event.originalDate):type==='income'?'Зарплата или аванс':'Платёж или подписку')+'</div></div><span class="chevron">'+I('arrow')+'</span></a>';
   return (premiumActive()?dailyWishCard()+personalHome():'')+(blank?'<div class="help-line"><b>Начните со своего баланса.</b> Затем добавьте даты доходов, платежи и цель — план пересчитается автоматически. '+btn('Ввести баланс','balance','','small soft')+' '+btn('Посмотреть пример','demo','','small line')+'</div>':'')+
-  '<div class="hero home-hero"><section class="card balance balance-overview" aria-label="Баланс"><div class="balance-heading"><span class="eyebrow">Баланс сейчас</span>'+btn(I('edit'),'balance','aria-label="Изменить баланс"','balance-edit')+'</div><div class="big">'+money(S.balance)+'</div><div class="balance-breakdown"><div class="balance-mini"><span class="hint">Доступно для трат</span><strong>'+money(C.available(S))+'</strong></div><div class="balance-mini"><span class="hint">Выделено на цели</span><strong>'+money(C.reserved(S))+'</strong></div></div></section><div class="home-actions" role="group" aria-label="Быстрые действия">'+quickAction('Доход','income','add-income')+quickAction('Платёж','payment','add-payment','orange')+quickAction('Расход','minus','expense','blue')+quickAction('Цель','goals','edit-goal')+'</div><div class="stack upcoming-stack">'+nextCard('income',a.next,'Ближайшее поступление')+nextCard('payment',payment,'Ближайший платёж')+'</div></div>'+
+  '<div class="hero home-hero"><section class="card balance balance-overview" aria-label="Баланс"><div class="balance-heading"><span class="eyebrow">Баланс сейчас</span>'+btn(I('edit'),'balance','aria-label="Изменить баланс"','balance-edit')+'</div><div class="big">'+money(S.balance)+'</div><div class="balance-breakdown"><div class="balance-mini"><span class="hint">Доступно для трат</span><strong>'+money(C.available(S))+'</strong></div><div class="balance-mini"><span class="hint">Выделено на цели</span><strong>'+money(C.reserved(S))+'</strong></div></div></section><div class="home-actions" role="group" aria-label="Быстрые действия">'+quickAction('Доход','income','add-income')+quickAction('Платёж','payment','add-payment','orange')+quickAction('Расход','minus','expense','blue')+quickAction('Цель','goals','edit-goal')+'</div><div class="stack upcoming-stack">'+nextCard('income',next,'Ближайшее поступление')+nextCard('payment',payment,'Ближайший платёж')+'</div></div>'+
   (f.firstGap?'<div class="notice">'+I('alert')+'<div><b>В плане появляется нехватка денег</b><div>'+dateLabel(f.firstGap.date,true)+' доступный остаток составит '+money(f.firstGap.balance)+'. '+link('Открыть прогноз →','calendar')+'</div></div></div>':S.items.length?'<div class="notice ok">'+I('check')+'<div><b>План до конца месяца сходится</b><div>По указанным доходам, платежам, взносам и повседневным расходам.</div></div></div>':'')+
-  '<div class="grid2"><div class="card"><div class="card-head"><div><h2>До следующего поступления</h2><div class="hint">'+(a.next?'До '+dateLabel(a.next.date,true)+' · '+a.count+' дн.': 'Доходы ещё не указаны · ориентир до конца месяца')+'</div></div><div class="tile">'+I('wallet')+'</div></div><div class="value" style="font-size:34px">'+money(a.perDay)+' <span class="muted" style="font-size:14px;font-weight:400">в день</span></div><p class="hint">Ориентир на повседневные расходы после платежей и плановых взносов до поступления. Ожидаемый доход ещё не включён в текущий баланс.</p><div class="metric-row"><span class="muted">Будущие платежи до поступления</span><b>'+money(a.obligations)+'</b></div><div class="metric-row"><span class="muted">Запланировано на цели</span><b>'+money(a.goals)+'</b></div><div class="metric-row"><span class="muted">Ваши повседневные расходы</span>'+btn(money(S.daily)+'/день','balance','','small soft')+'</div>'+(a.need?'<p class="negative hint">Для указанных повседневных расходов не хватает '+money(a.need)+'.</p>':'')+'</div><div class="card">'+(g?goalCard(g,true):empty('На что будем копить?','Добавьте стоимость и срок — приложение рассчитает взносы.','edit-goal','Добавить цель','goals'))+'</div></div>'+
+  '<div class="grid2">'+recentExpenses()+'<div class="card">'+(g?goalCard(g,true):empty('На что будем копить?','Добавьте стоимость и срок — приложение рассчитает взносы.','edit-goal','Добавить цель','goals'))+'</div></div>'+
   monthSummary(now);
+}
+function recentExpenses(){
+  const entries=C.expenseHistory(S).slice(0,5);
+  return '<section class="card recent-expenses" data-recent-expenses aria-labelledby="recent-expenses-title"><div class="card-head"><h2 id="recent-expenses-title">Последние расходы</h2>'+btn(I('plus'),'expense','aria-label="Записать расход"','line icon-button')+'</div>'+
+    (entries.length?'<div class="recent-expense-list">'+entries.map(e=>'<div class="recent-expense-row" data-recent-expense="'+esc(e.id)+'"><div class="grow"><b>'+esc(e.title)+'</b><div class="hint">'+dateLabel(e.date,true)+'</div></div><strong class="recent-expense-amount">'+money(e.amount)+'</strong></div>').join('')+'</div><a class="recent-expense-more" href="#payment?view=history">Вся история расходов '+I('arrow')+'</a>':'<div class="recent-expense-empty"><div class="tile">'+I('wallet')+'</div><h3>Расходов пока нет</h3><p class="hint">Запишите первую трату — она появится здесь.</p>'+btn(I('plus')+'Записать расход','expense','','small line')+'</div>')+'</section>';
 }
 function monthSummary(now){
   const m=C.monthOverview(S,now),key=now.slice(0,7),label=C.parse(m.start).toLocaleDateString('ru-RU',{month:'long',year:'numeric'}).replace(/\s*г\.$/,'');
@@ -1130,11 +1152,11 @@ function monthSummary(now){
     '</section>';
 }
 function history(type){
-  const entries=S.ledger.filter(e=>e.type===type).sort((a,b)=>b.date.localeCompare(a.date));
+  const entries=type==='payment'?C.expenseHistory(S):S.ledger.filter(e=>e.type===type).sort((a,b)=>b.date.localeCompare(a.date));
   if(!entries.length)return '<div class="hint">Подтверждённых операций пока нет.</div>';
   return '<div class="table-wrap"><table class="history-table"><thead><tr><th>Операция</th><th>Фактическая дата</th><th class="number">Сумма</th><th></th></tr></thead><tbody>'+entries.map(e=>{
     const item=S.items.find(item=>item.id===e.itemId);
-    return '<tr data-history-key="'+esc(e.key)+'"><td class="wrap"><b>'+esc(e.title)+'</b><div class="hint">По плану: '+dateLabel(e.plannedDate,true)+'</div></td><td>'+dateLabel(e.date,true)+'</td><td class="number '+(type==='income'?'positive':'')+'">'+money(e.amount)+'</td><td class="number"><div class="actions">'+btn('Отменить отметку','undo','data-id="'+e.id+'"','small ghost')+(item?btn('Настроить повторение','edit-item','data-id="'+item.id+'" data-type="'+item.type+'"','small line'):'')+'</div></td></tr>';
+    return '<tr data-history-key="'+esc(e.key)+'"><td class="wrap"><b>'+esc(e.title)+'</b><div class="hint">По плану: '+dateLabel(e.plannedDate,true)+'</div></td><td>'+dateLabel(e.date,true)+'</td><td class="number '+(type==='income'?'positive':'')+'">'+money(e.amount)+'</td><td class="number"><div class="actions">'+(type==='payment'?btn(I('edit'),'edit-expense','data-id="'+e.id+'" aria-label="Изменить расход: '+esc(e.title)+'"','small line history-edit'):'')+btn('Отменить отметку','undo','data-id="'+e.id+'"','small ghost')+(item?btn('Настроить повторение','edit-item','data-id="'+item.id+'" data-type="'+item.type+'"','small line'):'')+'</div></td></tr>';
   }).join('')+'</tbody></table></div>';
 }
 function scheduleTable(events,type){
@@ -1302,6 +1324,11 @@ function open(kind,options={}){
   }
   if(kind==='record'){const e=findEvent(options.key);active.event=e;title=e.type==='income'?'Подтвердить поступление':'Подтвердить оплату';body='<p><b>'+esc(e.title)+'</b> · план на '+dateLabel(e.date,true)+'</p>'+amountField('Фактическая сумма','amount',e.amount)+field('Когда операция произошла','date',now,'date','','required max="'+now+'"')+'<p class="hint">Текущий баланс '+(e.type==='income'?'увеличится':'уменьшится')+' на указанную сумму. Эта дата расписания больше не учитывается в прогнозе.</p>';}
   if(kind==='expense'){title='Записать расход';body=field('На что потратили','title','','text','','required maxlength="120" placeholder="Например, продукты"')+amountField('Сумма','amount',0)+field('Дата расхода','date',now,'date','','required max="'+now+'"')+'<p class="hint">Расход уже произошёл и уменьшит текущий баланс. Повседневные расходы в прогнозе — оценка будущих расходов.</p>';}
+  if(kind==='edit-expense'){
+    const entry=S.ledger.find(e=>e.id===options.id&&e.type==='payment');if(!entry)throw Error('Расход не найден.');
+    title='Изменить расход';
+    body=field('Название расхода','title',entry.title,'text','','required maxlength="120"')+amountField('Сумма','amount',entry.amount)+field('Дата расхода','date',entry.date,'date','','required max="'+now+'"');
+  }
   if(kind==='reserve'||kind==='withdraw'){
     const g=S.goals.find(x=>x.id===options.id);if(!g)throw Error('Цель не найдена.');const p=C.goalPlan(g);title=kind==='reserve'?'Отложить на цель':'Вернуть деньги в бюджет';
     active.plannedDate=options.date||p.slots[0]||null;
@@ -1360,6 +1387,7 @@ function submit(e){
       });
     }
     if(kind==='record'){const amount=amt('amount'),date=get('date');change(s=>C.record(s,active.event,amount,date),active.event.type==='income'?'Поступление учтено':'Платёж учтён');}
+    if(kind==='edit-expense')change(s=>C.editExpense(s,active.id,{title:get('title'),amount:amt('amount'),date:get('date')}),'Расход изменён');
     if(kind==='expense'){
       const title=get('title').trim(),amount=amt('amount'),date=get('date');if(!title||amount<=0)throw Error('Укажите название и сумму больше нуля.');
       change(s=>{const item={id:C.id(),title,amount,date,type:'payment',repeat:'none'};s.items.push(item);C.record(s,{...item,originalDate:date,key:item.id+'@'+date},amount,date);},'Расход записан');
@@ -1393,6 +1421,7 @@ document.addEventListener('click',e=>{
     if(a==='quick')open('quick',{date});
     if(a==='quick-pick'){const chosen=type==='goals'?'goal':type==='wallet'?'expense':'item',d=active?.date;open(chosen,{type,date:d});}
     if(a==='balance'||a==='expense')open(a);
+    if(a==='edit-expense')open('edit-expense',{id});
     if(a==='edit-item')open('item',{id,type,date});
     if(a==='add-income'||a==='add-payment')open('item',{type:a.slice(4)});
     if(a==='edit-goal')open('goal',{id,date});
@@ -1416,7 +1445,7 @@ $('editor').addEventListener('input',()=>{if(active?.kind==='goal')updateGoalPre
 $('editor').addEventListener('change',()=>{if(active?.kind==='goal')updateGoalPreview();});
 $('import-file').addEventListener('change',e=>importPlan(e.target.files[0]));
 $('dialog').addEventListener('click',e=>{if(e.target===$('dialog')){$('dialog').close();active=null;}});
-window.addEventListener('hashchange',()=>{if(!currentUser)return;render();window.scrollTo({top:0,behavior:'instant'});$('heading').focus({preventScroll:true});});
+window.addEventListener('hashchange',()=>{if(!currentUser)return;render();const history=route==='payment'&&new URLSearchParams(location.hash.split('?')[1]||'').get('view')==='history'?document.querySelector('[data-history-list="payment"]'):null;if(history){history.tabIndex=-1;history.focus({preventScroll:true});history.scrollIntoView({block:'start',behavior:'instant'});}else{window.scrollTo({top:0,behavior:'instant'});$('heading').focus({preventScroll:true});}});
 
 
 
