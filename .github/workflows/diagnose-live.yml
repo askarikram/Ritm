@@ -1,0 +1,24 @@
+name: Diagnose Ritm public routes
+on:
+  push:
+    branches: [diagnostics/public-check-20261016]
+permissions:
+  contents: read
+jobs:
+  public-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Check public routes without account changes
+        run: |
+          node --input-type=module <<'NODE'
+          const base='https://ritm-r9m8.onrender.com';
+          for(const path of ['/healthz','/','/api/me','/sw.js','/manifest.webmanifest']){
+            const begin=Date.now();
+            try{
+              const response=await fetch(base+path,{signal:AbortSignal.timeout(90000),redirect:'follow'});
+              const body=await response.text();
+              console.log(JSON.stringify({path,status:response.status,elapsedMs:Date.now()-begin,type:response.headers.get('content-type'),bytes:body.length,version:path==='/healthz'?body.slice(0,180):undefined,error:response.status>=500?body.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0,220):undefined}));
+            }catch(error){console.log(JSON.stringify({path,elapsedMs:Date.now()-begin,error:error.name,message:error.message,cause:error.cause?.code}));}
+          }
+          NODE
