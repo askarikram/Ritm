@@ -1120,9 +1120,13 @@ const Core = (() => {
   const monthlyExpenses = (s,date=today()) => expensePeriod(s,monthStart(date),monthEnd(date));
   const expenseItem = (s,item) => item.spendingType==='expense'||(!item.spendingType&&item.repeat==='none'&&s.ledger.some(e=>e.itemId===item.id&&spendingType(s,e)==='expense'));
   const monthPayments = (s,date=today()) => {
-    const start=monthStart(date),end=monthEnd(date),events=[];
+    const start=monthStart(date),end=monthEnd(date),events=[],actual=new Map(s.ledger.map(e=>[e.key,e]));
     for(const item of s.items.filter(i=>i.type==='payment'&&!expenseItem(s,i))){
-      for(const day of dates(item,start,end))events.push({...item,date:day,originalDate:day,key:item.id+'@'+day,overdue:day<today()});
+      for(const day of dates(item,start,end)){
+        const key=item.id+'@'+day,entry=actual.get(key);
+        if(entry&&spendingType(s,entry)==='expense')continue;
+        events.push({...item,date:day,originalDate:day,key,overdue:day<today()});
+      }
     }
     events.sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,'ru')||a.id.localeCompare(b.id));
     const paid=spendingHistory(s).filter(e=>spendingType(s,e)==='payment'&&e.plannedDate>=start&&e.plannedDate<=end);
@@ -1284,10 +1288,12 @@ function paymentPage(){
     '<section class="card expense-month-card section-gap" data-history-list="payment">'+heading('Итого расходов',expenses.total,'expense','expense','Записать расход')+
     (expenses.entries.length?history('payment',expenses.entries):'<div class="monthly-list-empty">Расходов за этот месяц пока нет</div>')+'</section>';
 }
-document.addEventListener('change',event=>{
+function selectPaymentMonth(event){
   const input=event.target.closest('[data-payment-month]');if(!input||!currentUser)return;
   if(/^\d{4}-(0[1-9]|1[0-2])$/.test(input.value)&&C.validDate(input.value+'-01'))location.hash=paymentMonthLink(input.value+'-01');
-});
+}
+document.addEventListener('change',selectPaymentMonth);
+document.addEventListener('input',selectPaymentMonth);
 function goals(){
   const f=C.forecast(S),without=C.forecast(S,C.today(),C.forecastEnd(C.today()),false);
   return (premiumActive()?'<a class="personal-breadcrumb" href="#personal">'+I('back')+'Личное</a>':'')+'<div class="card-head"><div><h2>Ваши денежные цели</h2><div class="hint">Выделено '+money(C.reserved(S))+' · осталось накопить '+money(S.goals.reduce((a,g)=>a+Math.max(0,g.target-g.saved),0))+'</div></div>'+btn(I('plus')+'Новая цель','edit-goal','','small')+'</div>'+

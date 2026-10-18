@@ -207,6 +207,7 @@ export async function verifyMonths() {
   const reclassified=periods.ledger.find(e=>e.itemId==='paid-once');
   C.editExpense(periods,reclassified.id,{...reclassified,spendingType:'expense'},'2026-10-18');
   eq(C.weeklyExpenses(periods,'2026-10-18').total,6800n,'explicit category correction immediately updates expense total');
+  eq(C.monthPayments(periods,'2026-10-18').total,90000n,'reclassified one-time payment is not also counted as a scheduled bill');
   const legacySpending=JSON.parse(stored);
   for(const i of legacySpending.items)delete i.spendingType;
   for(const e of legacySpending.ledger)delete e.spendingType;

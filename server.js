@@ -217,9 +217,13 @@ const Core = (() => {
   const monthlyExpenses = (s,date=today()) => expensePeriod(s,monthStart(date),monthEnd(date));
   const expenseItem = (s,item) => item.spendingType==='expense'||(!item.spendingType&&item.repeat==='none'&&s.ledger.some(e=>e.itemId===item.id&&spendingType(s,e)==='expense'));
   const monthPayments = (s,date=today()) => {
-    const start=monthStart(date),end=monthEnd(date),events=[];
+    const start=monthStart(date),end=monthEnd(date),events=[],actual=new Map(s.ledger.map(e=>[e.key,e]));
     for(const item of s.items.filter(i=>i.type==='payment'&&!expenseItem(s,i))){
-      for(const day of dates(item,start,end))events.push({...item,date:day,originalDate:day,key:item.id+'@'+day,overdue:day<today()});
+      for(const day of dates(item,start,end)){
+        const key=item.id+'@'+day,entry=actual.get(key);
+        if(entry&&spendingType(s,entry)==='expense')continue;
+        events.push({...item,date:day,originalDate:day,key,overdue:day<today()});
+      }
     }
     events.sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,'ru')||a.id.localeCompare(b.id));
     const paid=spendingHistory(s).filter(e=>spendingType(s,e)==='payment'&&e.plannedDate>=start&&e.plannedDate<=end);

@@ -40,6 +40,8 @@ export async function verifySpendingUI(base){
    check(await page.getByText('Доступно для трат',{exact:true}).count()===0,name+': duplicate available balance removed');
    check(await amount('[data-recent-expense-total]')==='83'&&await page.locator('[data-recent-expense]').count()===5,name+': home monthly total includes all six expenses, even outside visible five');
    check(!(await page.locator('[data-recent-expenses]').textContent()).includes('rent'),name+': paid recurring bill excluded from recent expenses');
+   if(name==='chromium')for(const width of [390,1440]){await page.setViewportSize({width,height:1000});console.log('RITM_SCREENSHOT_WEEK_HOME_'+width+' '+(await page.screenshot({fullPage:true})).toString('base64'));}
+   await page.setViewportSize({width:390,height:844});
    await page.locator('.recent-expense-more').click();await page.locator('[data-history-list="payment"]').waitFor();
    check(await page.locator('[data-history-list="payment"]').evaluate(n=>document.activeElement===n),name+': home history link focuses monthly expense section');
    check(await page.locator('[data-planned-total="payment"]').getAttribute('data-total-cents')==='65234',name+': payment month total counts scheduled occurrences and removed paid schedule once');
