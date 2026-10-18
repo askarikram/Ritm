@@ -156,10 +156,10 @@ export async function verifyMonths() {
   eq(editing.balance,1015000,'reducing actual expense returns only the difference to balance');
   eq(paid.plannedDate,'2024-01-20','moving actual date across months retains scheduled occurrence');
   eq(C.validate(editing),editing,'edited history still passes import and server validation');
-  eq(C.expenseHistory(editing).map(e=>e.id),[paid.id],'recent expenses exclude income and unpaid scheduled payments');
-  editing.ledger.unshift({...paid,id:'newer-expense',itemId:'newer-item',key:'newer-item@2024-01-18',plannedDate:'2024-01-18',date:'2024-01-18'});
+  eq(C.expenseHistory(editing).map(e=>e.id),[],'paid scheduled payments are excluded from actual expense history');
+  editing.ledger.unshift({...paid,spendingType:'expense',id:'newer-expense',itemId:'newer-item',key:'newer-item@2024-01-18',plannedDate:'2024-01-18',date:'2024-01-18'});
   editing.done['newer-item@2024-01-18']=true;
-  eq(C.expenseHistory(editing).map(e=>e.id),['newer-expense',paid.id],'expense history sorts by actual date, newest first');
+  eq(C.expenseHistory(editing).map(e=>e.id),['newer-expense'],'expense history excludes confirmed monthly payments');
   const invalidEdits=[
     {title:'',amount:100,date:'2024-01-20'},
     {title:'x'.repeat(121),amount:100,date:'2024-01-20'},
@@ -175,5 +175,68 @@ export async function verifyMonths() {
   assert.throws(()=>C.editExpense(editing,readOnly.id,{title:'Трата',amount:100,date:'2024-01-20'},'2024-01-20'),/Расход не найден/);eq(JSON.stringify(editing),snapshot,'expense editor cannot turn income into spending');
   editing.balance=100000000000000;
   const beforeOverflow=JSON.stringify(editing);assert.throws(()=>C.editExpense(editing,paid.id,{title:'Трата',amount:1,date:'2024-01-20'},'2024-01-20'),/баланс/);eq(JSON.stringify(editing),beforeOverflow,'balance limit failure leaves expense unchanged');
+
+  const periods=plan([]);
+  const addSpend=(id,date,amount,category='expense',repeat='none',plannedDate=date)=>{
+    const source={id,title:id,type:'payment',repeat,date:plannedDate,amount,spendingType:category};
+    periods.items.push(source);
+    C.record(periods,{...source,key:id+'@'+plannedDate,originalDate:plannedDate},amount,date,'2027-01-31');
+    return periods.ledger[0];
+  };
+  addSpend('previous-sunday','2026-10-11',1100);
+  const monday=addSpend('monday','2026-10-12',1200);
+  addSpend('sunday','2026-10-18',1800);
+  addSpend('next-monday','2026-10-19',1900);
+  addSpend('previous-month','2026-09-30',3000);
+  addSpend('paid-subscription','2026-10-12',90000,'payment','monthly','2026-10-10');
+  addSpend('paid-once','2026-10-18',5000,'payment');
+  periods.items.push(item('future','payment','none','2026-11-02',7777));
+  eq([C.weeklyExpenses(periods,'2026-10-12').start,C.weeklyExpenses(periods,'2026-10-18').end],['2026-10-12','2026-10-18'],'Monday and Sunday use the same inclusive week');
+  eq(C.weeklyExpenses(periods,'2026-10-18').total,3000n,'weekly expenses include both boundaries and exclude paid bills');
+  eq(C.weeklyExpenses(periods,'2026-10-19').total,1900n,'new Monday starts a fresh week');
+  eq(C.monthlyExpenses(periods,'2026-10-01').total,6000n,'monthly actual expense total excludes previous month and paid one-off bills');
+  eq(C.monthlyExpenses(periods,'2026-11-01').total,0n,'new month has zero expenses without deleting history');
+  eq(C.monthlyExpenses(periods,'2026-09-15').total,3000n,'past month actual expenses remain available');
+  eq(C.monthPayments(periods,'2026-10-01').total,95000n,'month payment total excludes manual expense items, including confirmed ones');
+  eq(C.monthPayments(periods,'2026-10-01').events,[],'paid scheduled entries remain hidden in selected month');
+  eq(C.monthPayments(periods,'2026-11-01').events.map(e=>e.id),['future','paid-subscription'],'new month restores monthly payment and includes November-only payment');
+  const stored=JSON.stringify(periods);
+  C.editExpense(periods,monday.id,{title:'Monday moved',amount:2200,date:'2026-10-11',spendingType:'expense'},'2026-10-18');
+  eq(C.weeklyExpenses(periods,'2026-10-18').total,1800n,'backdating expense recomputes weekly total');
+  eq(C.monthlyExpenses(periods,'2026-10-18').total,7000n,'editing expense amount recomputes month actual total once');
+  const reclassified=periods.ledger.find(e=>e.itemId==='paid-once');
+  C.editExpense(periods,reclassified.id,{...reclassified,spendingType:'expense'},'2026-10-18');
+  eq(C.weeklyExpenses(periods,'2026-10-18').total,6800n,'explicit category correction immediately updates expense total');
+  eq(C.monthPayments(periods,'2026-10-18').total,90000n,'reclassified one-time payment is not also counted as a scheduled bill');
+  const legacySpending=JSON.parse(stored);
+  for(const i of legacySpending.items)delete i.spendingType;
+  for(const e of legacySpending.ledger)delete e.spendingType;
+  eq(C.spendingType(legacySpending,legacySpending.ledger.find(e=>e.itemId==='paid-subscription')),'payment','legacy recurring schedule is a payment');
+  eq(C.spendingType(legacySpending,legacySpending.ledger.find(e=>e.itemId==='monday')),'expense','legacy one-time spending defaults to expense');
+  const oneTime=legacySpending.ledger.find(e=>e.itemId==='paid-once');
+  C.editExpense(legacySpending,oneTime.id,{...oneTime,spendingType:'payment'},'2026-10-18');
+  eq(C.spendingType(legacySpending,oneTime),'payment','legacy one-time payment can be corrected without a balance change');
+  const cross=plan([]);
+  cross.items=[{...item('cross','payment','none','2026-12-31',100),spendingType:'expense'},{...item('cross2','payment','none','2027-01-03',200),spendingType:'expense'}];
+  for(const i of cross.items)C.record(cross,{...i,key:i.id+'@'+i.date,originalDate:i.date},i.amount,i.date,'2027-01-03');
+  eq([C.weeklyExpenses(cross,'2027-01-03').start,C.weeklyExpenses(cross,'2027-01-03').end,C.weeklyExpenses(cross,'2027-01-03').total],['2026-12-28','2027-01-03',300n],'week spans year and month boundaries');
+  eq([C.monthlyExpenses(cross,'2026-12-31').total,C.monthlyExpenses(cross,'2027-01-03').total],[100n,200n],'monthly totals stay separate across year');
+  eq(C.monthPayments(plan([item('weekbill','payment','weekly','2026-10-05',100)]),'2026-10-18').total,400n,'all weekly payment occurrences in selected month are counted');
+  eq(C.monthPayments(plan([item('leapbill','payment','monthly','2024-01-31',100)]),'2024-02-01').events[0].date,'2024-02-29','month payment list respects leap day');
+  const orphan=plan([]);orphan.ledger=[{id:'orphan',itemId:'removed',key:'removed@2026-10-01',title:'Deleted subscription',type:'payment',amount:777,date:'2026-10-02',plannedDate:'2026-10-01',spendingType:'payment'}];orphan.done[orphan.ledger[0].key]=true;
+  eq(C.monthPayments(orphan,'2026-10-18').total,777n,'deleting schedule preserves paid month amount exactly once');
+  const exact=plan([]);
+  exact.ledger=Array.from({length:500},(_,n)=>({id:'e'+n,itemId:'i'+n,key:'i'+n+'@2026-10-12',title:'Expense',type:'payment',spendingType:'expense',amount:99999999999999,date:'2026-10-12',plannedDate:'2026-10-12'}));exact.done=Object.fromEntries(exact.ledger.map(e=>[e.key,true]));
+  eq(C.weeklyExpenses(exact,'2026-10-18').total,500n*99999999999999n,'weekly expense aggregate remains exact beyond Number precision');
+  eq(C.monthlyExpenses(exact,'2026-10-18').total,500n*99999999999999n,'monthly expense aggregate remains exact beyond Number precision');
+  for(const invalid of [
+    {...exact,ledger:[{...exact.ledger[0],spendingType:'other'}]},
+    {...periods,items:[{...periods.items[0],spendingType:'expense',repeat:'monthly'}]},
+    {...periods,items:[{...periods.items[0],spendingType:'expense',type:'income'}]}
+  ]){assert.throws(()=>C.validate(invalid));checks++;}
+  const stable=JSON.stringify(periods);
+  assert.throws(()=>C.editExpense(periods,monday.id,{title:'Bad',amount:100,date:'2026-10-12',spendingType:'other'},'2026-10-18'));
+  eq(JSON.stringify(periods),stable,'invalid category correction leaves balance and history unchanged');
+
   console.log('RITM_MONTHS_PASS '+checks+' checks');
 }
