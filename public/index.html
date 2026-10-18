@@ -876,6 +876,46 @@ label,.field>label{font-size:14px;font-weight:500}
 @media(max-width:760px){.workspace-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.workspace-hub-tabs>a{padding:16px}.workspace-hub-tabs strong{font-size:15px}.workspace-hub-tabs small{font-size:12px}.workspace-hub-tabs .tile{width:36px;height:36px}.workspace-project-grid,.workspace-books-grid,.workspace-ideas-grid,.workspace-hub-bottom{grid-template-columns:1fr}.workspace-book-detail{grid-template-columns:1fr;grid-template-areas:"progress" "history" "notes"}.workspace-heading{align-items:flex-start}.workspace-heading h2{font-size:19px;line-height:1.5}.workspace-heading>.btn{font-size:13px;padding:10px 12px;gap:6px}.workspace-step{flex-wrap:wrap;gap:10px}.workspace-step>.grow{flex-basis:calc(100% - 45px)}.workspace-step-actions{margin-left:42px}.workspace-step-actions .btn{width:42px;height:42px;min-height:42px}.workspace-entry{padding:20px;gap:12px}.workspace-entry .tile{flex-shrink:0}.workspace-entry h2{font-size:19px}.workspace-entry p{font-size:13px}.workspace-week-stats{gap:9px}.workspace-week-stats>.card{padding:15px 12px;gap:10px}.workspace-week-stats strong{font-size:25px}.workspace-week-stats .card>span:last-child{font-size:12px}.workspace-week-stats .tile{width:32px;height:32px}.workspace-weekbar{gap:8px}.workspace-weekbar>.btn{width:40px;flex:0 0 40px}.workspace-weekbar label{font-size:13px;padding:12px 8px;flex:1}.workspace-log{gap:6px}.workspace-log .icon-button{flex-basis:34px}.workspace-reading-history{padding:20px}.workspace-dialog .dialog-head{padding:20px 20px 0}.workspace-dialog .dialog-body{padding:18px 20px 22px}}
 @media(prefers-reduced-motion:reduce){.workspace-progress>span{transition:none}}
 
+
+/* Monthly payments and actual expenses share one continuous list per section. */
+.payment-month-picker{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 22px;flex-wrap:wrap}
+.payment-month-label{position:relative;display:grid;place-items:center;min-width:180px;min-height:44px;font-size:18px;font-weight:600;text-transform:capitalize}
+.payment-month-label input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.payment-month-label:focus-within{outline:2px solid var(--green);outline-offset:4px;border-radius:10px}
+.payment-current-month{flex-basis:100%;text-align:center;font-size:13px}
+.payment-month-card,.expense-month-card{padding:24px 26px;border:1px solid var(--line);border-radius:24px;background:#fff}
+.monthly-list-head{align-items:center;margin-bottom:4px!important;padding-bottom:18px!important;border-bottom:1px solid var(--line)}
+.monthly-list-head h2{font-size:16px;font-weight:500;color:var(--muted);margin:0}
+.monthly-list-total{display:block;margin-top:9px;font-size:32px;font-weight:650;line-height:1.25;letter-spacing:-.025em;overflow-wrap:anywhere}
+.monthly-paid{border-top:1px solid var(--line);margin-top:18px;padding-top:18px}
+.monthly-paid summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;color:var(--green);font-weight:500;min-height:38px}
+.monthly-paid summary::after{content:'⌄';margin-left:auto}
+.monthly-paid[open] summary{margin-bottom:12px}
+.monthly-list-empty{padding:26px 0 8px;color:var(--muted);font-size:14px}
+.recent-expense-total{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 0 16px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.recent-expense-total strong{font-size:20px;font-weight:600;overflow-wrap:anywhere;text-align:right}
+.payment-month-card .empty{border:0;background:transparent}
+@media(max-width:850px){
+ .payment-month-card,.expense-month-card{padding:22px;border:1px solid var(--line);border-radius:24px;background:#fff}
+ .payment-month-card .schedule-table tr,.payment-month-card .schedule-table tr:last-child{padding:20px 0;margin:0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;gap:12px 16px}
+ .payment-month-card .schedule-table tr:last-child{border-bottom:0;padding-bottom:4px}
+ .payment-month-card .schedule-table td:nth-child(4){padding:0;border-radius:0;background:transparent}
+ .payment-month-card .schedule-table td:nth-child(4)::before{content:'Сумма'}
+ .payment-month-card .card-head{padding:0}
+ .payment-month-card .table-wrap{overflow:visible}
+ .payment-month-card .schedule-table .btn.small{min-height:40px}
+}
+@media(max-width:650px){
+ .payment-month-card,.expense-month-card{padding:20px}
+ .monthly-list-total{font-size:28px}
+ .payment-month-picker{gap:8px}
+ .payment-month-label{font-size:17px;min-width:170px}
+ .expense-month-card .history-table tr:first-child{padding-top:20px}
+ .recent-expense-total{align-items:flex-start}
+ .recent-expense-total .hint{font-size:13px}
+ .recent-expense-total strong{font-size:18px}
+}
+
 </style></head><body>
 <div id="connection-status" class="connection-status" role="status" aria-live="polite" hidden></div>
 <div id="update-banner" class="update-banner" role="status" hidden><div><b>Доступно обновление Ритма</b><p>Установим его после сохранения вашего плана.</p></div><button class="btn soft" id="apply-update" type="button">Обновить</button></div>
@@ -1058,20 +1098,51 @@ const Core = (() => {
     freezeMonthBalance(s,now);
     s.balance+=event.type==='income'?amount:-amount;
     const entry={id:id(),key:event.key,itemId:event.id,title:event.title,type:event.type,amount,date,plannedDate:event.originalDate};
+    if(event.type==='payment')entry.spendingType=event.spendingType||'payment';
     s.ledger.unshift(entry);s.done[event.key]=true;
     return entry;
   };
-  const expenseHistory = s => s.ledger.filter(e=>e.type==='payment').sort((a,b)=>b.date.localeCompare(a.date));
-  const editExpense = (s,id,{title,amount,date},now=today()) => {
+  // Legacy one-time spending had no origin marker. Explicit categories always win.
+  const spendingType = (s,entry) => {
+    const item=s.items.find(i=>i.id===entry.itemId);
+    return entry.spendingType||item?.spendingType||(item&&item.repeat!=='none'?'payment':'expense');
+  };
+  const spendingHistory = s => s.ledger.filter(e=>e.type==='payment').sort((a,b)=>b.date.localeCompare(a.date));
+  const expenseHistory = s => spendingHistory(s).filter(e=>spendingType(s,e)==='expense');
+  const expensePeriod = (s,start,end) => {
+    const entries=expenseHistory(s).filter(e=>e.date>=start&&e.date<=end);
+    return {start,end,entries,total:entries.reduce((sum,e)=>sum+BigInt(e.amount),0n)};
+  };
+  const weeklyExpenses = (s,date=today()) => {
+    const start=addDays(date,-((parse(date).getUTCDay()+6)%7));
+    return expensePeriod(s,start,addDays(start,6));
+  };
+  const monthlyExpenses = (s,date=today()) => expensePeriod(s,monthStart(date),monthEnd(date));
+  const expenseItem = (s,item) => item.spendingType==='expense'||(!item.spendingType&&item.repeat==='none'&&s.ledger.some(e=>e.itemId===item.id&&spendingType(s,e)==='expense'));
+  const monthPayments = (s,date=today()) => {
+    const start=monthStart(date),end=monthEnd(date),events=[];
+    for(const item of s.items.filter(i=>i.type==='payment'&&!expenseItem(s,i))){
+      for(const day of dates(item,start,end))events.push({...item,date:day,originalDate:day,key:item.id+'@'+day,overdue:day<today()});
+    }
+    events.sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,'ru')||a.id.localeCompare(b.id));
+    const paid=spendingHistory(s).filter(e=>spendingType(s,e)==='payment'&&e.plannedDate>=start&&e.plannedDate<=end);
+    const keys=new Set(events.map(e=>e.key));
+    // A deleted schedule keeps its actual payment in the month's total.
+    const total=events.reduce((sum,e)=>sum+BigInt(e.amount),0n)+paid.filter(e=>!keys.has(e.key)).reduce((sum,e)=>sum+BigInt(e.amount),0n);
+    return {start,end,events:events.filter(e=>!s.done[e.key]),paid,total};
+  };
+  const editExpense = (s,id,{title,amount,date,spendingType:category},now=today()) => {
     const entry=s.ledger.find(e=>e.id===id&&e.type==='payment');
     if(!entry)throw Error('Расход не найден.');
     if(typeof title!=='string'||!title.trim()||title.trim().length>120)throw Error('Введите название расхода.');
     if(!Number.isSafeInteger(amount)||amount<=0||amount>100000000000000)throw Error('Введите сумму больше нуля.');
     if(!validDate(date)||date>now)throw Error('Дата расхода не может быть в будущем.');
+    if(category!==undefined&&!['expense','payment'].includes(category))throw Error('Выберите расход или платёж.');
     const balance=s.balance+entry.amount-amount;
     if(!Number.isSafeInteger(balance)||Math.abs(balance)>100000000000000)throw Error('Слишком большой итоговый баланс.');
     s.balance=balance;
     Object.assign(entry,{title:title.trim(),amount,date});
+    if(category!==undefined)entry.spendingType=category;
     return entry;
   };
   const validate = s => {
@@ -1087,15 +1158,16 @@ const Core = (() => {
     const name=v=>typeof v==='string'&&v.trim().length>0&&v.length<=120;
     const ident=v=>typeof v==='string'&&/^[a-zA-Z0-9-]{1,80}$/.test(v);
     if(s.items.length>500||s.goals.length>100||s.ledger.length>10000)throw Error('В файле слишком много записей.');
-    s.items.forEach(i=>{if(!ident(i.id)||!name(i.title)||!money(i.amount)||i.amount<=0||!validDate(i.date)||!['income','payment'].includes(i.type)||!['none','monthly','weekly','yearly'].includes(i.repeat))throw Error('Некорректное поступление или платёж.');});
+    const spending=(v,type)=>v===undefined||(type==='payment'&&['expense','payment'].includes(v));
+    s.items.forEach(i=>{if(!spending(i.spendingType,i.type)||(i.spendingType==='expense'&&i.repeat!=='none')||!ident(i.id)||!name(i.title)||!money(i.amount)||i.amount<=0||!validDate(i.date)||!['income','payment'].includes(i.type)||!['none','monthly','weekly','yearly'].includes(i.repeat))throw Error('Некорректное поступление или платёж.');});
     s.goals.forEach(g=>{monthMap(g.monthPlans,'goal');if(!ident(g.id)||!name(g.title)||!money(g.target)||!g.target||!money(g.saved)||!money(g.monthly)||!validDate(g.start)||!['deadline','monthly'].includes(g.mode)||(g.mode==='deadline'&&!validDate(g.deadline))||(g.mode==='monthly'&&g.monthly<=0)||!Array.isArray(g.done)||!g.done.every(validDate))throw Error('Некорректная цель накопления.');});
     if(new Set([...s.items.map(i=>i.id),...s.goals.map(g=>g.id)]).size!==s.items.length+s.goals.length)throw Error('Повторяющиеся записи в файле.');
-    s.ledger.forEach(e=>{if(!ident(e.id)||!ident(e.itemId)||!name(e.title)||!money(e.amount)||!e.amount||!validDate(e.date)||!validDate(e.plannedDate)||e.key!==e.itemId+'@'+e.plannedDate||!['income','payment'].includes(e.type))throw Error('Некорректная история операций.');});
+    s.ledger.forEach(e=>{if(!spending(e.spendingType,e.type)||!ident(e.id)||!ident(e.itemId)||!name(e.title)||!money(e.amount)||!e.amount||!validDate(e.date)||!validDate(e.plannedDate)||e.key!==e.itemId+'@'+e.plannedDate||!['income','payment'].includes(e.type))throw Error('Некорректная история операций.');});
     const marks=new Set(s.ledger.map(e=>e.key));
     if(marks.size!==s.ledger.length||Object.keys(s.done).some(k=>!marks.has(k)||s.done[k]!==true)||s.ledger.some(e=>!s.done[e.key]))throw Error('Некорректные отметки платежей.');
     return s;
   };
-  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,goalMonthAmount,freezeGoalMonth,monthOpening,monthOverview,freezeMonthBalance,allowance,record,expenseHistory,editExpense,validate};
+  return {iso,parse,today,addDays,days,month,monthStart,monthEnd,forecastEnd,cyclePeriod,validDate,id,fresh,reserved,available,dates,pendingEvent,currentEvents,pastEvents,scheduled,goalPlan,savings,forecast,monthlyForecast,goalMonthAmount,freezeGoalMonth,monthOpening,monthOverview,freezeMonthBalance,allowance,record,spendingType,spendingHistory,expenseHistory,expensePeriod,weeklyExpenses,monthlyExpenses,expenseItem,monthPayments,editExpense,validate};
 })();
 
 const C=Core, $=id=>document.getElementById(id), KEY='ritm-finance-v1';
@@ -1119,7 +1191,7 @@ const inputMoney=v=>String(Math.round(v/100));
 const dateLabel=(s,long=false)=>s?C.parse(s).toLocaleDateString('ru-RU',{day:'numeric',month:long?'long':'short',...(s.slice(0,4)!==C.today().slice(0,4)?{year:'numeric'}:{})}):'—';
 const fullDate=s=>C.parse(s).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 const repeats={none:'Один раз',monthly:'Каждый месяц',weekly:'Каждую неделю',yearly:'Каждый год'};
-const pages={projects:['Мои проекты','Ваши планы, книги и идеи'],project:['Проект','Шаг за шагом к вашей цели'],books:['Книжная полка','Читайте в своём темпе'],book:['Книга','Ваш прогресс, история чтения и мысли'],ideas:['Идеи','Сохраните то, к чему хочется вернуться'],weekly:['Итоги недели','Замечайте результаты и выбирайте главное'],profile:['Профиль','Имя, пароль и восстановление доступа'],'settings-notifications':['Настройки уведомлений','Напоминания в Ритм и на телефон'],'settings-plan':['Баланс и расходы','Параметры вашего финансового плана'],'settings-data':['Ваши данные','Экспорт, импорт и управление планом'],'settings-app':['Приложение и помощь','Ритм всегда под рукой'],'settings-delete':['Удалить аккаунт','Управление вашими данными'],notifications:['Уведомления','Поступившие напоминания'],premium:['Premium','Больше возможностей для вашего ритма'],developer:['Кабинет разработчика','Реквизиты и подтверждение подписок'],home:['Главная','Ваши деньги, дела и привычки'],income:['Поступления','Зарплата, аванс и другие доходы'],payment:['Платежи','Все обязательства и подписки по датам'],personal:['Личное','Ваши дела, привычки и накопления'],goals:['Накопить деньги','Суммы, взносы и сроки ваших денежных целей'],calendar:['Календарь','Что произойдёт с деньгами дальше'],settings:['Настройки','Профиль, безопасность и параметры вашего плана']};
+const pages={projects:['Мои проекты','Ваши планы, книги и идеи'],project:['Проект','Шаг за шагом к вашей цели'],books:['Книжная полка','Читайте в своём темпе'],book:['Книга','Ваш прогресс, история чтения и мысли'],ideas:['Идеи','Сохраните то, к чему хочется вернуться'],weekly:['Итоги недели','Замечайте результаты и выбирайте главное'],profile:['Профиль','Имя, пароль и восстановление доступа'],'settings-notifications':['Настройки уведомлений','Напоминания в Ритм и на телефон'],'settings-plan':['Баланс и расходы','Параметры вашего финансового плана'],'settings-data':['Ваши данные','Экспорт, импорт и управление планом'],'settings-app':['Приложение и помощь','Ритм всегда под рукой'],'settings-delete':['Удалить аккаунт','Управление вашими данными'],notifications:['Уведомления','Поступившие напоминания'],premium:['Premium','Больше возможностей для вашего ритма'],developer:['Кабинет разработчика','Реквизиты и подтверждение подписок'],home:['Главная','Ваши деньги, дела и привычки'],income:['Поступления','Зарплата, аванс и другие доходы'],payment:['Платежи','Платежи и расходы за месяц'],personal:['Личное','Ваши дела, привычки и накопления'],goals:['Накопить деньги','Суммы, взносы и сроки ваших денежных целей'],calendar:['Календарь','Что произойдёт с деньгами дальше'],settings:['Настройки','Профиль, безопасность и параметры вашего плана']};
 const btn=(text,action,extra='',cls='')=>'<button type="button" class="btn '+cls+'" data-action="'+action+'" '+extra+'>'+text+'</button>';
 const link=(text,to)=>'<a class="inline-link" href="#'+to+'">'+text.replace(/\s*→$/,'')+(text.endsWith('→')?I('arrow'):'')+'</a>';
 const empty=(title,text,action,button,icon='wallet')=>'<div class="empty"><div class="tile">'+I(icon)+'</div><h3>'+title+'</h3><p class="muted">'+text+'</p>'+btn(button,action)+'</div>';
@@ -1147,17 +1219,17 @@ function dailyWishCard(){
 
 const quickAction=(label,icon,action,tone='')=>btn('<span class="quick-action-mark '+tone+'" aria-hidden="true">'+I(icon)+'</span><span class="quick-action-label">'+label+'</span>',action,'','quick-action');
 function home(){
-  const now=C.today(),events=C.scheduled(S,now,C.addDays(now,365),true),next=events.find(e=>e.type==='income'),payment=events.find(e=>e.type==='payment'),f=C.monthlyForecast(S,now),g=S.goals.find(g=>g.saved<g.target)||S.goals[0],blank=!S.balance&&!S.items.length&&!S.goals.length;
+  const now=C.today(),week=C.weeklyExpenses(S,now),events=C.scheduled(S,now,C.addDays(now,365),true),next=events.find(e=>e.type==='income'),payment=events.find(e=>e.type==='payment'),f=C.monthlyForecast(S,now),g=S.goals.find(g=>g.saved<g.target)||S.goals[0],blank=!S.balance&&!S.items.length&&!S.goals.length;
   const nextCard=(type,event,title)=>'<a class="card next-card" href="#'+type+'"><div class="tile '+(type==='payment'?'orange':'')+'">'+I(type)+'</div><div class="grow"><div class="next-title">'+title+'</div><div class="value">'+(event?money(event.amount):'Добавить')+'</div><div class="hint wrap">'+(event?esc(event.title)+' · '+(event.overdue?'просрочен, ':'')+dateLabel(event.originalDate):type==='income'?'Зарплата или аванс':'Платёж или подписку')+'</div></div><span class="chevron">'+I('arrow')+'</span></a>';
   return (premiumActive()?dailyWishCard()+personalHome():'')+(blank?'<div class="help-line"><b>Начните со своего баланса.</b> Затем добавьте даты доходов, платежи и цель — план пересчитается автоматически. '+btn('Ввести баланс','balance','','small soft')+' '+btn('Посмотреть пример','demo','','small line')+'</div>':'')+
-  '<div class="hero home-hero"><section class="card balance balance-overview" aria-label="Баланс"><div class="balance-heading"><span class="eyebrow">Баланс сейчас</span>'+btn(I('edit'),'balance','aria-label="Изменить баланс"','balance-edit')+'</div><div class="big">'+money(S.balance)+'</div><div class="balance-breakdown"><div class="balance-mini"><span class="hint">Доступно для трат</span><strong>'+money(C.available(S))+'</strong></div><div class="balance-mini"><span class="hint">Выделено на цели</span><strong>'+money(C.reserved(S))+'</strong></div></div></section><div class="home-actions" role="group" aria-label="Быстрые действия">'+quickAction('Доход','income','add-income')+quickAction('Платёж','payment','add-payment','orange')+quickAction('Расход','minus','expense','blue')+quickAction('Цель','goals','edit-goal')+'</div><div class="stack upcoming-stack">'+nextCard('income',next,'Ближайшее поступление')+nextCard('payment',payment,'Ближайший платёж')+'</div></div>'+
+  '<div class="hero home-hero"><section class="card balance balance-overview" aria-label="Баланс"><div class="balance-heading"><span class="eyebrow">Баланс сейчас</span>'+btn(I('edit'),'balance','aria-label="Изменить баланс"','balance-edit')+'</div><div class="big">'+money(S.balance)+'</div><div class="balance-breakdown"><div class="balance-mini"><span class="hint">Расходы за неделю</span><strong data-week-expenses data-start-date="'+week.start+'" data-end-date="'+week.end+'">'+money(week.total)+'</strong></div><div class="balance-mini"><span class="hint">Выделено на цели</span><strong>'+money(C.reserved(S))+'</strong></div></div></section><div class="home-actions" role="group" aria-label="Быстрые действия">'+quickAction('Доход','income','add-income')+quickAction('Платёж','payment','add-payment','orange')+quickAction('Расход','minus','expense','blue')+quickAction('Цель','goals','edit-goal')+'</div><div class="stack upcoming-stack">'+nextCard('income',next,'Ближайшее поступление')+nextCard('payment',payment,'Ближайший платёж')+'</div></div>'+
   (f.firstGap?'<div class="notice">'+I('alert')+'<div><b>В плане появляется нехватка денег</b><div>'+dateLabel(f.firstGap.date,true)+' доступный остаток составит '+money(f.firstGap.balance)+'. '+link('Открыть прогноз →','calendar')+'</div></div></div>':S.items.length?'<div class="notice ok">'+I('check')+'<div><b>План до конца месяца сходится</b><div>По указанным доходам, платежам, взносам и повседневным расходам.</div></div></div>':'')+
   '<div class="grid2">'+recentExpenses()+'<div class="card">'+(g?goalCard(g,true):empty('На что будем копить?','Добавьте стоимость и срок — приложение рассчитает взносы.','edit-goal','Добавить цель','goals'))+'</div></div>'+
   monthSummary(now);
 }
 function recentExpenses(){
-  const entries=C.expenseHistory(S).slice(0,5);
-  return '<section class="card recent-expenses" data-recent-expenses aria-labelledby="recent-expenses-title"><div class="card-head"><h2 id="recent-expenses-title">Последние расходы</h2>'+btn(I('plus'),'expense','aria-label="Записать расход"','line icon-button')+'</div>'+
+  const month=C.monthlyExpenses(S),entries=month.entries.slice(0,5);
+  return '<section class="card recent-expenses" data-recent-expenses aria-labelledby="recent-expenses-title"><div class="card-head"><h2 id="recent-expenses-title">Последние расходы</h2>'+btn(I('plus'),'expense','aria-label="Записать расход"','line icon-button')+'</div><div class="recent-expense-total"><span class="hint">Итого за '+esc(C.parse(month.start).toLocaleDateString('ru-RU',{month:'long'}))+'</span><strong data-recent-expense-total>'+money(month.total)+'</strong></div>'+
     (entries.length?'<div class="recent-expense-list">'+entries.map(e=>'<div class="recent-expense-row" data-recent-expense="'+esc(e.id)+'"><div class="grow"><b>'+esc(e.title)+'</b><div class="hint">'+dateLabel(e.date,true)+'</div></div><strong class="recent-expense-amount">'+money(e.amount)+'</strong></div>').join('')+'</div><a class="recent-expense-more" href="#payment?view=history">Вся история расходов '+I('arrow')+'</a>':'<div class="recent-expense-empty"><div class="tile">'+I('wallet')+'</div><h3>Расходов пока нет</h3><p class="hint">Запишите первую трату — она появится здесь.</p>'+btn(I('plus')+'Записать расход','expense','','small line')+'</div>')+'</section>';
 }
 function monthSummary(now){
@@ -1169,11 +1241,11 @@ function monthSummary(now){
     '<label class="month-budget-option"><input type="checkbox" data-action="month-daily" '+(m.includeDaily?'checked':'')+'>Учитывать повседневные расходы</label>'+
     '</section>';
 }
-function history(type){
-  const entries=type==='payment'?C.expenseHistory(S):S.ledger.filter(e=>e.type===type).sort((a,b)=>b.date.localeCompare(a.date));
+function history(type,provided){
+  const entries=provided||(type==='payment'?C.spendingHistory(S):S.ledger.filter(e=>e.type===type).sort((a,b)=>b.date.localeCompare(a.date)));
   if(!entries.length)return '<div class="hint">Подтверждённых операций пока нет.</div>';
   return '<div class="table-wrap"><table class="history-table"><thead><tr><th>Операция</th><th>Фактическая дата</th><th class="number">Сумма</th><th></th></tr></thead><tbody>'+entries.map(e=>{
-    const item=S.items.find(item=>item.id===e.itemId);
+    const source=S.items.find(item=>item.id===e.itemId),item=source&&!C.expenseItem(S,source)?source:null;
     return '<tr data-history-key="'+esc(e.key)+'"><td class="wrap"><b>'+esc(e.title)+'</b><div class="hint">По плану: '+dateLabel(e.plannedDate,true)+'</div></td><td>'+dateLabel(e.date,true)+'</td><td class="number '+(type==='income'?'positive':'')+'">'+money(e.amount)+'</td><td class="number"><div class="actions">'+(type==='payment'?btn(I('edit'),'edit-expense','data-id="'+e.id+'" aria-label="Изменить расход: '+esc(e.title)+'"','small line history-edit'):'')+btn('Отменить отметку','undo','data-id="'+e.id+'"','small ghost')+(item?btn('Настроить повторение','edit-item','data-id="'+item.id+'" data-type="'+item.type+'"','small line'):'')+'</div></td></tr>';
   }).join('')+'</tbody></table></div>';
 }
@@ -1182,6 +1254,7 @@ function scheduleTable(events,type){
   return '<div class="table-wrap"><table class="schedule-table"><thead><tr><th>Название</th><th>Дата по плану</th><th>Повторение</th><th class="number">Плановая сумма</th><th class="number">Действия</th></tr></thead><tbody>'+events.map(e=>'<tr data-event-key="'+esc(e.key)+'"><td><div class="row-name"><div class="wrap grow"><div class="list-label">'+esc(e.title)+'</div>'+(e.overdue?'<span class="pill warn">'+(income?'Не подтверждено':'Просрочено')+'</span>':'')+'</div></div></td><td>'+dateLabel(e.originalDate,true)+'</td><td class="hint">'+repeats[e.repeat]+'</td><td class="number"><b>'+money(e.amount)+'</b></td><td><div class="actions" style="justify-content:flex-end">'+btn(income?'Получено':'Оплачено','record','data-key="'+esc(e.key)+'"','small soft')+btn('Изменить','edit-item','data-id="'+e.id+'" data-type="'+type+'"','small line')+btn('Удалить','delete-item','data-id="'+e.id+'"','small ghost')+'</div></td></tr>').join('')+'</tbody></table></div>';
 }
 function itemPage(type){
+  if(type==='payment')return paymentPage();
   const now=C.today(),events=C.currentEvents(S,type,now),past=C.pastEvents(S,type,now),income=type==='income',total=events.reduce((sum,event)=>sum+BigInt(event.amount),0n);
   const count=events.length,words=income?['поступление','поступления','поступлений']:['платёж','платежа','платежей'];
   const countLabel=count+' '+words[count%100>=11&&count%100<=14?2:count%10===1?0:count%10>=2&&count%10<=4?1:2];
@@ -1191,6 +1264,30 @@ function itemPage(type){
   const overdue=past.length?'<details class="card section-gap past-events" data-past-list="'+type+'"><summary>Прошлые неподтверждённые даты <span class="pill">'+past.length+'</span></summary><p class="hint">'+(income?'Эти поступления не подтверждены и не входят в ожидаемый доход прогноза.':'Эти платежи ещё не подтверждены и учитываются в прогнозе как просроченные.')+'</p><div class="schedule-card">'+scheduleTable(past,type)+'</div></details>':'';
   return summary+'<div class="card schedule-card" data-active-list="'+type+'"><div class="card-head"><div><h2>'+(income?'Запланированные поступления':'Платежи и подписки')+'</h2><div class="hint">Новый ежемесячный цикл начинается первого числа</div></div>'+btn(I('plus')+'Добавить','edit-item','data-type="'+type+'"','small')+'</div>'+list+'<p class="smallprint">'+(income?'Нажмите «Получено», когда деньги пришли: запись перейдёт в историю.':'Нажмите «Оплачено», когда платёж выполнен: запись перейдёт в историю.')+' Для возвращения каждый месяц выберите повторение «Каждый месяц». Неотмеченные записи прошлого месяца не переносятся в новый цикл.</p></div>'+overdue+'<div class="card section-gap" data-history-list="'+type+'"><h2 style="margin-bottom:16px">История '+(income?'поступлений':'расходов')+'</h2>'+history(type)+'</div>';
 }
+function paymentMonth(){
+  const raw=new URLSearchParams(location.hash.split('?')[1]||'').get('month');
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(raw||'')&&C.validDate(raw+'-01')?raw+'-01':C.monthStart(C.today());
+}
+function paymentMonthLink(date,view=''){
+  return '#payment'+(date===C.monthStart(C.today())?(view?'?view='+view:''):'?month='+date.slice(0,7)+(view?'&view='+view:''));
+}
+function paymentPage(){
+  const month=paymentMonth(),p=C.monthPayments(S,month),expenses=C.monthlyExpenses(S,month),label=C.parse(month).toLocaleDateString('ru-RU',{month:'long',year:'numeric'}).replace(/\s*г\.$/,'');
+  const heading=(title,total,name,action,actionLabel)=>'<div class="card-head monthly-list-head"><div class="grow"><h2>'+title+'</h2><strong class="monthly-list-total" data-planned-total="'+name+'" data-total-cents="'+(amountsHidden?'':total.toString())+'">'+money(total)+'</strong></div>'+btn(I('plus'),action,'aria-label="'+actionLabel+'"'+(action==='edit-item'?' data-type="payment"':''),'line icon-button')+'</div>';
+  const allPaid=S.items.some(i=>i.type==='payment'&&!C.expenseItem(S,i)&&C.dates(i,p.start,p.end).length)||p.paid.length;
+  return '<div class="payment-month-picker" data-payment-period data-start-date="'+p.start+'" data-end-date="'+p.end+'">'+
+    '<a class="btn line icon-button" href="'+paymentMonthLink(C.month(month,-1))+'" aria-label="Предыдущий месяц">'+I('back')+'</a><label class="payment-month-label"><span>'+esc(label)+'</span><input type="month" aria-label="Месяц платежей и расходов" data-payment-month value="'+month.slice(0,7)+'"></label><a class="btn line icon-button" href="'+paymentMonthLink(C.month(month,1))+'" aria-label="Следующий месяц">'+I('arrow')+'</a>'+
+    (month!==C.monthStart(C.today())?'<a class="inline-link payment-current-month" href="#payment">Текущий месяц</a>':'')+'</div>'+
+    '<section class="card payment-month-card schedule-card" data-active-list="payment">'+heading('Итого платежей',p.total,'payment','edit-item','Добавить платёж')+
+    (p.events.length?scheduleTable(p.events,'payment'):'<div class="monthly-list-empty">'+(allPaid?'Все платежи за месяц оплачены':'Платежей за этот месяц пока нет')+'</div>')+
+    (p.paid.length?'<details class="monthly-paid" data-paid-list><summary>Оплачено <span class="pill">'+p.paid.length+'</span></summary>'+history('payment',p.paid)+'</details>':'')+'</section>'+
+    '<section class="card expense-month-card section-gap" data-history-list="payment">'+heading('Итого расходов',expenses.total,'expense','expense','Записать расход')+
+    (expenses.entries.length?history('payment',expenses.entries):'<div class="monthly-list-empty">Расходов за этот месяц пока нет</div>')+'</section>';
+}
+document.addEventListener('change',event=>{
+  const input=event.target.closest('[data-payment-month]');if(!input||!currentUser)return;
+  if(/^\d{4}-(0[1-9]|1[0-2])$/.test(input.value)&&C.validDate(input.value+'-01'))location.hash=paymentMonthLink(input.value+'-01');
+});
 function goals(){
   const f=C.forecast(S),without=C.forecast(S,C.today(),C.forecastEnd(C.today()),false);
   return (premiumActive()?'<a class="personal-breadcrumb" href="#personal">'+I('back')+'Личное</a>':'')+'<div class="card-head"><div><h2>Ваши денежные цели</h2><div class="hint">Выделено '+money(C.reserved(S))+' · осталось накопить '+money(S.goals.reduce((a,g)=>a+Math.max(0,g.target-g.saved),0))+'</div></div>'+btn(I('plus')+'Новая цель','edit-goal','','small')+'</div>'+
@@ -1345,7 +1442,7 @@ function open(kind,options={}){
   if(kind==='edit-expense'){
     const entry=S.ledger.find(e=>e.id===options.id&&e.type==='payment');if(!entry)throw Error('Расход не найден.');
     title='Изменить расход';
-    body=field('Название расхода','title',entry.title,'text','','required maxlength="120"')+amountField('Сумма','amount',entry.amount)+field('Дата расхода','date',entry.date,'date','','required max="'+now+'"');
+    body=field('Название расхода','title',entry.title,'text','','required maxlength="120"')+amountField('Сумма','amount',entry.amount)+field('Дата расхода','date',entry.date,'date','','required max="'+now+'"')+select('Тип операции','spendingType',C.spendingType(S,entry),{expense:'Расход',payment:'Платёж'});
   }
   if(kind==='reserve'||kind==='withdraw'){
     const g=S.goals.find(x=>x.id===options.id);if(!g)throw Error('Цель не найдена.');const p=C.goalPlan(g);title=kind==='reserve'?'Отложить на цель':'Вернуть деньги в бюджет';
@@ -1387,7 +1484,7 @@ function submit(e){
     if(kind==='item'){
       const title=get('title').trim(),amount=amt('amount'),date=get('date'),repeat=get('repeat');
       if(!title||amount<=0||!C.validDate(date))throw Error('Укажите название, дату и сумму больше нуля.');
-      change(s=>{const old=s.items.find(i=>i.id===active.id),item={id:old?.id||C.id(),title,amount,date,repeat,type:active.type};if(old)Object.assign(old,item);else s.items.push(item);});
+      change(s=>{const old=s.items.find(i=>i.id===active.id),item={id:old?.id||C.id(),title,amount,date,repeat,type:active.type,...(active.type==='payment'?{spendingType:'payment'}:{})};if(old)Object.assign(old,item);else s.items.push(item);});
     }
     if(kind==='goal'){
       const title=get('title').trim(),target=amt('target'),saved=amt('saved'),mode=get('mode'),monthly=mode==='monthly'?amt('monthly'):0,start=get('start'),deadline=get('deadline');
@@ -1405,10 +1502,10 @@ function submit(e){
       });
     }
     if(kind==='record'){const amount=amt('amount'),date=get('date');change(s=>C.record(s,active.event,amount,date),active.event.type==='income'?'Поступление учтено':'Платёж учтён');}
-    if(kind==='edit-expense')change(s=>C.editExpense(s,active.id,{title:get('title'),amount:amt('amount'),date:get('date')}),'Расход изменён');
+    if(kind==='edit-expense')change(s=>C.editExpense(s,active.id,{title:get('title'),amount:amt('amount'),date:get('date'),spendingType:get('spendingType')}),'Запись изменена');
     if(kind==='expense'){
       const title=get('title').trim(),amount=amt('amount'),date=get('date');if(!title||amount<=0)throw Error('Укажите название и сумму больше нуля.');
-      change(s=>{const item={id:C.id(),title,amount,date,type:'payment',repeat:'none'};s.items.push(item);C.record(s,{...item,originalDate:date,key:item.id+'@'+date},amount,date);},'Расход записан');
+      change(s=>{const item={id:C.id(),title,amount,date,type:'payment',repeat:'none',spendingType:'expense'};s.items.push(item);C.record(s,{...item,originalDate:date,key:item.id+'@'+date},amount,date);},'Расход записан');
     }
     if(kind==='reserve'||kind==='withdraw'){
       const amount=amt('amount'),g=S.goals.find(g=>g.id===active.id);if(!g||amount<=0)throw Error('Введите сумму больше нуля.');
@@ -1447,7 +1544,7 @@ document.addEventListener('click',e=>{
     if(a==='reserve'||a==='withdraw')open(a,{id,date});
     if(a==='delete-item'&&confirm('Удалить событие из расписания? Подтверждённые операции останутся в истории.'))change(s=>{s.items=s.items.filter(i=>i.id!==id);},'Событие удалено');
     if(a==='delete-goal'&&confirm('Удалить цель? Выделенная на неё сумма вернётся в доступные деньги.'))change(s=>{s.goals=s.goals.filter(g=>g.id!==id);},'Цель удалена');
-    if(a==='undo'&&confirm('Отменить отметку? Баланс изменится обратно, а событие вернётся в план, если оно ещё есть в расписании.'))change(s=>{const row=s.ledger.find(x=>x.id===id);if(!row)throw Error('Операция не найдена.');s.balance+=row.type==='income'?-row.amount:row.amount;delete s.done[row.key];s.ledger=s.ledger.filter(x=>x.id!==id);},'Отметка отменена');
+    if(a==='undo'&&confirm('Отменить отметку? Баланс изменится обратно, а событие вернётся в план, если оно ещё есть в расписании.'))change(s=>{const row=s.ledger.find(x=>x.id===id);if(!row)throw Error('Операция не найдена.');const source=s.items.find(i=>i.id===row.itemId),manual=source&&(source.spendingType==='expense'||(!source.spendingType&&source.repeat==='none'&&row.type==='payment'&&C.spendingType(s,row)==='expense'));s.balance+=row.type==='income'?-row.amount:row.amount;delete s.done[row.key];s.ledger=s.ledger.filter(x=>x.id!==id);if(manual)s.items=s.items.filter(item=>item.id!==row.itemId);},'Отметка отменена');
     if(a==='cal-day'){calDay=date;render();}
     if(a==='cal-view'){calView=b.dataset.view;render();}
     if(a==='cal-prev'||a==='cal-next'){const next=C.month(calMonth,a==='cal-prev'?-1:1);if(next<C.month(C.today().slice(0,7)+'-01',-12)||next>C.month(C.today().slice(0,7)+'-01',12))return;calMonth=next;calDay=next;render();}

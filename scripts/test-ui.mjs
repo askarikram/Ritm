@@ -147,7 +147,11 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
         await page.waitForFunction(route=>document.querySelector('[data-nav="'+(route==='goals'?'personal':route==='profile'||route.startsWith('settings-')?'settings':route)+'"][aria-current="page"]')!==null,route);
       };
       const waitSaved=()=>page.waitForFunction(()=>document.getElementById('save-state').textContent==='План сохранён');
-      for(const [type,baseCents] of [['income',7000000n],['payment',2529900n]]){
+      const demoDay=await page.evaluate(()=>Core.today());
+      const demoMonthEnd=new Date(Date.UTC(Number(demoDay.slice(0,4)),Number(demoDay.slice(5,7)),0,12)).toISOString().slice(0,10);
+      const shiftDay=n=>new Date(new Date(demoDay+'T12:00:00Z').getTime()+n*86400000).toISOString().slice(0,10);
+      const demoPaymentTotal=[[6,1800000n],[14,650000n],[7,79900n]].filter(([n])=>shiftDay(n)<=demoMonthEnd).reduce((sum,[,amount])=>sum+amount,0n);
+      for(const [type,baseCents] of [['income',7000000n],['payment',demoPaymentTotal]]){
         await navigate('home');
         await page.locator('.home-actions [data-action="add-'+type+'"]').click();
         await page.locator('#dialog').waitFor({state:'visible'});
@@ -155,20 +159,21 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
         await page.locator('#editor [name="title"]').fill(title);
         await page.locator('#editor [name="amount"]').fill('1234');
         await page.locator('#editor [name="repeat"]').selectOption('weekly');
+        const occurrenceCount=type==='payment'?Math.floor((new Date(demoMonthEnd+'T12:00:00Z')-new Date((await page.locator('#editor [name="date"]').inputValue())+'T12:00:00Z'))/604800000)+1:1;
         await page.locator('#editor button[type="submit"]').click();
         await waitSaved();await navigate(type);
         const total=page.locator('[data-planned-total="'+type+'"]');
-        check(await total.getAttribute('data-total-cents')===(baseCents+123400n).toString(),engineName+': '+type+' total updates after adding a recurring entry once');
+        check(await total.getAttribute('data-total-cents')===(baseCents+123400n*BigInt(occurrenceCount)).toString(),engineName+': '+type+' total updates after adding a recurring entry once');
         check((await total.textContent()).includes('теңге'),engineName+': '+type+' total uses теңге');
-        const row=page.locator('.schedule-table tbody tr').filter({has:page.getByText(title,{exact:true})});
+        const row=page.locator('.schedule-table tbody tr').filter({has:page.getByText(title,{exact:true})}).first();
         await row.locator('[data-action="edit-item"]').click();
         await page.locator('#editor [name="amount"]').fill('4321');
         await page.locator('#editor button[type="submit"]').click();
         await waitSaved();
-        check(await total.getAttribute('data-total-cents')===(baseCents+432100n).toString(),engineName+': '+type+' total updates after editing');
+        check(await total.getAttribute('data-total-cents')===(baseCents+432100n*BigInt(occurrenceCount)).toString(),engineName+': '+type+' total updates after editing');
         await page.reload({waitUntil:'networkidle'});
         await total.waitFor();
-        check(await total.getAttribute('data-total-cents')===(baseCents+432100n).toString(),engineName+': '+type+' total survives reload');
+        check(await total.getAttribute('data-total-cents')===(baseCents+432100n*BigInt(occurrenceCount)).toString(),engineName+': '+type+' total survives reload');
         await row.locator('[data-action="delete-item"]').click();
         await waitSaved();
         check(await total.getAttribute('data-total-cents')===baseCents.toString(),engineName+': '+type+' total updates after deletion');
@@ -203,7 +208,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
             return b.left>=0&&b.right<=innerWidth&&b.width>=44&&b.height>=44&&heading.left>=0&&heading.right<=innerWidth;
           });
           check(geometry&&await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),engineName+': eye and full heading fit '+route+' at '+width+'px');
-          if(route==='income'||route==='payment')check(await page.locator('[data-planned-total]').getAttribute('data-total-cents')==='',engineName+': hidden total exposes no numeric dataset');
+          if(route==='income'||route==='payment')check(await page.locator('[data-planned-total="'+route+'"]').getAttribute('data-total-cents')==='',engineName+': hidden total exposes no numeric dataset');
         }
         if(engineName==='chromium'&&[390,1440].includes(width)){
           await navigate('home');const screenshot=await page.screenshot({fullPage:true});
@@ -263,7 +268,7 @@ export async function verifyUI(base,{setOriginAvailable}={}) {
           }
 
           if(route==='income'||route==='payment'){
-            const expected=route==='income'?'7000000':'2529900';
+            const expected=route==='income'?'7000000':demoPaymentTotal.toString();
             check(await page.locator('[data-planned-total="'+route+'"]').getAttribute('data-total-cents')===expected,engineName+': '+route+' aggregate remains correct at '+width+'px');
 
             check(await page.locator('.schedule-table .row-name .tile').count()===0,engineName+': '+route+' names have no decorative icons');

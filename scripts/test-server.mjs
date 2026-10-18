@@ -47,6 +47,7 @@ try {
   await verifyNotifications(base);
   await verifySecurity(base);
   if(process.env.RITM_TEST_UI==='1'){
+    const {verifySpendingUI}=await import('./test-spending-ui.mjs');await verifySpendingUI(base);
     const {verifyProjectUI}=await import('./test-projects-ui.mjs');await verifyProjectUI(base);
     const {verifyNotificationUI}=await import('./test-notifications-ui.mjs');await verifyNotificationUI(base);
     const {verifySubscriptionUI}=await import('./test-subscription-ui.mjs');await verifySubscriptionUI(base);

@@ -22,7 +22,7 @@ export async function verifyMonthUI(base){
     };
     const read=async()=>{const response=await page.request.get(base+'/api/me',{headers});assert.ok(response.ok());return (await response.json()).plan;};
     const active=(type,key)=>page.locator('[data-active-list="'+type+'"] [data-event-key="'+key+'"]');
-    const history=(type,key)=>page.locator('[data-history-list="'+type+'"] [data-history-key="'+key+'"]');
+    const history=(type,key)=>page.locator((type==='payment'?'[data-paid-list]':'[data-history-list="income"]')+' [data-history-key="'+key+'"]');
     const confirm=async(type,key)=>{
       await active(type,key).locator('[data-action="record"]').click();
       await page.locator('#dialog').waitFor({state:'visible'});
@@ -30,6 +30,7 @@ export async function verifyMonthUI(base){
       await page.locator('#dialog').waitFor({state:'hidden'});await saved();
       check(await active(type,key).count()===0,name+': confirmed '+key+' leaves active list');
       check(await history(type,key).count()===1,name+': confirmed '+key+' stays in history');
+      if(type==='payment')await page.locator('[data-paid-list]').evaluate(n=>{n.open=true;});
     };
     try{
       const signup=await page.request.post(base+'/api/signup',{headers:{Origin:base},data:{username,password,confirmPassword:password,name:'Проверка месяца',remember:true}});
@@ -65,7 +66,7 @@ export async function verifyMonthUI(base){
       check((await read()).balance===1301000,name+': undo restores actual balance');
       await confirm('payment','once-payment@2024-01-31');
       await confirm('payment','month-payment@2024-01-31');
-      check(await page.locator('[data-planned-total="payment"]').getAttribute('data-total-cents')==='0',name+': paid list total is zero');
+      check(await page.locator('[data-planned-total="payment"]').getAttribute('data-total-cents')==='6000',name+': full month payment total retains paid scheduled amounts');
       const january=await read();
       check(january.balance===1295000&&january.ledger.length===4,name+': actual transactions saved once');
       await navigate('home');
@@ -116,7 +117,8 @@ export async function verifyMonthUI(base){
       await page.clock.fastForward('00:00:10');
       await active('payment','month-payment@2024-02-29').waitFor();
       check(await page.locator('[data-active-list="payment"] [data-event-key]').count()===1,name+': first day restores monthly payment without reload');
-      check(await history('payment','month-payment@2024-01-31').count()===1,name+': January payment remains in history on first day');
+      check(await history('payment','month-payment@2024-01-31').count()===0,name+': January history is outside the selected February');
+      check((await read()).ledger.some(e=>e.key==='month-payment@2024-01-31'),name+': previous month history remains saved');
       check(await page.locator('[data-planned-total="payment"]').getAttribute('data-total-cents')==='4000',name+': first day updates active payment total');
       await confirm('payment','month-payment@2024-02-29');
       check(await page.locator('[data-active-list="payment"] [data-event-key]').count()===0,name+': early February payment stays hidden');
@@ -138,7 +140,11 @@ export async function verifyMonthUI(base){
       await page.clock.fastForward(14*86400000);
       await active('payment','month-payment@2024-03-31').waitFor();
       check(await page.locator('[data-active-list="payment"] [data-event-key]').count()===1,name+': March restores original day 31 and no one-time payment');
-      check(await page.locator('[data-history-list="payment"] [data-history-key]').count()===3,name+': March retains January and February history');
+      check(await page.locator('[data-paid-list] [data-history-key]').count()===0,name+': March contains no paid rows from other months');
+      await page.getByRole('link',{name:'Предыдущий месяц',exact:true}).click();
+      await page.locator('[data-payment-period][data-start-date="2024-02-01"]').waitFor();
+      check(await page.locator('[data-paid-list] [data-history-key]').count()===1,name+': February paid history remains accessible through month selector');
+      await page.locator('[data-paid-list]').evaluate(n=>{n.open=true;});
       if(name==='chromium'){const shot=await page.screenshot({fullPage:true});console.log('RITM_SCREENSHOT_MONTH_HISTORY_390 '+shot.toString('base64'));}
       check((await read()).balance===1591000,name+': calendar rollover does not change actual balance');
       for(const width of [320,390,768,1440]){
